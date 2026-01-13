@@ -76,7 +76,7 @@ export default function Navbar() {
         <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 px-4 ${isScrolled? 'bg-base-300 shadow-lg border-b border-base-300': 'bg-base-200'
             }`}>
             <div className="container-custom">
-                <div className="flex items-center justify-between h-20">
+                <div className="flex items-center justify-between h-20 md:h-auto">
                     {/* Logo */}
                     <Logo />
 

@@ -250,8 +250,8 @@ export default function Navbar() {
 
             {/* Mobile Menu */}
             {isOpen && (
-                <div className="lg:hidden border-t border-base-300 bg-base-100">
-                    <div className="container-custom py-4">
+                <div className="lg:hidden border-t border-base-300 bg-base-100 rounded-xl mb-2">
+                    <div className="container-custom p-4">
                         {/* User Info Mobile */}
                         {isLoggedIn && (
                             <div className="mb-4 p-4 rounded-xl bg-linear-to-br from-primary/10 to-secondary/10">

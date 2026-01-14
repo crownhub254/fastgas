@@ -9,6 +9,12 @@ A modern, full-stack e-commerce product showcase built with Next.js 16, featurin
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-38bdf8)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
+## 📸 Product Showcase
+
+A visual highlight of some of our featured products:
+
+![Products Image](./assets/products.png)
+
 ## 🌟 Features
 
 ### Core Functionality

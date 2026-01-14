@@ -5,6 +5,8 @@ import { useParams, useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useCart } from '@/contexts/CartContext'
+import { Heart, Share2 } from 'lucide-react'
 
 export default function ProductDetailPage() {
     const params = useParams()
@@ -14,6 +16,7 @@ export default function ProductDetailPage() {
     const [quantity, setQuantity] = useState(1)
     const [selectedTab, setSelectedTab] = useState('description')
     const [selectedImage, setSelectedImage] = useState(0)
+    const { addToCart, addToWishlist, isInWishlist, removeFromWishlist } = useCart()
 
     useEffect(() => {
         fetchProduct()
@@ -37,7 +40,34 @@ export default function ProductDetailPage() {
     }
 
     const handleAddToCart = () => {
-        alert(`Added ${quantity} ${product.name}(s) to cart!`)
+        addToCart(product, quantity)
+        alert(`${quantity} ${product.name}(s) added to cart!`)
+    }
+
+    const handleWishlistToggle = () => {
+        if (isInWishlist(product.id)) {
+            removeFromWishlist(product.id)
+        } else {
+            addToWishlist(product)
+        }
+    }
+
+    const handleShare = async () => {
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: product.name,
+                    text: product.description.split('\n\n')[0],
+                    url: window.location.href
+                })
+            } catch (err) {
+                console.log('Error sharing:', err)
+            }
+        } else {
+            // Fallback: copy to clipboard
+            navigator.clipboard.writeText(window.location.href)
+            alert('Link copied to clipboard!')
+        }
     }
 
     if (isLoading) {
@@ -56,9 +86,10 @@ export default function ProductDetailPage() {
     const images = [product.image, product.image, product.image, product.image]
     const averageRating = product.rating || 0
     const totalReviews = product.reviews?.length || 0
+    const inWishlist = isInWishlist(product.id)
 
     return (
-        <div className="min-h-screen">
+        <div className="min-h-screen pt-24">
             <div className="section-padding">
                 <div className="container-custom">
                     {/* Breadcrumb */}
@@ -169,11 +200,11 @@ export default function ProductDetailPage() {
                             </div>
 
                             {/* Price Card */}
-                            <div className="card bg-linear-to-br from-primary/5 to-secondary/5 border-2 border-primary/20">
+                            <div className="card bg-gradient-to-br from-primary/5 to-secondary/5 border-2 border-primary/20">
                                 <div className="flex items-center gap-4 flex-wrap">
                                     <div>
                                         <div className="text-base-content/60 text-sm mb-1">Price</div>
-                                        <div className="text-4xl md:text-5xl font-bold bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent">
+                                        <div className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                                             ${product.price}
                                         </div>
                                     </div>
@@ -234,7 +265,7 @@ export default function ProductDetailPage() {
                                 <button
                                     onClick={handleAddToCart}
                                     disabled={product.stock === 0}
-                                    className="w-full bg-linear-to-r from-primary to-secondary text-primary-content px-6 py-4 rounded-lg font-semibold hover:opacity-90 transition-all duration-300 transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-3 text-lg"
+                                    className="w-full bg-gradient-to-r from-primary to-secondary text-primary-content px-6 py-4 rounded-lg font-semibold hover:opacity-90 transition-all duration-300 transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-3 text-lg"
                                 >
                                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -243,16 +274,21 @@ export default function ProductDetailPage() {
                                 </button>
 
                                 <div className="grid grid-cols-2 gap-3">
-                                    <button className="bg-base-100 text-base-content px-6 py-3 rounded-lg font-semibold hover:bg-base-200 transition-all duration-300 border-2 border-base-300 flex items-center justify-center gap-2">
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                        </svg>
-                                        <span>Wishlist</span>
+                                    <button
+                                        onClick={handleWishlistToggle}
+                                        className={`${inWishlist
+                                                ? 'bg-error/10 text-error border-error/20'
+                                                : 'bg-base-100 text-base-content border-base-300'
+                                            } px-6 py-3 rounded-lg font-semibold hover:bg-base-200 transition-all duration-300 border-2 flex items-center justify-center gap-2`}
+                                    >
+                                        <Heart className={`w-5 h-5 ${inWishlist ? 'fill-current' : ''}`} />
+                                        <span>{inWishlist ? 'Saved' : 'Wishlist'}</span>
                                     </button>
-                                    <button className="bg-base-100 text-base-content px-6 py-3 rounded-lg font-semibold hover:bg-base-200 transition-all duration-300 border-2 border-base-300 flex items-center justify-center gap-2">
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                                        </svg>
+                                    <button
+                                        onClick={handleShare}
+                                        className="bg-base-100 text-base-content px-6 py-3 rounded-lg font-semibold hover:bg-base-200 transition-all duration-300 border-2 border-base-300 flex items-center justify-center gap-2"
+                                    >
+                                        <Share2 className="w-5 h-5" />
                                         <span>Share</span>
                                     </button>
                                 </div>

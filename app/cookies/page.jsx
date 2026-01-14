@@ -181,7 +181,7 @@ Note that deleting cookies will log you out of websites and may remove your save
     return (
         <div className="min-h-screen">
             {/* Hero */}
-            <section className="relative section-padding bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5 overflow-hidden">
+            <section className="relative section-padding bg-linear-to-br from-primary/5 via-secondary/5 to-accent/5 overflow-hidden">
                 <div className="absolute top-20 right-10 w-96 h-96 bg-primary/10 rounded-full blur-3xl"></div>
                 <div className="absolute bottom-20 left-10 w-96 h-96 bg-secondary/10 rounded-full blur-3xl"></div>
 
@@ -197,7 +197,7 @@ Note that deleting cookies will log you out of websites and may remove your save
 
                         <h1 className="text-5xl md:text-6xl font-bold mb-6 text-base-content">
                             Cookie{' '}
-                            <span className="bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+                            <span className="bg-linear-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
                                 Policy
                             </span>
                         </h1>
@@ -246,7 +246,7 @@ Note that deleting cookies will log you out of websites and may remove your save
                                 className="card bg-base-200"
                             >
                                 <div className="flex items-start gap-4">
-                                    <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${type.color} flex items-center justify-center shrink-0`}>
+                                    <div className={`w-12 h-12 rounded-lg bg-linear-to-br ${type.color} flex items-center justify-center shrink-0`}>
                                         <Cookie className="w-6 h-6 text-white" />
                                     </div>
                                     <div className="flex-1">
@@ -290,7 +290,7 @@ Note that deleting cookies will log you out of websites and may remove your save
                                 className="card"
                             >
                                 <div className="flex items-start gap-4">
-                                    <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center shrink-0">
+                                    <div className="w-12 h-12 rounded-lg bg-linear-to-br from-primary to-secondary flex items-center justify-center shrink-0">
                                         <section.icon className="w-6 h-6 text-white" />
                                     </div>
                                     <div className="flex-1">
@@ -363,7 +363,7 @@ Note that deleting cookies will log you out of websites and may remove your save
                             <div>
                                 <h2 className="text-3xl font-bold text-base-content mb-4">Updates to This Policy</h2>
                                 <p className="text-base-content/70 leading-relaxed mb-4">
-                                    We may update this Cookie Policy from time to time to reflect changes in our practices or for other operational, legal, or regulatory reasons. When we make changes, we will update the "Last Updated" date at the top of this policy.
+                                    We may update this Cookie Policy from time to time to reflect changes in our practices or for other operational, legal, or regulatory reasons. When we make changes, we will update the &quot;Last Updated&ldquo; date at the top of this policy.
                                 </p>
                                 <p className="text-base-content/70 leading-relaxed">
                                     We encourage you to review this Cookie Policy periodically to stay informed about how we use cookies. Your continued use of our website after any changes indicates your acceptance of the updated policy.
@@ -377,10 +377,10 @@ Note that deleting cookies will log you out of websites and may remove your save
             {/* Contact */}
             <section className="section-padding">
                 <div className="container-custom max-w-4xl">
-                    <motion.div {...fadeInUp} className="card bg-gradient-to-br from-primary/10 to-secondary/10 border-2 border-primary/20">
+                    <motion.div {...fadeInUp} className="card bg-linear-to-br from-primary/10 to-secondary/10 border-2 border-primary/20">
                         <h2 className="text-3xl font-bold text-base-content mb-4">Questions About Cookies?</h2>
                         <p className="text-base-content/70 mb-6 leading-relaxed">
-                            If you have any questions about our use of cookies or this Cookie Policy, please don't hesitate to contact us:
+                            If you have any questions about our use of cookies or this Cookie Policy, please don&apos;t hesitate to contact us:
                         </p>
                         <div className="space-y-3 text-base-content/70">
                             <div className="flex items-center gap-3">
@@ -405,7 +405,7 @@ Note that deleting cookies will log you out of websites and may remove your save
             </section>
 
             {/* CTA */}
-            <section className="section-padding bg-gradient-to-r from-primary via-secondary to-accent text-primary-content">
+            <section className="section-padding bg-linear-to-r from-primary via-secondary to-accent text-primary-content">
                 <div className="container-custom text-center">
                     <motion.div {...fadeInUp}>
                         <div className="text-5xl mb-4">🍪</div>

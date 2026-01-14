@@ -1,8 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ShoppingBag, Menu, X, Sun, Moon, User, LogOut, Settings, Heart, Package } from 'lucide-react'
+import { ShoppingBag, Menu, X, Sun, Moon, User, LogOut, Settings, Heart, Package, ShoppingCart } from 'lucide-react'
 import Logo from './Logo'
+import { useCart } from '@/contexts/CartContext'
+import Link from 'next/link'
 
 // Theme Hook
 function useTheme() {
@@ -31,6 +33,7 @@ export default function Navbar() {
     const [isScrolled, setIsScrolled] = useState(false)
     const [isProfileOpen, setIsProfileOpen] = useState(false)
     const { theme, toggleTheme, mounted } = useTheme()
+    const { cartItems } = useCart()
 
     // Mock user data - replace with actual auth data
     const isLoggedIn = true
@@ -39,6 +42,9 @@ export default function Navbar() {
         email: 'john.doe@example.com',
         avatar: 'JD'
     }
+
+    // Calculate total items in cart
+    const cartItemsCount = cartItems.reduce((total, item) => total + item.quantity, 0)
 
     useEffect(() => {
         const handleScroll = () => {
@@ -73,7 +79,7 @@ export default function Navbar() {
     }
 
     return (
-        <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 px-4 ${isScrolled? 'bg-base-300 shadow-lg border-b border-base-300': 'bg-base-200'
+        <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 px-4 ${isScrolled ? 'bg-base-300 shadow-lg border-b border-base-300' : 'bg-base-200'
             }`}>
             <div className="container-custom">
                 <div className="flex items-center justify-between h-20 md:h-auto">
@@ -84,15 +90,29 @@ export default function Navbar() {
                     <div className="hidden lg:flex items-center gap-8">
                         <div className="flex items-center gap-1">
                             {navLinks.map((link) => (
-                                <a
+                                <Link
                                     key={link.href}
                                     href={link.href}
                                     className="px-4 py-2 rounded-lg text-base-content font-medium hover:bg-base-200 transition-all duration-200 hover:text-primary"
                                 >
                                     {link.label}
-                                </a>
+                                </Link>
                             ))}
                         </div>
+
+                        {/* Cart Button */}
+                        <a
+                            href="/cart"
+                            className="relative p-2.5 rounded-lg bg-base-200 hover:bg-base-300 transition-all duration-200 group"
+                            aria-label="Shopping cart"
+                        >
+                            <ShoppingCart className="w-5 h-5 text-base-content group-hover:scale-110 transition-transform" />
+                            {cartItemsCount > 0 && (
+                                <span className="absolute -top-1 -right-1 w-5 h-5 bg-linear-to-r from-primary to-secondary text-primary-content text-xs font-bold rounded-full flex items-center justify-center animate-pulse">
+                                    {cartItemsCount > 9 ? '9+' : cartItemsCount}
+                                </span>
+                            )}
+                        </a>
 
                         {/* Theme Toggle */}
                         <button
@@ -153,7 +173,7 @@ export default function Navbar() {
 
                                         {/* Menu Items */}
                                         <div className="p-2">
-                                            <a
+                                            <Link
                                                 href="/profile"
                                                 className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-base-200 transition-all duration-200 group"
                                             >
@@ -161,8 +181,8 @@ export default function Navbar() {
                                                 <span className="font-medium text-base-content group-hover:text-primary transition-colors">
                                                     My Profile
                                                 </span>
-                                            </a>
-                                            <a
+                                            </Link>
+                                            <Link
                                                 href="/orders"
                                                 className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-base-200 transition-all duration-200 group"
                                             >
@@ -170,8 +190,8 @@ export default function Navbar() {
                                                 <span className="font-medium text-base-content group-hover:text-primary transition-colors">
                                                     My Orders
                                                 </span>
-                                            </a>
-                                            <a
+                                            </Link>
+                                            <Link
                                                 href="/wishlist"
                                                 className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-base-200 transition-all duration-200 group"
                                             >
@@ -179,8 +199,8 @@ export default function Navbar() {
                                                 <span className="font-medium text-base-content group-hover:text-primary transition-colors">
                                                     Wishlist
                                                 </span>
-                                            </a>
-                                            <a
+                                            </Link>
+                                            <Link
                                                 href="/settings"
                                                 className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-base-200 transition-all duration-200 group"
                                             >
@@ -188,7 +208,7 @@ export default function Navbar() {
                                                 <span className="font-medium text-base-content group-hover:text-primary transition-colors">
                                                     Settings
                                                 </span>
-                                            </a>
+                                            </Link>
                                         </div>
 
                                         {/* Logout */}
@@ -218,6 +238,20 @@ export default function Navbar() {
 
                     {/* Mobile Menu Button */}
                     <div className="flex items-center gap-3 lg:hidden">
+                        {/* Mobile Cart Button */}
+                        <a
+                            href="/cart"
+                            className="relative p-2 rounded-lg bg-base-200 hover:bg-base-300 transition-all duration-200"
+                            aria-label="Shopping cart"
+                        >
+                            <ShoppingCart className="w-5 h-5 text-base-content" />
+                            {cartItemsCount > 0 && (
+                                <span className="absolute -top-1 -right-1 w-5 h-5 bg-linear-to-r from-primary to-secondary text-primary-content text-xs font-bold rounded-full flex items-center justify-center">
+                                    {cartItemsCount > 9 ? '9+' : cartItemsCount}
+                                </span>
+                            )}
+                        </a>
+
                         {/* Mobile Theme Toggle */}
                         <button
                             onClick={toggleTheme}

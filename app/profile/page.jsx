@@ -9,7 +9,7 @@ export default function ProfilePage() {
     const [profileData, setProfileData] = useState({
         firstName: 'John',
         lastName: 'Doe',
-        email: 'john.doe@example.com',
+        email: 'john.doe@example.com', 
         phone: '+1 (555) 123-4567',
         address: '123 E-Commerce St',
         city: 'Digital City',

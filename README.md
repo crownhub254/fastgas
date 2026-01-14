@@ -306,7 +306,7 @@ This project is created for educational purposes as part of an project.
 - ShopHub - Next.js Full-Stack Application
 - Date: January 2026
 
-## 🙏 Acknowledgments
+## 💡 Acknowledgments
 
 - Next.js team for the amazing framework
 - Tailwind CSS for utility-first styling

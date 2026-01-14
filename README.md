@@ -1,6 +1,6 @@
 # 🛍️ ShopHub - Next.js E-Commerce Application
 
-![Hero Image](./assets/hero.png)
+[![Hero Image](./assets/hero.png)](https://github.com/hossain-shifat/Shop-Hub)
 
 A modern, full-stack e-commerce product showcase built with Next.js 16, featuring authentication, dynamic product listings, and protected routes.
 
@@ -13,7 +13,7 @@ A modern, full-stack e-commerce product showcase built with Next.js 16, featurin
 
 A visual highlight of some of our featured products:
 
-![Products Image](./assets/products.png)
+[![Products Image](./assets/products.png)](https://github.com/hossain-shifat/Shop-Hub)
 
 ## 🌟 Features
 

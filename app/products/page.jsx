@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
+import Image from 'next/image'
 
 export default function ProductsPage() {
     const [products, setProducts] = useState([])
@@ -102,9 +103,12 @@ export default function ProductsPage() {
                                     <div className="card overflow-hidden h-full hover:shadow-2xl transition-all duration-500 bg-base-100 border border-base-content/5">
                                         {/* Product Image */}
                                         <div className="relative h-64 rounded-xl mb-6 overflow-hidden bg-linear-to-br from-primary/10 via-secondary/10 to-accent/10">
-                                            <div className="w-full h-full flex items-center justify-center text-8xl group-hover:scale-110 transition-transform duration-500">
-                                                {product.image}
-                                            </div>
+                                            <Image
+                                                src={product.image}
+                                                alt={product.name}
+                                                fill
+                                                className="object-cover group-hover:scale-110 transition-transform duration-500"
+                                            />
                                             <div className="absolute inset-0 bg-linear-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
                                             {/* Badge */}

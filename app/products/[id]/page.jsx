@@ -1,8 +1,10 @@
 'use client'
+
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
+import Image from 'next/image'
 
 export default function ProductDetailPage() {
     const params = useParams()
@@ -72,14 +74,13 @@ export default function ProductDetailPage() {
                         transition={{ duration: 0.5 }}
                     >
                         <div className="card bg-base-100 sticky top-24">
-                            <div className="bg-linear-to-br from-primary/10 via-secondary/10 to-accent/10 rounded-2xl p-12 flex items-center justify-center h-125 relative overflow-hidden group">
-                                <motion.div
-                                    whileHover={{ scale: 1.1, rotate: 5 }}
-                                    transition={{ duration: 0.3 }}
-                                    className="text-9xl md:text-[12rem]"
-                                >
-                                    {product.image}
-                                </motion.div>
+                            <div className="relative rounded-2xl overflow-hidden h-125 group">
+                                <Image
+                                    src={product.image}
+                                    alt={product.name}
+                                    fill
+                                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                                />
                                 <div className="absolute inset-0 bg-linear-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                             </div>
 
@@ -88,9 +89,14 @@ export default function ProductDetailPage() {
                                 {[1, 2, 3, 4].map((_, idx) => (
                                     <div
                                         key={idx}
-                                        className="aspect-square rounded-lg bg-base-200 flex items-center justify-center text-4xl cursor-pointer hover:ring-2 hover:ring-primary transition-all"
+                                        className="relative aspect-square rounded-lg overflow-hidden bg-base-200 cursor-pointer hover:ring-2 hover:ring-primary transition-all"
                                     >
-                                        {product.image}
+                                        <Image
+                                            src={product.image}
+                                            alt={`${product.name} view ${idx + 1}`}
+                                            fill
+                                            className="object-cover"
+                                        />
                                     </div>
                                 ))}
                             </div>
@@ -215,14 +221,19 @@ export default function ProductDetailPage() {
                                     <h3 className="text-xl font-bold mb-4 text-base-content">Customer Reviews</h3>
                                     <div className="space-y-4">
                                         {[
-                                            { name: 'John D.', rating: 5, comment: 'Excellent product! Exceeded my expectations.' },
-                                            { name: 'Sarah M.', rating: 4, comment: 'Great quality, fast shipping. Very satisfied!' },
-                                            { name: 'Mike R.', rating: 5, comment: 'Best purchase I\'ve made this year. Highly recommend!' },
+                                            { name: 'John D.', rating: 5, comment: 'Excellent product! Exceeded my expectations.', image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop' },
+                                            { name: 'Sarah M.', rating: 4, comment: 'Great quality, fast shipping. Very satisfied!', image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop' },
+                                            { name: 'Mike R.', rating: 5, comment: 'Best purchase I\'ve made this year. Highly recommend!', image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop' },
                                         ].map((review, idx) => (
                                             <div key={idx} className="bg-base-100 rounded-lg p-4">
                                                 <div className="flex items-center gap-2 mb-2">
-                                                    <div className="w-8 h-8 rounded-full bg-linear-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-sm">
-                                                        {review.name[0]}
+                                                    <div className="relative w-8 h-8 rounded-full overflow-hidden">
+                                                        <Image
+                                                            src={review.image}
+                                                            alt={review.name}
+                                                            fill
+                                                            className="object-cover"
+                                                        />
                                                     </div>
                                                     <span className="font-semibold">{review.name}</span>
                                                     <div className="flex text-warning ml-auto">

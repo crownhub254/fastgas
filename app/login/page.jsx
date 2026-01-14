@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
+import Link from 'next/link'
+import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react'
 
 export default function LoginPage() {
     const router = useRouter()
@@ -50,6 +52,13 @@ export default function LoginPage() {
         }
     }
 
+    const features = [
+        { icon: '✨', text: 'Exclusive member benefits' },
+        { icon: '🎁', text: 'Special discounts & offers' },
+        { icon: '📦', text: 'Track your orders easily' },
+        { icon: '💎', text: 'Premium customer support' },
+    ]
+
     return (
         <div className="min-h-screen flex items-center justify-center section-padding bg-base-200 relative overflow-hidden">
             {/* Background Decoration */}
@@ -70,7 +79,7 @@ export default function LoginPage() {
                         </div>
                         <h1 className="text-5xl font-bold text-base-content leading-tight">
                             Welcome Back to
-                            <span className="block text-transparent bg-clip-text bg-linear-to-r from-primary via-secondary to-accent mt-2">
+                            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-primary via-secondary to-accent mt-2">
                                 ProductHub
                             </span>
                         </h1>
@@ -79,12 +88,7 @@ export default function LoginPage() {
                         </p>
 
                         <div className="space-y-4 pt-6">
-                            {[
-                                { icon: '✨', text: 'Exclusive member benefits' },
-                                { icon: '🎁', text: 'Special discounts & offers' },
-                                { icon: '📦', text: 'Track your orders easily' },
-                                { icon: '💎', text: 'Premium customer support' },
-                            ].map((item, idx) => (
+                            {features.map((item, idx) => (
                                 <motion.div
                                     key={idx}
                                     initial={{ opacity: 0, x: -20 }}
@@ -92,12 +96,28 @@ export default function LoginPage() {
                                     transition={{ delay: 0.2 + idx * 0.1 }}
                                     className="flex items-center gap-4"
                                 >
-                                    <div className="w-12 h-12 rounded-xl bg-linear-to-br from-primary/20 to-secondary/20 flex items-center justify-center text-2xl">
+                                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center text-2xl">
                                         {item.icon}
                                     </div>
                                     <span className="text-base-content/80 text-lg font-medium">{item.text}</span>
                                 </motion.div>
                             ))}
+                        </div>
+
+                        <div className="pt-8">
+                            <div className="card bg-base-100 border-2 border-primary/20">
+                                <div className="flex items-start gap-4">
+                                    <div className="text-4xl">🎉</div>
+                                    <div>
+                                        <h3 className="font-bold text-base-content mb-2">New to ProductHub?</h3>
+                                        <p className="text-base-content/60 text-sm mb-3">Create an account and unlock access to exclusive features and deals.</p>
+                                        <Link href="/register" className="text-primary font-semibold hover:text-primary/80 transition-colors inline-flex items-center gap-2">
+                                            Sign Up Now
+                                            <ArrowRight className="w-4 h-4" />
+                                        </Link>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </motion.div>
@@ -111,7 +131,7 @@ export default function LoginPage() {
                 >
                     <div className="card bg-base-100 shadow-2xl">
                         <div className="text-center mb-8">
-                            <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-primary via-secondary to-accent flex items-center justify-center text-3xl mx-auto mb-4 shadow-lg">
+                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary via-secondary to-accent flex items-center justify-center text-3xl mx-auto mb-4 shadow-lg">
                                 🛍️
                             </div>
                             <h2 className="text-3xl font-bold text-base-content mb-2">
@@ -128,9 +148,7 @@ export default function LoginPage() {
                                 </label>
                                 <div className="relative">
                                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                        <svg className="w-5 h-5 text-base-content/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
-                                        </svg>
+                                        <Mail className="w-5 h-5 text-base-content/40" />
                                     </div>
                                     <input
                                         type="email"
@@ -152,9 +170,7 @@ export default function LoginPage() {
                                 </label>
                                 <div className="relative">
                                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                        <svg className="w-5 h-5 text-base-content/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                        </svg>
+                                        <Lock className="w-5 h-5 text-base-content/40" />
                                     </div>
                                     <input
                                         type={showPassword ? 'text' : 'password'}
@@ -171,16 +187,7 @@ export default function LoginPage() {
                                         onClick={() => setShowPassword(!showPassword)}
                                         className="absolute inset-y-0 right-0 pr-4 flex items-center text-base-content/40 hover:text-base-content"
                                     >
-                                        {showPassword ? (
-                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                                            </svg>
-                                        ) : (
-                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                            </svg>
-                                        )}
+                                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                                     </button>
                                 </div>
                             </div>
@@ -210,9 +217,7 @@ export default function LoginPage() {
                                 ) : (
                                     <>
                                         <span>Sign In</span>
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                                        </svg>
+                                        <ArrowRight className="w-5 h-5" />
                                     </>
                                 )}
                             </button>
@@ -221,9 +226,9 @@ export default function LoginPage() {
                         {/* Sign Up Link */}
                         <div className="mt-6 text-center text-sm text-base-content/70">
                             Don&apos;t have an account?{' '}
-                            <a href="#" className="text-primary hover:text-primary/80 font-semibold">
+                            <Link href="/register" className="text-primary hover:text-primary/80 font-semibold">
                                 Sign up now
-                            </a>
+                            </Link>
                         </div>
                     </div>
 

@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { ShoppingBag, Truck, Shield, Star, Award, CheckCircle, Users, Globe, Clock, Mail } from 'lucide-react'
+import Image from 'next/image'
 import Link from 'next/link'
 
 export default function HomePage() {
@@ -15,7 +16,7 @@ export default function HomePage() {
     return (
         <div className="min-h-screen">
             {/* Section 1: Hero */}
-            <section className="relative min-h-[90vh] flex items-center bg-linear-to-br from-primary via-secondary to-accent overflow-hidden">
+            <section className="relative min-h-screen flex items-center bg-linear-to-br from-primary via-secondary to-accent overflow-hidden">
                 <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS1vcGFjaXR5PSIwLjA1IiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-30"></div>
 
                 <div className="container-custom relative z-10">
@@ -163,10 +164,12 @@ export default function HomePage() {
                             >
                                 <div className="card overflow-hidden h-full hover:shadow-2xl transition-all duration-500">
                                     <div className="relative h-64 rounded-xl mb-6 overflow-hidden bg-base-200">
-                                        <img
+                                        <Image
                                             src={item.image}
                                             alt={item.name}
-                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                            fill
+                                            sizes="(max-width: 768px) 100vw, 33vw"
+                                            className="object-cover group-hover:scale-110 transition-transform duration-500"
                                         />
                                         <div className="absolute inset-0 bg-linear-to-t from-black/20 to-transparent"></div>
                                         <div className="absolute top-4 right-4">

@@ -124,7 +124,7 @@ export default function ProductsPage() {
                                             </div>
 
                                             {/* Quick View Overlay */}
-                                            <div className="absolute inset-0 bg-base-100/90 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center">
+                                            {/* <div className="absolute inset-0 bg-base-100/90 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center">
                                                 <div className="text-center space-y-2 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
                                                     <div className="text-primary font-bold">Quick View</div>
                                                     <svg className="w-8 h-8 mx-auto text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -132,7 +132,7 @@ export default function ProductsPage() {
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                                     </svg>
                                                 </div>
-                                            </div>
+                                            </div> */}
                                         </div>
 
                                         {/* Product Info */}

@@ -37,7 +37,7 @@ export default function HomePage() {
                             </div>
                         </motion.div>
 
-                        <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-6 text-primary-content leading-tight">
+                        <h1 className="text-5xl md:text-6xl lg:text-8xl font-bold mb-6 text-primary-content leading-tight">
                             Discover Amazing
                             <span className="block bg-linear-to-r from-white to-primary-content bg-clip-text text-transparent">
                                 Products
@@ -54,7 +54,7 @@ export default function HomePage() {
                                 Browse Products
                                 <span className="absolute inset-0 rounded-xl bg-linear-to-r from-primary/20 to-secondary/20 opacity-0 group-hover:opacity-100 transition-opacity"></span>
                             </Link>
-                            <a href="/login" className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-sm border-2 border-white/30 text-primary-content px-8 py-4 rounded-xl font-semibold hover:bg-white/20 transition-all duration-300">
+                            <a href="/login" className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-sm border-2 border-white/30 text-primary-content px-8 py-3.5 rounded-xl font-semibold hover:bg-white/20 transition-all duration-300">
                                 Get Started
                                 <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />

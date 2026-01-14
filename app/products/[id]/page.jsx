@@ -102,7 +102,7 @@ export default function ProductDetailPage() {
                         <span>/</span>
                         <Link href="/products" className="hover:text-primary transition-colors">Products</Link>
                         <span>/</span>
-                        <span className="text-base-content truncate max-w-[200px]">{product.name}</span>
+                        <span className="text-base-content truncate max-w-50">{product.name}</span>
                     </motion.nav>
 
                     <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
@@ -200,11 +200,11 @@ export default function ProductDetailPage() {
                             </div>
 
                             {/* Price Card */}
-                            <div className="card bg-gradient-to-br from-primary/5 to-secondary/5 border-2 border-primary/20">
+                            <div className="card bg-linear-to-br from-primary/5 to-secondary/5 border-2 border-primary/20">
                                 <div className="flex items-center gap-4 flex-wrap">
                                     <div>
                                         <div className="text-base-content/60 text-sm mb-1">Price</div>
-                                        <div className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                                        <div className="text-4xl md:text-5xl font-bold bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent">
                                             ${product.price}
                                         </div>
                                     </div>
@@ -265,7 +265,7 @@ export default function ProductDetailPage() {
                                 <button
                                     onClick={handleAddToCart}
                                     disabled={product.stock === 0}
-                                    className="w-full bg-gradient-to-r from-primary to-secondary text-primary-content px-6 py-4 rounded-lg font-semibold hover:opacity-90 transition-all duration-300 transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-3 text-lg"
+                                    className="w-full bg-linear-to-r from-primary to-secondary text-primary-content px-6 py-4 rounded-lg font-semibold hover:opacity-90 transition-all duration-300 transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-3 text-lg"
                                 >
                                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />

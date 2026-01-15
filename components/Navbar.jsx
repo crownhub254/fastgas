@@ -1,10 +1,14 @@
+// components/Navbar.jsx
 'use client'
 
 import { useState, useEffect } from 'react'
 import { ShoppingBag, Menu, X, Sun, Moon, User, LogOut, Settings, Heart, Package, ShoppingCart } from 'lucide-react'
 import Logo from './Logo'
 import { useCart } from '@/contexts/CartContext'
+import { onAuthChange, logout } from '@/lib/firebase/auth'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import toast from 'react-hot-toast'
 
 // Theme Hook
 function useTheme() {
@@ -29,22 +33,47 @@ function useTheme() {
 }
 
 export default function Navbar() {
+    const router = useRouter()
     const [isOpen, setIsOpen] = useState(false)
     const [isScrolled, setIsScrolled] = useState(false)
     const [isProfileOpen, setIsProfileOpen] = useState(false)
     const { theme, toggleTheme, mounted } = useTheme()
     const { cartItems } = useCart()
 
-    // Mock user data - replace with actual auth data
-    const isLoggedIn = true
-    const user = {
-        name: 'John Doe',
-        email: 'john.doe@example.com',
-        avatar: 'JD'
-    }
+    // Real Firebase Auth State
+    const [user, setUser] = useState(null)
+    const [userProfile, setUserProfile] = useState(null)
+    const [isLoading, setIsLoading] = useState(true)
 
     // Calculate total items in cart
     const cartItemsCount = cartItems.reduce((total, item) => total + item.quantity, 0)
+
+    // Listen to Firebase auth state changes
+    useEffect(() => {
+        const unsubscribe = onAuthChange(async (firebaseUser) => {
+            if (firebaseUser) {
+                setUser(firebaseUser)
+                // Fetch user profile from MongoDB
+                try {
+                    const response = await fetch(
+                        `${process.env.NEXT_PUBLIC_API_URL}/auth/user/${firebaseUser.uid}`
+                    )
+                    const data = await response.json()
+                    if (data.success) {
+                        setUserProfile(data.user)
+                    }
+                } catch (error) {
+                    console.error('Error fetching user profile:', error)
+                }
+            } else {
+                setUser(null)
+                setUserProfile(null)
+            }
+            setIsLoading(false)
+        })
+
+        return () => unsubscribe()
+    }, [])
 
     useEffect(() => {
         const handleScroll = () => {
@@ -72,10 +101,54 @@ export default function Navbar() {
         { href: '/contact', label: 'Contact' },
     ]
 
-    const handleLogout = () => {
-        // Add logout logic here
-        console.log('Logging out...')
-        setIsProfileOpen(false)
+    const handleLogout = async () => {
+        try {
+            const { error } = await logout()
+            if (error) {
+                toast.error('Failed to logout')
+            } else {
+                toast.success('Logged out successfully')
+                setIsProfileOpen(false)
+                router.push('/')
+            }
+        } catch (error) {
+            console.error('Logout error:', error)
+            toast.error('Failed to logout')
+        }
+    }
+
+    // Get user avatar (first letters of name or first letter of email)
+    const getUserAvatar = () => {
+        if (userProfile?.displayName) {
+            return userProfile.displayName
+                .split(' ')
+                .map(n => n[0])
+                .join('')
+                .toUpperCase()
+                .slice(0, 2)
+        }
+        if (user?.displayName) {
+            return user.displayName
+                .split(' ')
+                .map(n => n[0])
+                .join('')
+                .toUpperCase()
+                .slice(0, 2)
+        }
+        if (user?.email) {
+            return user.email[0].toUpperCase()
+        }
+        return 'U'
+    }
+
+    // Get display name
+    const getDisplayName = () => {
+        return userProfile?.displayName || user?.displayName || 'User'
+    }
+
+    // Get email
+    const getEmail = () => {
+        return user?.email || ''
     }
 
     return (
@@ -130,116 +203,145 @@ export default function Navbar() {
                         </button>
 
                         {/* User Profile / Login */}
-                        {isLoggedIn ? (
-                            <div className="relative profile-dropdown bg-base-300 rounded-xl">
-                                <button
-                                    onClick={() => setIsProfileOpen(!isProfileOpen)}
-                                    className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-base-200 transition-all duration-200 group cursor-pointer"
+                        {!isLoading && (
+                            user ? (
+                                <div className="relative profile-dropdown bg-base-300 rounded-xl">
+                                    <button
+                                        onClick={() => setIsProfileOpen(!isProfileOpen)}
+                                        className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-base-200 transition-all duration-200 group cursor-pointer"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="hidden md:block text-right">
+                                                <div className="text-sm font-semibold text-base-content group-hover:text-primary transition-colors">
+                                                    {getDisplayName()}
+                                                </div>
+                                                <div className="text-xs text-base-content/60">
+                                                    {getEmail()}
+                                                </div>
+                                            </div>
+                                            {userProfile?.photoURL || user?.photoURL ? (
+                                                <img
+                                                    src={userProfile?.photoURL || user?.photoURL}
+                                                    alt={getDisplayName()}
+                                                    className="w-10 h-10 rounded-full object-cover ring-2 ring-base-200 group-hover:ring-primary/30 transition-all"
+                                                />
+                                            ) : (
+                                                <div className="w-10 h-10 rounded-full bg-linear-to-br from-primary to-secondary flex items-center justify-center text-primary-content font-bold ring-2 ring-base-200 group-hover:ring-primary/30 transition-all">
+                                                    {getUserAvatar()}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </button>
+
+                                    {/* Dropdown Menu */}
+                                    {isProfileOpen && (
+                                        <div className="absolute right-0 mt-3 w-64 bg-base-100 rounded-xl shadow-2xl border border-base-300 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                                            {/* User Info */}
+                                            <div className="p-4 bg-linear-to-br from-primary/10 to-secondary/10 border-b border-base-300">
+                                                <div className="flex items-center gap-3">
+                                                    {userProfile?.photoURL || user?.photoURL ? (
+                                                        <img
+                                                            src={userProfile?.photoURL || user?.photoURL}
+                                                            alt={getDisplayName()}
+                                                            className="w-12 h-12 rounded-full object-cover"
+                                                        />
+                                                    ) : (
+                                                        <div className="w-12 h-12 rounded-full bg-linear-to-br from-primary to-secondary flex items-center justify-center text-primary-content font-bold text-lg">
+                                                            {getUserAvatar()}
+                                                        </div>
+                                                    )}
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="font-semibold text-base-content truncate">
+                                                            {getDisplayName()}
+                                                        </div>
+                                                        <div className="text-sm text-base-content/60 truncate">
+                                                            {getEmail()}
+                                                        </div>
+                                                        {userProfile?.role && (
+                                                            <div className="mt-1">
+                                                                <span className="text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary font-semibold capitalize">
+                                                                    {userProfile.role}
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Menu Items */}
+                                            <div className="p-2">
+                                                <Link
+                                                    href="/profile"
+                                                    className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-base-200 transition-all duration-200 group"
+                                                    onClick={() => setIsProfileOpen(false)}
+                                                >
+                                                    <User className="w-5 h-5 text-base-content/70 group-hover:text-primary transition-colors" />
+                                                    <span className="font-medium text-base-content group-hover:text-primary transition-colors">
+                                                        My Profile
+                                                    </span>
+                                                </Link>
+                                                <Link
+                                                    href="/orders"
+                                                    className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-base-200 transition-all duration-200 group"
+                                                    onClick={() => setIsProfileOpen(false)}
+                                                >
+                                                    <Package className="w-5 h-5 text-base-content/70 group-hover:text-primary transition-colors" />
+                                                    <span className="font-medium text-base-content group-hover:text-primary transition-colors">
+                                                        My Orders
+                                                    </span>
+                                                </Link>
+                                                <Link
+                                                    href="/wishlist"
+                                                    className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-base-200 transition-all duration-200 group"
+                                                    onClick={() => setIsProfileOpen(false)}
+                                                >
+                                                    <Heart className="w-5 h-5 text-base-content/70 group-hover:text-primary transition-colors" />
+                                                    <span className="font-medium text-base-content group-hover:text-primary transition-colors">
+                                                        Wishlist
+                                                    </span>
+                                                </Link>
+                                                <Link
+                                                    href="/settings"
+                                                    className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-base-200 transition-all duration-200 group"
+                                                    onClick={() => setIsProfileOpen(false)}
+                                                >
+                                                    <Settings className="w-5 h-5 text-base-content/70 group-hover:text-primary transition-colors" />
+                                                    <span className="font-medium text-base-content group-hover:text-primary transition-colors">
+                                                        Settings
+                                                    </span>
+                                                </Link>
+                                            </div>
+
+                                            {/* Logout */}
+                                            <div className="p-2 border-t border-base-300">
+                                                <button
+                                                    onClick={handleLogout}
+                                                    className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-error/10 transition-all duration-200 group"
+                                                >
+                                                    <LogOut className="w-5 h-5 text-error group-hover:translate-x-1 transition-transform" />
+                                                    <span className="font-medium text-error">
+                                                        Logout
+                                                    </span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <Link
+                                    href="/login"
+                                    className="btn-primary"
                                 >
-                                    <div className="flex items-center gap-3">
-                                        <div className="hidden md:block text-right">
-                                            <div className="text-sm font-semibold text-base-content group-hover:text-primary transition-colors">
-                                                {user.name}
-                                            </div>
-                                            <div className="text-xs text-base-content/60">
-                                                {user.email}
-                                            </div>
-                                        </div>
-                                        <div className="w-10 h-10 rounded-full bg-linear-to-br from-primary to-secondary flex items-center justify-center text-primary-content font-bold ring-2 ring-base-200 group-hover:ring-primary/30 transition-all">
-                                            {user.avatar}
-                                        </div>
-                                    </div>
-                                </button>
-
-                                {/* Dropdown Menu */}
-                                {isProfileOpen && (
-                                    <div className="absolute right-0 mt-3 w-64 bg-base-100 rounded-xl shadow-2xl border border-base-300 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                                        {/* User Info */}
-                                        <div className="p-4 bg-linear-to-br from-primary/10 to-secondary/10 border-b border-base-300">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-12 h-12 rounded-full bg-linear-to-br from-primary to-secondary flex items-center justify-center text-primary-content font-bold text-lg">
-                                                    {user.avatar}
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="font-semibold text-base-content truncate">
-                                                        {user.name}
-                                                    </div>
-                                                    <div className="text-sm text-base-content/60 truncate">
-                                                        {user.email}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Menu Items */}
-                                        <div className="p-2">
-                                            <Link
-                                                href="/profile"
-                                                className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-base-200 transition-all duration-200 group"
-                                            >
-                                                <User className="w-5 h-5 text-base-content/70 group-hover:text-primary transition-colors" />
-                                                <span className="font-medium text-base-content group-hover:text-primary transition-colors">
-                                                    My Profile
-                                                </span>
-                                            </Link>
-                                            <Link
-                                                href="/orders"
-                                                className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-base-200 transition-all duration-200 group"
-                                            >
-                                                <Package className="w-5 h-5 text-base-content/70 group-hover:text-primary transition-colors" />
-                                                <span className="font-medium text-base-content group-hover:text-primary transition-colors">
-                                                    My Orders
-                                                </span>
-                                            </Link>
-                                            <Link
-                                                href="/wishlist"
-                                                className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-base-200 transition-all duration-200 group"
-                                            >
-                                                <Heart className="w-5 h-5 text-base-content/70 group-hover:text-primary transition-colors" />
-                                                <span className="font-medium text-base-content group-hover:text-primary transition-colors">
-                                                    Wishlist
-                                                </span>
-                                            </Link>
-                                            <Link
-                                                href="/settings"
-                                                className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-base-200 transition-all duration-200 group"
-                                            >
-                                                <Settings className="w-5 h-5 text-base-content/70 group-hover:text-primary transition-colors" />
-                                                <span className="font-medium text-base-content group-hover:text-primary transition-colors">
-                                                    Settings
-                                                </span>
-                                            </Link>
-                                        </div>
-
-                                        {/* Logout */}
-                                        <div className="p-2 border-t border-base-300">
-                                            <button
-                                                onClick={handleLogout}
-                                                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-error/10 transition-all duration-200 group"
-                                            >
-                                                <LogOut className="w-5 h-5 text-error group-hover:translate-x-1 transition-transform" />
-                                                <span className="font-medium text-error">
-                                                    Logout
-                                                </span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        ) : (
-                            <a
-                                href="/login"
-                                className="btn-primary"
-                            >
-                                Sign In
-                            </a>
+                                    Sign In
+                                </Link>
+                            )
                         )}
                     </div>
 
                     {/* Mobile Menu Button */}
                     <div className="flex items-center gap-3 lg:hidden">
                         {/* Mobile Cart Button */}
-                        <a
+                        <Link
                             href="/cart"
                             className="relative p-2 rounded-lg bg-base-200 hover:bg-base-300 transition-all duration-200"
                             aria-label="Shopping cart"
@@ -250,7 +352,7 @@ export default function Navbar() {
                                     {cartItemsCount > 9 ? '9+' : cartItemsCount}
                                 </span>
                             )}
-                        </a>
+                        </Link>
 
                         {/* Mobile Theme Toggle */}
                         <button
@@ -287,19 +389,34 @@ export default function Navbar() {
                 <div className="lg:hidden border-t border-base-300 bg-base-100 rounded-xl mb-2">
                     <div className="container-custom p-4">
                         {/* User Info Mobile */}
-                        {isLoggedIn && (
+                        {!isLoading && user && (
                             <div className="mb-4 p-4 rounded-xl bg-linear-to-br from-primary/10 to-secondary/10">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 rounded-full bg-linear-to-br from-primary to-secondary flex items-center justify-center text-primary-content font-bold">
-                                        {user.avatar}
-                                    </div>
+                                    {userProfile?.photoURL || user?.photoURL ? (
+                                        <img
+                                            src={userProfile?.photoURL || user?.photoURL}
+                                            alt={getDisplayName()}
+                                            className="w-12 h-12 rounded-full object-cover"
+                                        />
+                                    ) : (
+                                        <div className="w-12 h-12 rounded-full bg-linear-to-br from-primary to-secondary flex items-center justify-center text-primary-content font-bold">
+                                            {getUserAvatar()}
+                                        </div>
+                                    )}
                                     <div className="flex-1 min-w-0">
                                         <div className="font-semibold text-base-content">
-                                            {user.name}
+                                            {getDisplayName()}
                                         </div>
                                         <div className="text-sm text-base-content/60 truncate">
-                                            {user.email}
+                                            {getEmail()}
                                         </div>
+                                        {userProfile?.role && (
+                                            <div className="mt-1">
+                                                <span className="text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary font-semibold capitalize">
+                                                    {userProfile.role}
+                                                </span>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -308,66 +425,72 @@ export default function Navbar() {
                         {/* Navigation Links */}
                         <div className="space-y-1">
                             {navLinks.map((link) => (
-                                <a
+                                <Link
                                     key={link.href}
                                     href={link.href}
                                     className="block px-4 py-3 rounded-lg text-base-content font-medium hover:bg-base-200 transition-all duration-200"
                                     onClick={() => setIsOpen(false)}
                                 >
                                     {link.label}
-                                </a>
+                                </Link>
                             ))}
                         </div>
 
                         {/* User Menu Mobile */}
-                        {isLoggedIn ? (
-                            <div className="mt-4 pt-4 border-t border-base-300 space-y-1">
-                                <a
-                                    href="/profile"
-                                    className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-base-200 transition-all duration-200"
-                                >
-                                    <User className="w-5 h-5 text-base-content/70" />
-                                    <span className="font-medium text-base-content">My Profile</span>
-                                </a>
-                                <a
-                                    href="/orders"
-                                    className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-base-200 transition-all duration-200"
-                                >
-                                    <Package className="w-5 h-5 text-base-content/70" />
-                                    <span className="font-medium text-base-content">My Orders</span>
-                                </a>
-                                <a
-                                    href="/wishlist"
-                                    className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-base-200 transition-all duration-200"
-                                >
-                                    <Heart className="w-5 h-5 text-base-content/70" />
-                                    <span className="font-medium text-base-content">Wishlist</span>
-                                </a>
-                                <a
-                                    href="/settings"
-                                    className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-base-200 transition-all duration-200"
-                                >
-                                    <Settings className="w-5 h-5 text-base-content/70" />
-                                    <span className="font-medium text-base-content">Settings</span>
-                                </a>
-                                <button
-                                    onClick={handleLogout}
-                                    className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-error/10 transition-all duration-200 text-error"
-                                >
-                                    <LogOut className="w-5 h-5" />
-                                    <span className="font-medium">Logout</span>
-                                </button>
-                            </div>
-                        ) : (
-                            <div className="mt-4 pt-4 border-t border-base-300">
-                                <a
-                                    href="/login"
-                                    className="btn-primary w-full text-center"
-                                    onClick={() => setIsOpen(false)}
-                                >
-                                    Sign In
-                                </a>
-                            </div>
+                        {!isLoading && (
+                            user ? (
+                                <div className="mt-4 pt-4 border-t border-base-300 space-y-1">
+                                    <Link
+                                        href="/profile"
+                                        className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-base-200 transition-all duration-200"
+                                        onClick={() => setIsOpen(false)}
+                                    >
+                                        <User className="w-5 h-5 text-base-content/70" />
+                                        <span className="font-medium text-base-content">My Profile</span>
+                                    </Link>
+                                    <Link
+                                        href="/orders"
+                                        className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-base-200 transition-all duration-200"
+                                        onClick={() => setIsOpen(false)}
+                                    >
+                                        <Package className="w-5 h-5 text-base-content/70" />
+                                        <span className="font-medium text-base-content">My Orders</span>
+                                    </Link>
+                                    <Link
+                                        href="/wishlist"
+                                        className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-base-200 transition-all duration-200"
+                                        onClick={() => setIsOpen(false)}
+                                    >
+                                        <Heart className="w-5 h-5 text-base-content/70" />
+                                        <span className="font-medium text-base-content">Wishlist</span>
+                                    </Link>
+                                    <Link
+                                        href="/settings"
+                                        className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-base-200 transition-all duration-200"
+                                        onClick={() => setIsOpen(false)}
+                                    >
+                                        <Settings className="w-5 h-5 text-base-content/70" />
+                                        <span className="font-medium text-base-content">Settings</span>
+                                    </Link>
+                                    <button
+                                        onClick={handleLogout}
+                                        className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-error/10 transition-all duration-200 text-error"
+                                    >
+                                        <LogOut className="w-5 h-5" />
+                                        <span className="font-medium">Logout</span>
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="mt-4 pt-4 border-t border-base-300">
+                                    <Link
+                                        href="/login"
+                                        className="btn-primary w-full text-center block"
+                                        onClick={() => setIsOpen(false)}
+                                    >
+                                        Sign In
+                                    </Link>
+                                </div>
+                            )
                         )}
                     </div>
                 </div>

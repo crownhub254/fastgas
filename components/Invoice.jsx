@@ -2,13 +2,37 @@
 
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas-pro'
-import { useRef, useState } from 'react'
-import { Download, Printer } from 'lucide-react'
+import { useRef, useState, useEffect } from 'react'
+import { Download, Printer, CheckCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function Invoice({ order }) {
     const invoiceRef = useRef(null)
     const [isGenerating, setIsGenerating] = useState(false)
+    const [transactionId, setTransactionId] = useState(null)
+
+    useEffect(() => {
+        // Fetch transaction ID if payment was made
+        if (order.transactionId) {
+            setTransactionId(order.transactionId)
+        } else if (order.orderId) {
+            fetchTransactionId()
+        }
+    }, [order])
+
+    const fetchTransactionId = async () => {
+        try {
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/payments/order/${order.orderId}`
+            )
+            const data = await response.json()
+            if (data.success && data.payment) {
+                setTransactionId(data.payment.transactionId)
+            }
+        } catch (error) {
+            console.error('Error fetching transaction ID:', error)
+        }
+    }
 
     const generatePDF = async () => {
         if (!invoiceRef.current) return
@@ -17,7 +41,6 @@ export default function Invoice({ order }) {
         try {
             const invoiceElement = invoiceRef.current
 
-            // Create canvas with html2canvas
             const canvas = await html2canvas(invoiceElement, {
                 scale: 2,
                 useCORS: true,
@@ -25,7 +48,6 @@ export default function Invoice({ order }) {
                 backgroundColor: '#ffffff',
                 allowTaint: true,
                 imageTimeout: 10000,
-                // Ignore elements with certain classes to avoid color parsing issues
                 ignoreElements: (element) => {
                     return element.classList?.contains('no-pdf')
                 }
@@ -54,7 +76,7 @@ export default function Invoice({ order }) {
                 heightLeft -= 297
             }
 
-            pdf.save(`Invoice-${order.id}.pdf`)
+            pdf.save(`ShopHub-Invoice-${order.orderId}.pdf`)
             toast.success('Invoice downloaded successfully!')
         } catch (error) {
             console.error('Error generating PDF:', error)
@@ -73,7 +95,7 @@ export default function Invoice({ order }) {
             <html>
             <head>
                 <meta charset="UTF-8">
-                <title>Invoice ${order.id}</title>
+                <title>ShopHub Invoice ${order.orderId}</title>
                 <style>
                     * { margin: 0; padding: 0; box-sizing: border-box; }
                     body { font-family: Arial, sans-serif; padding: 20px; }
@@ -93,9 +115,9 @@ export default function Invoice({ order }) {
 
     const calculateTotals = () => {
         const subtotal = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0)
-        const shipping = subtotal > 100 ? 0 : 10
-        const tax = subtotal * 0.1
-        const total = subtotal + shipping + tax
+        const shipping = order.shipping || (subtotal > 100 ? 0 : 10)
+        const tax = order.tax || (subtotal * 0.1)
+        const total = order.total || (subtotal + shipping + tax)
 
         return { subtotal, shipping, tax, total }
     }
@@ -123,7 +145,7 @@ export default function Invoice({ order }) {
                 </button>
             </div>
 
-            {/* Invoice Container - Using only standard colors */}
+            {/* Invoice Container */}
             <div
                 ref={invoiceRef}
                 style={{
@@ -132,211 +154,265 @@ export default function Invoice({ order }) {
                     backgroundColor: '#ffffff',
                     color: '#000000',
                     fontFamily: 'Arial, Helvetica, sans-serif',
-                    padding: '30px',
+                    padding: '40px',
                     borderRadius: '12px',
                     boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)'
                 }}
             >
-                {/* Header */}
+                {/* Header with Logo and Invoice Title */}
                 <div style={{
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'flex-start',
-                    marginBottom: '16px',
+                    marginBottom: '30px',
                     paddingBottom: '25px',
-                    borderBottom: '2px solid #d1d5db'
+                    borderBottom: '3px solid #7c3aed'
                 }}>
                     <div>
-                        <h1 style={{
-                            fontSize: '36px',
-                            fontWeight: '700',
-                            margin: '0 0 8px 0',
-                            color: '#111827'
-                        }}>INVOICE</h1>
-                        <p style={{
-                            color: '#666666',
-                            fontSize: '14px',
-                            margin: '0'
+                        <div style={{
+                            fontSize: '42px',
+                            fontWeight: '800',
+                            color: '#7c3aed',
+                            marginBottom: '8px',
+                            letterSpacing: '-1px'
+                        }}>ShopHub</div>
+                        <div style={{
+                            fontSize: '18px',
+                            fontWeight: '600',
+                            color: '#111827',
+                            marginBottom: '4px'
+                        }}>INVOICE</div>
+                        <div style={{
+                            fontSize: '12px',
+                            color: '#666666'
                         }}>
-                            Order ID: <span style={{
-                                fontWeight: '600',
-                                color: '#111827'
-                            }}>#{order.id}</span>
-                        </p>
+                            Order: <span style={{ fontWeight: '700', color: '#111827' }}>#{order.orderId}</span>
+                        </div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
                         <div style={{
-                            width: '64px',
-                            height: '64px',
-                            borderRadius: '8px',
-                            display: 'flex',
+                            display: 'inline-flex',
                             alignItems: 'center',
-                            justifyContent: 'center',
-                            marginBottom: '8px',
-                            background: '#7c3aed',
-                            color: 'white'
+                            gap: '8px',
+                            padding: '8px 16px',
+                            backgroundColor: '#dcfce7',
+                            borderRadius: '8px',
+                            marginBottom: '12px'
                         }}>
                             <span style={{
-                                fontWeight: '700',
-                                fontSize: '28px',
-                                margin: '0',
-                                lineHeight: '1'
-                            }}>📦</span>
-                        </div>
-                        <p style={{
-                            color: '#666666',
-                            fontSize: '12px',
-                            margin: '0'
-                        }}>
-                            Invoice Date: <span style={{
+                                width: '8px',
+                                height: '8px',
+                                backgroundColor: '#22c55e',
+                                borderRadius: '50%',
+                                display: 'inline-block'
+                            }}></span>
+                            <span style={{
+                                fontSize: '12px',
                                 fontWeight: '600',
-                                color: '#111827'
-                            }}>{new Date().toLocaleDateString()}</span>
-                        </p>
+                                color: '#166534',
+                                textTransform: 'uppercase'
+                            }}>{order.status}</span>
+                        </div>
+                        <div style={{
+                            fontSize: '11px',
+                            color: '#666666'
+                        }}>
+                            Invoice Date: <span style={{ fontWeight: '600', color: '#111827' }}>
+                                {new Date(order.createdAt || order.date).toLocaleDateString('en-US', {
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric'
+                                })}
+                            </span>
+                        </div>
                     </div>
                 </div>
+
+                {/* Transaction Badge (if available) */}
+                {transactionId && (
+                    <div style={{
+                        backgroundColor: '#eff6ff',
+                        border: '2px solid #3b82f6',
+                        borderRadius: '10px',
+                        padding: '16px',
+                        marginBottom: '24px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px'
+                    }}>
+                        <div style={{
+                            width: '40px',
+                            height: '40px',
+                            backgroundColor: '#3b82f6',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}>
+                            <span style={{
+                                fontSize: '20px',
+                                color: 'white'
+                            }}>✓</span>
+                        </div>
+                        <div>
+                            <div style={{
+                                fontSize: '12px',
+                                fontWeight: '600',
+                                color: '#1e3a8a',
+                                marginBottom: '2px'
+                            }}>Payment Verified</div>
+                            <div style={{
+                                fontSize: '11px',
+                                color: '#3b82f6'
+                            }}>
+                                Transaction ID: <span style={{ fontFamily: 'monospace', fontWeight: '600' }}>
+                                    {transactionId}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Company & Customer Info */}
                 <div style={{
                     display: 'grid',
                     gridTemplateColumns: '1fr 1fr',
-                    gap: '32px',
+                    gap: '40px',
                     marginBottom: '32px'
                 }}>
                     {/* Company Info */}
                     <div>
-                        <h3 style={{
-                            fontSize: '12px',
-                            fontWeight: '600',
-                            color: '#666666',
+                        <div style={{
+                            fontSize: '11px',
+                            fontWeight: '700',
+                            color: '#7c3aed',
                             textTransform: 'uppercase',
-                            margin: '0 0 12px 0'
-                        }}>From</h3>
-                        <div style={{ color: '#111827' }}>
-                            <p style={{
+                            marginBottom: '12px',
+                            letterSpacing: '1px'
+                        }}>From</div>
+                        <div style={{
+                            padding: '16px',
+                            backgroundColor: '#faf5ff',
+                            borderRadius: '8px',
+                            borderLeft: '4px solid #7c3aed'
+                        }}>
+                            <div style={{
                                 fontWeight: '700',
-                                fontSize: '16px',
-                                margin: '0'
-                            }}>ShopHub Store</p>
-                            <p style={{
-                                fontSize: '14px',
+                                fontSize: '18px',
+                                color: '#111827',
+                                marginBottom: '8px'
+                            }}>ShopHub</div>
+                            <div style={{
+                                fontSize: '13px',
                                 color: '#666666',
-                                margin: '4px 0'
-                            }}>123 E-Commerce Street</p>
-                            <p style={{
-                                fontSize: '14px',
-                                color: '#666666',
-                                margin: '0'
-                            }}>Digital City, DC 12345</p>
-                            <p style={{
-                                fontSize: '14px',
-                                color: '#666666',
-                                margin: '8px 0 0 0'
-                            }}>contact@shophub.com</p>
-                            <p style={{
-                                fontSize: '14px',
-                                color: '#666666',
-                                margin: '0'
-                            }}>+1 (555) 123-4567</p>
+                                lineHeight: '1.6'
+                            }}>
+                                123 E-Commerce Street<br />
+                                Digital City, DC 12345<br />
+                                Bangladesh<br />
+                                <br />
+                                <span style={{ fontWeight: '600' }}>Email:</span> support@shophub.com<br />
+                                <span style={{ fontWeight: '600' }}>Phone:</span> +880 1234-567890
+                            </div>
                         </div>
                     </div>
 
                     {/* Customer Info */}
                     <div>
-                        <h3 style={{
-                            fontSize: '12px',
-                            fontWeight: '600',
-                            color: '#666666',
+                        <div style={{
+                            fontSize: '11px',
+                            fontWeight: '700',
+                            color: '#7c3aed',
                             textTransform: 'uppercase',
-                            margin: '0 0 12px 0'
-                        }}>Bill To</h3>
-                        <div style={{ color: '#111827' }}>
-                            <p style={{
+                            marginBottom: '12px',
+                            letterSpacing: '1px'
+                        }}>Bill To</div>
+                        <div style={{
+                            padding: '16px',
+                            backgroundColor: '#f9fafb',
+                            borderRadius: '8px',
+                            borderLeft: '4px solid #6b7280'
+                        }}>
+                            <div style={{
                                 fontWeight: '700',
-                                fontSize: '16px',
-                                margin: '0'
-                            }}>{order.customerName || 'Valued Customer'}</p>
-                            <p style={{
-                                fontSize: '14px',
+                                fontSize: '18px',
+                                color: '#111827',
+                                marginBottom: '8px'
+                            }}>{order.customerName || 'Valued Customer'}</div>
+                            <div style={{
+                                fontSize: '13px',
                                 color: '#666666',
-                                margin: '4px 0'
-                            }}>{order.shippingAddress.street}</p>
-                            <p style={{
-                                fontSize: '14px',
-                                color: '#666666',
-                                margin: '0'
+                                lineHeight: '1.6'
                             }}>
-                                {order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.zipCode}
-                            </p>
-                            <p style={{
-                                fontSize: '14px',
-                                color: '#666666',
-                                margin: '0'
-                            }}>{order.shippingAddress.country}</p>
-                            <p style={{
-                                fontSize: '14px',
-                                color: '#666666',
-                                margin: '8px 0 0 0'
-                            }}>{order.customerEmail || 'customer@email.com'}</p>
+                                {order.shippingAddress.street}<br />
+                                {order.shippingAddress.city}, {order.shippingAddress.district}<br />
+                                {order.shippingAddress.division} {order.shippingAddress.zipCode}<br />
+                                {order.shippingAddress.country}
+                                {order.customerEmail && (
+                                    <>
+                                        <br /><br />
+                                        <span style={{ fontWeight: '600' }}>Email:</span> {order.customerEmail}
+                                    </>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Order Summary */}
+                {/* Order Details Summary */}
                 <div style={{
                     display: 'grid',
                     gridTemplateColumns: 'repeat(3, 1fr)',
                     gap: '16px',
-                    marginBottom: '20px',
-                    padding: '16px',
+                    marginBottom: '32px',
+                    padding: '20px',
                     backgroundColor: '#f3f4f6',
-                    borderRadius: '8px'
+                    borderRadius: '10px'
                 }}>
-                    <div>
-                        <p style={{
-                            fontSize: '12px',
+                    <div style={{ textAlign: 'center' }}>
+                        <div style={{
+                            fontSize: '11px',
                             fontWeight: '600',
-                            color: '#666666',
+                            color: '#6b7280',
                             textTransform: 'uppercase',
-                            margin: '0 0 4px 0'
-                        }}>Order Date</p>
-                        <p style={{
-                            fontSize: '14px',
+                            marginBottom: '6px'
+                        }}>Order Date</div>
+                        <div style={{
+                            fontSize: '15px',
                             fontWeight: '700',
-                            color: '#111827',
-                            margin: '0'
-                        }}>{order.date}</p>
+                            color: '#111827'
+                        }}>
+                            {new Date(order.createdAt || order.date).toLocaleDateString()}
+                        </div>
                     </div>
-                    <div>
-                        <p style={{
-                            fontSize: '12px',
+                    <div style={{ textAlign: 'center' }}>
+                        <div style={{
+                            fontSize: '11px',
                             fontWeight: '600',
-                            color: '#666666',
+                            color: '#6b7280',
                             textTransform: 'uppercase',
-                            margin: '0 0 4px 0'
-                        }}>Order Status</p>
-                        <p style={{
-                            fontSize: '14px',
+                            marginBottom: '6px'
+                        }}>Payment Method</div>
+                        <div style={{
+                            fontSize: '15px',
                             fontWeight: '700',
-                            color: '#111827',
-                            textTransform: 'capitalize',
-                            margin: '0'
-                        }}>{order.status}</p>
+                            color: '#111827'
+                        }}>{order.paymentMethod}</div>
                     </div>
-                    <div>
-                        <p style={{
-                            fontSize: '12px',
+                    <div style={{ textAlign: 'center' }}>
+                        <div style={{
+                            fontSize: '11px',
                             fontWeight: '600',
-                            color: '#666666',
+                            color: '#6b7280',
                             textTransform: 'uppercase',
-                            margin: '0 0 4px 0'
-                        }}>Payment Method</p>
-                        <p style={{
-                            fontSize: '14px',
+                            marginBottom: '6px'
+                        }}>Payment Status</div>
+                        <div style={{
+                            fontSize: '15px',
                             fontWeight: '700',
-                            color: '#111827',
-                            margin: '0'
-                        }}>{order.paymentMethod}</p>
+                            color: order.paymentStatus === 'completed' ? '#22c55e' : '#f59e0b',
+                            textTransform: 'capitalize'
+                        }}>{order.paymentStatus || 'Pending'}</div>
                     </div>
                 </div>
 
@@ -344,7 +420,10 @@ export default function Invoice({ order }) {
                 <div style={{ marginBottom: '32px' }}>
                     <table style={{
                         width: '100%',
-                        borderCollapse: 'collapse'
+                        borderCollapse: 'collapse',
+                        border: '2px solid #e5e7eb',
+                        borderRadius: '8px',
+                        overflow: 'hidden'
                     }}>
                         <thead>
                             <tr style={{
@@ -352,28 +431,33 @@ export default function Invoice({ order }) {
                                 color: 'white'
                             }}>
                                 <th style={{
-                                    padding: '12px 16px',
+                                    padding: '14px 16px',
                                     textAlign: 'left',
-                                    fontSize: '14px',
-                                    fontWeight: '600'
-                                }}>Description</th>
+                                    fontSize: '13px',
+                                    fontWeight: '700',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.5px'
+                                }}>Item Description</th>
                                 <th style={{
-                                    padding: '12px 16px',
+                                    padding: '14px 16px',
                                     textAlign: 'center',
-                                    fontSize: '14px',
-                                    fontWeight: '600'
+                                    fontSize: '13px',
+                                    fontWeight: '700',
+                                    textTransform: 'uppercase'
                                 }}>Qty</th>
                                 <th style={{
-                                    padding: '12px 16px',
+                                    padding: '14px 16px',
                                     textAlign: 'right',
-                                    fontSize: '14px',
-                                    fontWeight: '600'
+                                    fontSize: '13px',
+                                    fontWeight: '700',
+                                    textTransform: 'uppercase'
                                 }}>Unit Price</th>
                                 <th style={{
-                                    padding: '12px 16px',
+                                    padding: '14px 16px',
                                     textAlign: 'right',
-                                    fontSize: '14px',
-                                    fontWeight: '600'
+                                    fontSize: '13px',
+                                    fontWeight: '700',
+                                    textTransform: 'uppercase'
                                 }}>Amount</th>
                             </tr>
                         </thead>
@@ -383,45 +467,47 @@ export default function Invoice({ order }) {
                                     key={item.id}
                                     style={{
                                         borderBottom: '1px solid #e5e7eb',
-                                        backgroundColor: index % 2 === 0 ? '#f9fafb' : '#ffffff'
+                                        backgroundColor: index % 2 === 0 ? '#ffffff' : '#f9fafb'
                                     }}
                                 >
                                     <td style={{
                                         padding: '16px',
                                         color: '#111827'
                                     }}>
-                                        <p style={{
+                                        <div style={{
                                             fontWeight: '600',
-                                            color: '#111827',
-                                            margin: '0'
-                                        }}>{item.name}</p>
-                                        <p style={{
-                                            fontSize: '12px',
-                                            color: '#666666',
-                                            margin: '4px 0 0 0'
-                                        }}>Item ID: {item.id}</p>
+                                            fontSize: '14px',
+                                            marginBottom: '4px'
+                                        }}>{item.name}</div>
+                                        <div style={{
+                                            fontSize: '11px',
+                                            color: '#6b7280'
+                                        }}>SKU: {item.id}</div>
                                     </td>
                                     <td style={{
                                         padding: '16px',
                                         textAlign: 'center',
-                                        color: '#111827',
-                                        fontWeight: '600'
+                                        fontSize: '14px',
+                                        fontWeight: '600',
+                                        color: '#111827'
                                     }}>
                                         {item.quantity}
                                     </td>
                                     <td style={{
                                         padding: '16px',
                                         textAlign: 'right',
-                                        color: '#111827',
-                                        fontWeight: '600'
+                                        fontSize: '14px',
+                                        fontWeight: '600',
+                                        color: '#111827'
                                     }}>
                                         ${item.price.toFixed(2)}
                                     </td>
                                     <td style={{
                                         padding: '16px',
                                         textAlign: 'right',
-                                        color: '#111827',
-                                        fontWeight: '700'
+                                        fontSize: '15px',
+                                        fontWeight: '700',
+                                        color: '#111827'
                                     }}>
                                         ${(item.price * item.quantity).toFixed(2)}
                                     </td>
@@ -442,21 +528,23 @@ export default function Invoice({ order }) {
                         maxWidth: '400px'
                     }}>
                         <div style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '12px'
+                            backgroundColor: '#f9fafb',
+                            padding: '20px',
+                            borderRadius: '10px',
+                            border: '2px solid #e5e7eb'
                         }}>
                             <div style={{
                                 display: 'flex',
                                 justifyContent: 'space-between',
-                                paddingBottom: '8px',
-                                borderBottom: '1px solid #e5e7eb'
+                                marginBottom: '12px'
                             }}>
                                 <span style={{
-                                    color: '#666666',
+                                    fontSize: '14px',
+                                    color: '#6b7280',
                                     fontWeight: '500'
                                 }}>Subtotal</span>
                                 <span style={{
+                                    fontSize: '14px',
                                     color: '#111827',
                                     fontWeight: '600'
                                 }}>${subtotal.toFixed(2)}</span>
@@ -464,31 +552,35 @@ export default function Invoice({ order }) {
                             <div style={{
                                 display: 'flex',
                                 justifyContent: 'space-between',
-                                paddingBottom: '8px',
-                                borderBottom: '1px solid #e5e7eb'
+                                marginBottom: '12px'
                             }}>
                                 <span style={{
-                                    color: '#666666',
+                                    fontSize: '14px',
+                                    color: '#6b7280',
                                     fontWeight: '500'
                                 }}>Shipping</span>
                                 <span style={{
-                                    color: '#111827',
-                                    fontWeight: '600'
+                                    fontSize: '14px',
+                                    fontWeight: '600',
+                                    color: shipping === 0 ? '#22c55e' : '#111827'
                                 }}>
-                                    {shipping === 0 ? <span style={{ color: '#22c55e' }}>FREE</span> : `$${shipping.toFixed(2)}`}
+                                    {shipping === 0 ? 'FREE' : `$${shipping.toFixed(2)}`}
                                 </span>
                             </div>
                             <div style={{
                                 display: 'flex',
                                 justifyContent: 'space-between',
-                                paddingBottom: '8px',
-                                borderBottom: '1px solid #e5e7eb'
+                                paddingBottom: '16px',
+                                marginBottom: '16px',
+                                borderBottom: '2px solid #e5e7eb'
                             }}>
                                 <span style={{
-                                    color: '#666666',
+                                    fontSize: '14px',
+                                    color: '#6b7280',
                                     fontWeight: '500'
                                 }}>Tax (10%)</span>
                                 <span style={{
+                                    fontSize: '14px',
                                     color: '#111827',
                                     fontWeight: '600'
                                 }}>${tax.toFixed(2)}</span>
@@ -496,112 +588,71 @@ export default function Invoice({ order }) {
                             <div style={{
                                 display: 'flex',
                                 justifyContent: 'space-between',
-                                padding: '12px 16px',
-                                backgroundColor: '#111827',
-                                color: 'white',
-                                borderRadius: '8px',
-                                marginTop: '10px'
+                                alignItems: 'center',
+                                padding: '16px',
+                                backgroundColor: '#7c3aed',
+                                borderRadius: '8px'
                             }}>
-                                <span style={{ fontWeight: '700' }}>TOTAL</span>
                                 <span style={{
-                                    fontSize: '18px',
-                                    fontWeight: '700'
+                                    fontSize: '16px',
+                                    fontWeight: '700',
+                                    color: 'white',
+                                    textTransform: 'uppercase'
+                                }}>Total Amount</span>
+                                <span style={{
+                                    fontSize: '24px',
+                                    fontWeight: '800',
+                                    color: 'white'
                                 }}>${total.toFixed(2)}</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Footer Notes */}
+                {/* Footer */}
                 <div style={{
-                    borderTop: '2px solid #d1d5db',
+                    borderTop: '2px solid #e5e7eb',
                     paddingTop: '24px'
                 }}>
                     <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: '1fr 1fr',
-                        gap: '20px',
-                        marginBottom: '15px'
-                    }}>
-                        <div>
-                            <h4 style={{
-                                fontSize: '12px',
-                                fontWeight: '600',
-                                color: '#666666',
-                                textTransform: 'uppercase',
-                                margin: '0 0 8px 0'
-                            }}>Shipping Address</h4>
-                            <p style={{
-                                fontSize: '12px',
-                                color: '#666666',
-                                lineHeight: '1.6',
-                                margin: '0'
-                            }}>
-                                {order.shippingAddress.street}<br />
-                                {order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.zipCode}<br />
-                                {order.shippingAddress.country}
-                            </p>
-                        </div>
-                        <div>
-                            <h4 style={{
-                                fontSize: '12px',
-                                fontWeight: '600',
-                                color: '#666666',
-                                textTransform: 'uppercase',
-                                margin: '0 0 8px 0'
-                            }}>Payment Details</h4>
-                            <p style={{
-                                fontSize: '12px',
-                                color: '#666666',
-                                lineHeight: '1.6',
-                                margin: '0'
-                            }}>
-                                Method: {order.paymentMethod}<br />
-                                Status: <span style={{
-                                    fontWeight: '600',
-                                    textTransform: 'capitalize'
-                                }}>{order.status}</span>
-                            </p>
-                        </div>
-                    </div>
-
-                    <div style={{
-                        backgroundColor: '#eff6ff',
-                        border: '1px solid #3b82f6',
+                        backgroundColor: '#dcfce7',
+                        border: '2px solid #22c55e',
                         borderRadius: '8px',
                         padding: '16px',
-                        marginBottom: '10px'
+                        marginBottom: '16px'
                     }}>
-                        <p style={{
-                            fontSize: '12px',
-                            color: '#1e3a8a',
-                            lineHeight: '1.5',
-                            margin: '0'
+                        <div style={{
+                            fontSize: '13px',
+                            color: '#166534',
+                            lineHeight: '1.6'
                         }}>
-                            <span style={{ fontWeight: '600' }}>Thank you for your purchase!</span> Your order will be processed within 24 hours.
-                            For any inquiries, please contact our support team at support@shophub.com or call +1 (555) 123-4567.
-                        </p>
+                            <span style={{ fontWeight: '700', fontSize: '14px' }}>Thank you for shopping with ShopHub!</span>
+                            <br />
+                            Your order will be processed within 24-48 hours. For any inquiries, please contact our support team at{' '}
+                            <span style={{ fontWeight: '600' }}>support@shophub.com</span> or call{' '}
+                            <span style={{ fontWeight: '600' }}>+880 1234-567890</span>.
+                        </div>
                     </div>
 
                     <div style={{
                         textAlign: 'center',
-                        paddingTop: '10px',
+                        paddingTop: '16px',
                         borderTop: '1px solid #e5e7eb'
                     }}>
-                        <p style={{
-                            fontSize: '12px',
-                            color: '#666666',
-                            margin: '0'
+                        <div style={{
+                            fontSize: '11px',
+                            color: '#9ca3af',
+                            marginBottom: '4px'
                         }}>
-                            This is a computer-generated invoice. No signature is required.
-                        </p>
-                        <p style={{
-                            fontSize: '12px',
-                            color: '#666666',
-                            margin: '8px 0 0 0'
+                            This is a computer-generated invoice and requires no physical signature.
+                        </div>
+                        <div style={{
+                            fontSize: '11px',
+                            color: '#9ca3af',
+                            fontWeight: '600'
                         }}>
-                            © 2026 ShopHub. All rights reserved.
-                        </p>
+                            © 2026 ShopHub. All rights reserved. | Powered by innovative e-commerce solutions
+                        </div>
                     </div>
                 </div>
             </div>

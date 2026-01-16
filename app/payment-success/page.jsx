@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { CheckCircle, Package, ArrowRight, Loader } from 'lucide-react'
+import { CheckCircle, Package, ArrowRight, Loader, Mail } from 'lucide-react'
 import Link from 'next/link'
 import { useCart } from '@/contexts/CartContext'
 import toast from 'react-hot-toast'
@@ -15,16 +15,17 @@ export default function PaymentSuccessPage() {
 
     const [isVerifying, setIsVerifying] = useState(true)
     const [paymentDetails, setPaymentDetails] = useState(null)
-    const hasVerifiedRef = useRef(false)
+    const hasVerifiedRef = useRef(false) // Prevent double verification
 
     const sessionId = searchParams.get('session_id')
     const orderId = searchParams.get('order_id')
 
     useEffect(() => {
-
-        if (hasVerifiedRef.current) return
-        hasVerifiedRef.current = true
-
+        // CRITICAL: Prevent infinite loops and double verification
+        if (hasVerifiedRef.current) {
+            console.log('⚠️ Verification already attempted, skipping');
+            return;
+        }
 
         const verifyPayment = async () => {
             if (!sessionId || !orderId) {
@@ -34,6 +35,8 @@ export default function PaymentSuccessPage() {
             }
 
             try {
+                console.log('🔍 Verifying payment...', { sessionId, orderId });
+
                 const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/verify-session`, {
                     method: 'POST',
                     headers: {
@@ -46,13 +49,22 @@ export default function PaymentSuccessPage() {
 
                 if (result.success) {
                     setPaymentDetails(result)
-                    clearCart() // Clear cart after successful payment
-                    toast.success('Payment successful!')
+
+                    // Only clear cart and show toast if NOT already processed
+                    if (!result.alreadyProcessed) {
+                        clearCart()
+                        toast.success('Payment successful! 🎉')
+                        console.log('✅ Payment verified and cart cleared');
+                    } else {
+                        console.log('ℹ️ Payment was already processed');
+                        // Optionally clear cart anyway
+                        clearCart()
+                    }
                 } else {
-                    throw new Error('Payment verification failed')
+                    throw new Error(result.error || 'Payment verification failed')
                 }
             } catch (error) {
-                console.error('Payment verification error:', error)
+                console.error('❌ Payment verification error:', error)
                 toast.error('Failed to verify payment')
                 router.push(`/payment-error?order_id=${orderId}`)
             } finally {
@@ -60,12 +72,15 @@ export default function PaymentSuccessPage() {
             }
         }
 
+        // Mark as verified BEFORE the API call to prevent race conditions
+        hasVerifiedRef.current = true
         verifyPayment()
+
     }, [sessionId, orderId, router, clearCart])
 
     if (isVerifying) {
         return (
-            <div className="min-h-screen pt-32 flex items-center justify-center">
+            <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
                     <Loader className="w-16 h-16 text-primary animate-spin mx-auto mb-4" />
                     <h2 className="text-2xl font-bold text-base-content mb-2">Verifying Payment</h2>
@@ -76,7 +91,7 @@ export default function PaymentSuccessPage() {
     }
 
     return (
-        <div className="min-h-screen pt-32">
+        <div className="min-h-screen">
             <div className="section-padding">
                 <div className="container-custom max-w-2xl mx-auto">
                     <motion.div
@@ -126,7 +141,7 @@ export default function PaymentSuccessPage() {
                                         <div className="flex justify-between items-center">
                                             <span className="text-base-content/70">Transaction ID</span>
                                             <span className="font-mono text-sm text-base-content">
-                                                {paymentDetails.payment.transactionId}
+                                                {paymentDetails.payment.transactionId.slice(0, 20)}...
                                             </span>
                                         </div>
                                         <div className="flex justify-between items-center">
@@ -144,15 +159,19 @@ export default function PaymentSuccessPage() {
                             </div>
                         </motion.div>
 
-                        {/* Info Box */}
+                        {/* Email Confirmation Notice */}
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.5 }}
                             className="bg-info/10 border border-info/20 rounded-lg p-4 mb-8"
                         >
+                            <div className="flex items-center justify-center gap-2 mb-2">
+                                <Mail className="w-5 h-5 text-info" />
+                                <span className="font-semibold text-base-content">Confirmation Email Sent</span>
+                            </div>
                             <p className="text-sm text-base-content/70">
-                                📧 A confirmation email has been sent to your registered email address with order details.
+                                A confirmation email with your invoice has been sent to your registered email address.
                             </p>
                         </motion.div>
 

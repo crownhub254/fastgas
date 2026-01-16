@@ -1,7 +1,8 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
-require('dotenv').config();
+const { verifyEmailConfig } = require('./utils/email');
 
 const app = express();
 
@@ -22,6 +23,14 @@ mongoose.connect(process.env.MONGODB_URI, {
         console.log('📦 Database:', mongoose.connection.db.databaseName);
     })
     .catch((err) => console.error('❌ MongoDB Connection Error:', err));
+
+
+verifyEmailConfig().then(isValid => {
+    if (!isValid) {
+        console.warn('⚠️ Email configuration invalid - emails will not be sent');
+    }
+});
+
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));

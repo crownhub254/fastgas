@@ -3,6 +3,9 @@ const router = express.Router();
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const Payment = require('../models/Payment');
 const Order = require('../models/Order');
+const { generateInvoice } = require('../utils/invoice');
+const { sendOrderConfirmationEmail } = require('../utils/email');
+const User = require('../models/User');
 
 // Create Stripe Checkout Session
 router.post('/create-checkout-session', async (req, res) => {
@@ -117,15 +120,15 @@ router.post('/verify-session', async (req, res) => {
             });
         }
 
-        console.log('Verifying payment for session:', sessionId, 'order:', orderId);
+        console.log('🔍 Verifying payment for session:', sessionId, 'order:', orderId);
 
-        // Retrieve Stripe session
+        // --- STEP 1: Retrieve Stripe session ---
         let session;
         try {
             session = await stripe.checkout.sessions.retrieve(sessionId);
-            console.log('Stripe session retrieved:', session.id, 'Payment status:', session.payment_status);
+            console.log('✅ Stripe session retrieved:', session.id, 'Payment status:', session.payment_status);
         } catch (err) {
-            console.error('Stripe session retrieve error:', err);
+            console.error('❌ Stripe session retrieve error:', err);
             return res.status(400).json({
                 success: false,
                 error: 'Invalid Stripe session ID'
@@ -140,7 +143,7 @@ router.post('/verify-session', async (req, res) => {
             });
         }
 
-        // Find the order
+        // --- STEP 2: Find the order ---
         const order = await Order.findOne({ orderId });
         if (!order) {
             return res.status(404).json({
@@ -149,12 +152,11 @@ router.post('/verify-session', async (req, res) => {
             });
         }
 
-        // Check if payment already exists (prevent duplicates)
+        // --- STEP 3: Check if payment already exists (IDEMPOTENCY) ---
         let payment = await Payment.findOne({ orderId });
 
         if (payment) {
-            // Payment already exists, just return the existing data
-            console.log('Payment already exists for order:', orderId);
+            console.log('⚠️ Payment already processed for order:', orderId);
 
             // Update order if needed
             if (order.paymentStatus !== 'completed') {
@@ -167,11 +169,12 @@ router.post('/verify-session', async (req, res) => {
                 success: true,
                 payment,
                 order,
+                alreadyProcessed: true, // Frontend can use this flag
                 message: 'Payment already verified'
             });
         }
 
-        // Create new payment record
+        // --- STEP 4: Create new payment record ---
         payment = new Payment({
             orderId,
             transactionId: session.payment_intent,
@@ -182,20 +185,61 @@ router.post('/verify-session', async (req, res) => {
         });
         await payment.save();
 
-        // Update order status
+        // --- STEP 5: Update order status ---
         order.paymentStatus = 'completed';
         order.status = 'confirmed';
         await order.save();
 
-        console.log('Payment verified successfully for order:', orderId);
+        console.log('✅ Payment verified successfully for order:', orderId);
 
+        // --- STEP 6: Generate Invoice ---
+        let invoicePDF;
+        try {
+            invoicePDF = await generateInvoice({ order, payment });
+            console.log('✅ Invoice generated successfully');
+        } catch (error) {
+            console.error('❌ Invoice generation failed:', error);
+            // Continue even if invoice fails - don't block the response
+        }
+
+        let userEmail;
+        try {
+            const user = await User.findOne({ uid: order.userId });
+            if (user && user.email) {
+                userEmail = user.email;
+            } else {
+                console.warn(`⚠️ User not found or no email for uid: ${order.userId}`);
+            }
+        } catch (err) {
+            console.error('❌ Error fetching user for email:', err);
+        }
+
+        // --- STEP 7: Send Email (async, don't block response) ---
+        // We'll send email asynchronously and not wait for it
+        if (invoicePDF && userEmail) {
+            sendOrderConfirmationEmail({
+                customerEmail: userEmail,
+                order,
+                payment,
+                invoicePDF
+            }).then(() => {
+                console.log('✅ Email sent successfully to:', userEmail);
+            }).catch(error => {
+                console.error('❌ Email sending failed:', error);
+            });
+        }
+
+        // --- STEP 8: Return success response ---
         res.status(200).json({
             success: true,
             payment,
-            order
+            order,
+            alreadyProcessed: false,
+            message: 'Payment verified and processed successfully'
         });
+
     } catch (error) {
-        console.error('Payment Verification Error:', error);
+        console.error('❌ Payment Verification Error:', error);
         res.status(500).json({
             success: false,
             error: error.message || 'Failed to verify payment'

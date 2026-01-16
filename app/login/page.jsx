@@ -1,5 +1,4 @@
 'use client'
-
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
@@ -79,8 +78,8 @@ export default function LoginPage() {
                         </div>
                         <h1 className="text-5xl font-bold text-base-content leading-tight">
                             Welcome Back to
-                            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-primary via-secondary to-accent mt-2">
-                                ProductHub
+                            <span className="block text-transparent bg-clip-text bg-linear-to-r from-primary via-secondary to-accent mt-2">
+                                ShopHub
                             </span>
                         </h1>
                         <p className="text-base-content/70 text-xl leading-relaxed">
@@ -96,7 +95,7 @@ export default function LoginPage() {
                                     transition={{ delay: 0.2 + idx * 0.1 }}
                                     className="flex items-center gap-4"
                                 >
-                                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center text-2xl">
+                                    <div className="w-12 h-12 rounded-xl bg-linear-to-br from-primary/20 to-secondary/20 flex items-center justify-center text-2xl">
                                         {item.icon}
                                     </div>
                                     <span className="text-base-content/80 text-lg font-medium">{item.text}</span>
@@ -109,7 +108,7 @@ export default function LoginPage() {
                                 <div className="flex items-start gap-4">
                                     <div className="text-4xl">🎉</div>
                                     <div>
-                                        <h3 className="font-bold text-base-content mb-2">New to ProductHub?</h3>
+                                        <h3 className="font-bold text-base-content mb-2">New to ShopHub?</h3>
                                         <p className="text-base-content/60 text-sm mb-3">Create an account and unlock access to exclusive features and deals.</p>
                                         <Link href="/register" className="text-primary font-semibold hover:text-primary/80 transition-colors inline-flex items-center gap-2">
                                             Sign Up Now
@@ -131,7 +130,7 @@ export default function LoginPage() {
                 >
                     <div className="card bg-base-100 shadow-2xl">
                         <div className="text-center mb-8">
-                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary via-secondary to-accent flex items-center justify-center text-3xl mx-auto mb-4 shadow-lg">
+                            <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-primary via-secondary to-accent flex items-center justify-center text-3xl mx-auto mb-4 shadow-lg">
                                 🛍️
                             </div>
                             <h2 className="text-3xl font-bold text-base-content mb-2">

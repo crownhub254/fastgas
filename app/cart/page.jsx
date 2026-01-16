@@ -86,7 +86,7 @@ export default function CartPage() {
                                     transition={{ delay: index * 0.1 }}
                                     className="card bg-base-200"
                                 >
-                                    <div className="flex gap-4 md:gap-6">
+                                    <div className="flex gap-4 md:gap-6" key={index}>
                                         {/* Product Image */}
                                         <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-lg overflow-hidden bg-base-300 shrink-0">
                                             <Image

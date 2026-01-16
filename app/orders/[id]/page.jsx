@@ -1,3 +1,6 @@
+// ============================================
+// app/orders/[id]/page.jsx - Fixed Order Details from DB
+// ============================================
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -7,6 +10,8 @@ import { Package, Truck, CheckCircle, Clock, MapPin, CreditCard, ArrowLeft, Aler
 import Link from 'next/link'
 import Image from 'next/image'
 import Invoice from '@/components/Invoice'
+import { getCurrentUser } from '@/lib/firebase/auth'
+import toast from 'react-hot-toast'
 
 export default function OrderDetailsPage() {
     const params = useParams()
@@ -21,18 +26,48 @@ export default function OrderDetailsPage() {
     })
 
     useEffect(() => {
-        if (orderId) {
-            const orders = JSON.parse(localStorage.getItem('orders') || '[]')
-            const foundOrder = orders.find((o) => o.id === orderId)
+        const user = getCurrentUser()
+        if (!user) {
+            toast.error('Please login to view order details')
+            router.push('/login')
+            return
+        }
 
-            if (foundOrder) {
-                setOrder(foundOrder)
+        if (orderId) {
+            fetchOrder()
+        }
+    }, [orderId, router])
+
+    const fetchOrder = async () => {
+        try {
+            setIsLoading(true)
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders/${orderId}`)
+            const data = await response.json()
+
+            if (data.success && data.order) {
+                // Format order for display
+                const formattedOrder = {
+                    ...data.order,
+                    id: data.order.orderId,
+                    date: new Date(data.order.createdAt).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    })
+                }
+                setOrder(formattedOrder)
             } else {
+                toast.error('Order not found')
                 router.push('/orders')
             }
+        } catch (error) {
+            console.error('Error fetching order:', error)
+            toast.error('Failed to load order')
+            router.push('/orders')
+        } finally {
+            setIsLoading(false)
         }
-        setIsLoading(false)
-    }, [orderId, router])
+    }
 
     const toggleSection = (section) => {
         setExpandedSections((prev) => ({
@@ -43,9 +78,9 @@ export default function OrderDetailsPage() {
 
     const getStatusColor = (status) => {
         switch (status) {
-            case 'pending':
-                return 'bg-warning/10 text-warning border-warning/20'
             case 'processing':
+                return 'bg-warning/10 text-warning border-warning/20'
+            case 'confirmed':
                 return 'bg-info/10 text-info border-info/20'
             case 'shipped':
                 return 'bg-primary/10 text-primary border-primary/20'
@@ -60,10 +95,10 @@ export default function OrderDetailsPage() {
 
     const getStatusIcon = (status) => {
         switch (status) {
-            case 'pending':
-                return <Clock className="w-5 h-5" />
             case 'processing':
-                return <Package className="w-5 h-5" />
+                return <Clock className="w-5 h-5" />
+            case 'confirmed':
+                return <CheckCircle className="w-5 h-5" />
             case 'shipped':
                 return <Truck className="w-5 h-5" />
             case 'delivered':
@@ -80,12 +115,12 @@ export default function OrderDetailsPage() {
         let deliveryDate = new Date(today)
 
         switch (status) {
-            case 'pending':
-                deliveryDate.setDate(deliveryDate.getDate() + 5)
-                return { date: deliveryDate.toLocaleDateString(), message: 'Order being prepared' }
             case 'processing':
                 deliveryDate.setDate(deliveryDate.getDate() + 5)
                 return { date: deliveryDate.toLocaleDateString(), message: 'Order will ship soon' }
+            case 'confirmed':
+                deliveryDate.setDate(deliveryDate.getDate() + 4)
+                return { date: deliveryDate.toLocaleDateString(), message: 'Payment confirmed, preparing shipment' }
             case 'shipped':
                 deliveryDate.setDate(deliveryDate.getDate() + 3)
                 return { date: deliveryDate.toLocaleDateString(), message: 'In transit' }
@@ -116,30 +151,7 @@ export default function OrderDetailsPage() {
         )
     }
 
-    if (!order) {
-        return (
-            <div className="min-h-screen">
-                <div className="section-padding">
-                    <div className="container-custom">
-                        <motion.div {...fadeInUp} className="text-center">
-                            <AlertCircle className="w-16 h-16 text-error mx-auto mb-4" />
-                            <h1 className="text-3xl font-bold text-base-content mb-4">Order Not Found</h1>
-                            <p className="text-base-content/70 mb-6">
-                                The order you&apos;re looking for doesn&apos;t exist.
-                            </p>
-                            <Link
-                                href="/orders"
-                                className="inline-flex items-center gap-2 bg-linear-to-r from-primary to-secondary text-primary-content px-8 py-3 rounded-lg font-semibold hover:opacity-90"
-                            >
-                                <ArrowLeft className="w-4 h-4" />
-                                Back to Orders
-                            </Link>
-                        </motion.div>
-                    </div>
-                </div>
-            </div>
-        )
-    }
+    if (!order) return null
 
     const delivery = getDeliveryEstimate(order.status)
 
@@ -168,17 +180,22 @@ export default function OrderDetailsPage() {
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                             <div>
                                 <h1 className="text-3xl md:text-4xl font-bold text-base-content mb-2">
-                                    Order #{order.id}
+                                    Order #{order.orderId}
                                 </h1>
                                 <p className="text-base-content/70">
                                     Placed on {order.date}
                                 </p>
                             </div>
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-3 flex-wrap">
                                 <span className={`px-6 py-3 rounded-lg font-semibold border-2 flex items-center gap-2 ${getStatusColor(order.status)}`}>
                                     {getStatusIcon(order.status)}
                                     {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                                 </span>
+                                {order.paymentStatus === 'completed' && (
+                                    <span className="px-3 py-1 rounded-full text-xs font-semibold bg-success/10 text-success border border-success/20">
+                                        Paid
+                                    </span>
+                                )}
                             </div>
                         </div>
                     </motion.div>
@@ -197,12 +214,12 @@ export default function OrderDetailsPage() {
 
                                 <div className="space-y-4">
                                     {[
-                                        { status: 'pending', label: 'Order Confirmed', icon: Package },
-                                        { status: 'processing', label: 'Processing', icon: Clock },
+                                        { status: 'processing', label: 'Order Received', icon: Package },
+                                        { status: 'confirmed', label: 'Payment Confirmed', icon: CheckCircle },
                                         { status: 'shipped', label: 'Shipped', icon: Truck },
                                         { status: 'delivered', label: 'Delivered', icon: CheckCircle }
                                     ].map((step, index) => {
-                                        const statuses = ['pending', 'processing', 'shipped', 'delivered']
+                                        const statuses = ['processing', 'confirmed', 'shipped', 'delivered']
                                         const currentIndex = statuses.indexOf(order.status)
                                         const stepIndex = statuses.indexOf(step.status)
                                         const isCompleted = stepIndex <= currentIndex
@@ -275,9 +292,9 @@ export default function OrderDetailsPage() {
 
                                 {expandedSections.items && (
                                     <div className="space-y-4">
-                                        {order.items.map((item) => (
+                                        {order.items.map((item, idx) => (
                                             <div
-                                                key={item.id}
+                                                key={item._id || idx}
                                                 className="flex gap-4 p-4 bg-base-100 rounded-lg hover:shadow-lg transition-all duration-300"
                                             >
                                                 <div className="relative w-24 h-24 rounded-lg overflow-hidden bg-base-300 shrink-0">
@@ -293,7 +310,7 @@ export default function OrderDetailsPage() {
                                                         {item.name}
                                                     </h3>
                                                     <p className="text-sm text-base-content/60 mt-1">
-                                                        Item ID: {item.id}
+                                                        Item ID: {item.productId}
                                                     </p>
                                                     <div className="flex items-center justify-between mt-4 flex-wrap gap-2">
                                                         <div className="text-sm">
@@ -317,7 +334,7 @@ export default function OrderDetailsPage() {
                                 )}
                             </motion.div>
 
-                            {/* Shipping & Billing */}
+                            {/* Shipping & Payment */}
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -346,7 +363,8 @@ export default function OrderDetailsPage() {
                                             <p className="font-semibold text-base-content">
                                                 {order.shippingAddress.street}
                                             </p>
-                                            <p>{order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.zipCode}</p>
+                                            <p>{order.shippingAddress.city}, {order.shippingAddress.district}</p>
+                                            <p>{order.shippingAddress.division} {order.shippingAddress.zipCode}</p>
                                             <p>{order.shippingAddress.country}</p>
                                         </div>
                                     )}
@@ -356,17 +374,25 @@ export default function OrderDetailsPage() {
                                 <div className="card bg-base-200">
                                     <div className="flex items-center gap-3 mb-4">
                                         <CreditCard className="w-5 h-5 text-primary" />
-                                        <h3 className="text-xl font-bold text-base-content">Payment Method</h3>
+                                        <h3 className="text-xl font-bold text-base-content">Payment</h3>
                                     </div>
                                     <div className="space-y-2">
                                         <p className="text-base-content/70">
-                                            <span className="text-base-content/60">Card: </span>
+                                            <span className="text-base-content/60">Method: </span>
                                             <span className="font-semibold text-base-content">{order.paymentMethod}</span>
                                         </p>
                                         <p className="text-base-content/70">
                                             <span className="text-base-content/60">Status: </span>
-                                            <span className="font-semibold text-success">Paid</span>
+                                            <span className={`font-semibold ${order.paymentStatus === 'completed' ? 'text-success' : 'text-warning'}`}>
+                                                {order.paymentStatus === 'completed' ? 'Paid' : 'Pending'}
+                                            </span>
                                         </p>
+                                        {order.transactionId && (
+                                            <p className="text-base-content/70 text-xs mt-2">
+                                                <span className="text-base-content/60">Transaction: </span>
+                                                <span className="font-mono">{order.transactionId.slice(0, 20)}...</span>
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
                             </motion.div>
@@ -411,17 +437,19 @@ export default function OrderDetailsPage() {
                                         <div className="flex justify-between text-base-content/70">
                                             <span>Subtotal</span>
                                             <span className="font-semibold">
-                                                ${order.items.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2)}
+                                                ${order.subtotal.toFixed(2)}
                                             </span>
                                         </div>
                                         <div className="flex justify-between text-base-content/70">
                                             <span>Shipping</span>
-                                            <span className="font-semibold text-success">FREE</span>
+                                            <span className="font-semibold text-success">
+                                                {order.shipping === 0 ? 'FREE' : `$${order.shipping.toFixed(2)}`}
+                                            </span>
                                         </div>
                                         <div className="flex justify-between text-base-content/70">
                                             <span>Tax</span>
                                             <span className="font-semibold">
-                                                ${(order.items.reduce((sum, item) => sum + item.price * item.quantity, 0) * 0.1).toFixed(2)}
+                                                ${order.tax.toFixed(2)}
                                             </span>
                                         </div>
                                         <div className="border-t border-base-300 pt-3">

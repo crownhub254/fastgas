@@ -80,7 +80,7 @@ export default function CartPage() {
                         <div className="lg:col-span-2 space-y-4">
                             {cartItems.map((item, index) => (
                                 <motion.div
-                                    key={item.id}
+                                    key={item._id}
                                     initial={{ opacity: 0, x: -20 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{ delay: index * 0.1 }}
@@ -220,7 +220,7 @@ export default function CartPage() {
                                 </div>
 
                                 {/* Checkout Button */}
-                                <Link href='/checkout' className="w-full bg-linear-to-r from-primary to-secondary text-primary-content px-6 py-4 rounded-lg font-semibold hover:opacity-90 transition-all duration-300 transform hover:scale-105 shadow-lg mb-3">
+                                <Link href='/checkout' className="text-center w-full bg-linear-to-r from-primary to-secondary text-primary-content px-6 py-4 rounded-lg font-semibold hover:opacity-90 transition-all duration-300 transform hover:scale-105 shadow-lg mb-3">
                                     Proceed to Checkout
                                 </Link>
 

@@ -178,7 +178,7 @@ export default function CheckoutPage() {
 
     if (cartItems.length === 0) {
         return (
-            <div className="min-h-screen pt-32">
+            <div className="min-h-screen">
                 <div className="section-padding">
                     <div className="container-custom max-w-md mx-auto text-center">
                         <Package className="w-16 h-16 text-base-content/30 mx-auto mb-4" />
@@ -186,7 +186,7 @@ export default function CheckoutPage() {
                         <p className="text-base-content/70 mb-6">Add some products to checkout</p>
                         <Link
                             href="/products"
-                            className="inline-flex items-center gap-2 bg-gradient-to-r from-primary to-secondary text-primary-content px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity"
+                            className="inline-flex items-center gap-2 bg-linear-to-r from-primary to-secondary text-primary-content px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity"
                         >
                             Continue Shopping
                         </Link>
@@ -197,7 +197,7 @@ export default function CheckoutPage() {
     }
 
     return (
-        <div className="min-h-screen pt-32">
+        <div className="min-h-screen">
             <div className="section-padding">
                 <div className="container-custom max-w-6xl">
                     <Link
@@ -418,7 +418,7 @@ export default function CheckoutPage() {
                                     <div className="pt-3 border-t border-base-300">
                                         <div className="flex justify-between items-baseline">
                                             <span className="font-semibold text-base-content">Total</span>
-                                            <span className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                                            <span className="text-2xl font-bold bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent">
                                                 ${total.toFixed(2)}
                                             </span>
                                         </div>
@@ -428,7 +428,7 @@ export default function CheckoutPage() {
                                 <button
                                     onClick={handleSubmit}
                                     disabled={isProcessing}
-                                    className="w-full mt-6 bg-gradient-to-r from-primary to-secondary text-primary-content py-4 rounded-lg font-semibold hover:opacity-90 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                    className="w-full mt-6 bg-linear-to-r from-primary to-secondary text-primary-content py-4 rounded-lg font-semibold hover:opacity-90 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                 >
                                     {isProcessing ? (
                                         <>

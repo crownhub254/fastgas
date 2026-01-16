@@ -456,16 +456,30 @@ export default function ProductDetailPage() {
                                                     >
                                                         <div className="flex items-start justify-between mb-3 flex-wrap gap-2">
                                                             <div>
-                                                                <div className="flex items-center gap-2">
-                                                                    <span className="font-semibold text-base-content text-lg">
-                                                                        {review.name}
-                                                                    </span>
-                                                                    {review.verified && (
-                                                                        <span className="px-2 py-0.5 bg-success/10 text-success text-xs font-semibold rounded">
-                                                                            Verified Purchase
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="relative w-12 h-12 rounded-full overflow-hidden border border-base-300 bg-base-200">
+                                                                        <Image
+                                                                            src={review.image}
+                                                                            alt={review.name}
+                                                                            fill
+                                                                            sizes="48px"
+                                                                            className="object-cover"
+                                                                        />
+                                                                    </div>
+
+                                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                                        <span className="font-semibold text-base-content text-lg">
+                                                                            {review.name}
                                                                         </span>
-                                                                    )}
+
+                                                                        {review.verified && (
+                                                                            <span className="px-2 py-0.5 bg-success/10 text-success text-xs font-semibold rounded">
+                                                                                Verified Purchase
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
+
                                                                 <div className="text-sm text-base-content/60 mt-1">{review.date}</div>
                                                             </div>
                                                             <div className="flex text-warning">

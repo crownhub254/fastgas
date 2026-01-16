@@ -1,62 +1,196 @@
+// app/profile/page.jsx
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { User, Mail, Phone, MapPin, Camera, Save, Edit2 } from 'lucide-react'
+import { User, Mail, Shield, Calendar, Edit, Save, X, Upload, Package, Heart, ShoppingCart, CheckCircle, Clock } from 'lucide-react'
+import { getCurrentUser } from '@/lib/firebase/auth'
+import { uploadImageToImgBB, validateImage } from '@/utils/imageUpload'
+import toast from 'react-hot-toast'
+import Link from 'next/link'
+import Image from 'next/image'
 
 export default function ProfilePage() {
+    const router = useRouter()
+    const [user, setUser] = useState(null)
+    const [userProfile, setUserProfile] = useState(null)
+    const [isLoading, setIsLoading] = useState(true)
     const [isEditing, setIsEditing] = useState(false)
-    const [profileData, setProfileData] = useState({
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'john.doe@example.com', 
-        phone: '+1 (555) 123-4567',
-        address: '123 E-Commerce St',
-        city: 'Digital City',
-        state: 'DC',
-        zipCode: '12345',
-        country: 'United States',
-        bio: 'Tech enthusiast and avid online shopper. Love discovering new products and staying up-to-date with the latest trends.',
-        joinDate: 'January 2024'
+    const [isSaving, setIsSaving] = useState(false)
+    const [orderStats, setOrderStats] = useState({ total: 0, delivered: 0, processing: 0 })
+
+    const [editData, setEditData] = useState({
+        displayName: '',
+        photoURL: ''
     })
+    const [photoFile, setPhotoFile] = useState(null)
+    const [photoPreview, setPhotoPreview] = useState('')
 
-    const handleInputChange = (e) => {
-        setProfileData({
-            ...profileData,
-            [e.target.name]: e.target.value
+    useEffect(() => {
+        const currentUser = getCurrentUser()
+        if (!currentUser) {
+            toast.error('Please login to view profile')
+            router.push('/login')
+            return
+        }
+        setUser(currentUser)
+        fetchUserProfile(currentUser.uid)
+        fetchOrderStats(currentUser.uid)
+    }, [router])
+
+    const fetchUserProfile = async (uid) => {
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/user/${uid}`)
+            const data = await response.json()
+
+            if (data.success) {
+                setUserProfile(data.user)
+                setEditData({
+                    displayName: data.user.displayName,
+                    photoURL: data.user.photoURL
+                })
+            }
+        } catch (error) {
+            console.error('Error fetching profile:', error)
+            toast.error('Failed to load profile')
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    const fetchOrderStats = async (userId) => {
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders/user/${userId}`)
+            const data = await response.json()
+
+            if (data.success) {
+                const stats = {
+                    total: data.orders.length,
+                    delivered: data.orders.filter(o => o.status === 'delivered').length,
+                    processing: data.orders.filter(o => o.status === 'processing' || o.status === 'confirmed').length
+                }
+                setOrderStats(stats)
+            }
+        } catch (error) {
+            console.error('Error fetching order stats:', error)
+        }
+    }
+
+    const handlePhotoChange = (e) => {
+        const file = e.target.files?.[0]
+        if (file) {
+            const validation = validateImage(file)
+            if (!validation.valid) {
+                toast.error(validation.error)
+                return
+            }
+            setPhotoFile(file)
+            setPhotoPreview(URL.createObjectURL(file))
+        }
+    }
+
+    const handleSave = async () => {
+        if (!user) return
+
+        setIsSaving(true)
+
+        try {
+            let newPhotoURL = editData.photoURL
+
+            // Upload new photo if selected
+            if (photoFile) {
+                toast.loading('Uploading profile photo...')
+                const uploadResult = await uploadImageToImgBB(photoFile)
+                toast.dismiss()
+
+                if (uploadResult.success) {
+                    newPhotoURL = uploadResult.url
+                } else {
+                    toast.error('Failed to upload photo')
+                    setIsSaving(false)
+                    return
+                }
+            }
+
+            // Update user in MongoDB
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    uid: user.uid,
+                    email: user.email,
+                    displayName: editData.displayName,
+                    photoURL: newPhotoURL,
+                    role: userProfile.role,
+                    provider: userProfile.provider
+                })
+            })
+
+            const data = await response.json()
+
+            if (data.success) {
+                setUserProfile(data.user)
+                setEditData({
+                    displayName: data.user.displayName,
+                    photoURL: data.user.photoURL
+                })
+                setPhotoFile(null)
+                setPhotoPreview('')
+                setIsEditing(false)
+                toast.success('Profile updated successfully!')
+            } else {
+                toast.error('Failed to update profile')
+            }
+        } catch (error) {
+            console.error('Error updating profile:', error)
+            toast.error('Failed to update profile')
+        } finally {
+            setIsSaving(false)
+        }
+    }
+
+    const handleCancel = () => {
+        setEditData({
+            displayName: userProfile.displayName,
+            photoURL: userProfile.photoURL
         })
-    }
-
-    const handleSave = () => {
-        // Save logic here
+        setPhotoFile(null)
+        setPhotoPreview('')
         setIsEditing(false)
-        alert('Profile updated successfully!')
     }
 
-    const fadeInUp = {
-        initial: { opacity: 0, y: 20 },
-        animate: { opacity: 1, y: 0 },
-        transition: { duration: 0.5 }
+    if (isLoading) {
+        return (
+            <div className="min-h-screen pt-32 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-base-content/70 text-lg">Loading profile...</p>
+                </div>
+            </div>
+        )
     }
 
-    const stats = [
-        { label: 'Total Orders', value: '24', icon: '📦' },
-        { label: 'Wishlist Items', value: '12', icon: '❤️' },
-        { label: 'Reviews Written', value: '8', icon: '⭐' },
-        { label: 'Member Since', value: profileData.joinDate, icon: '🎉' }
-    ]
+    if (!userProfile) return null
+
+    const displayPhoto = photoPreview || editData.photoURL || userProfile.photoURL
 
     return (
-        <div className="min-h-screen pt-32">
+        <div className="min-h-screen">
             <div className="section-padding">
                 <div className="container-custom max-w-6xl">
-                    {/* Header */}
-                    <motion.div {...fadeInUp} className="mb-8">
+                    <motion.div
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mb-8"
+                    >
                         <h1 className="text-4xl md:text-5xl font-bold text-base-content mb-2">
                             My Profile
                         </h1>
                         <p className="text-base-content/70">
-                            Manage your account information and preferences
+                            Manage your account settings and preferences
                         </p>
                     </motion.div>
 
@@ -69,164 +203,235 @@ export default function ProfilePage() {
                             className="lg:col-span-1"
                         >
                             <div className="card bg-base-200 text-center sticky top-24">
-                                {/* Avatar */}
-                                <div className="relative w-32 h-32 mx-auto mb-4">
-                                    <div className="w-full h-full rounded-full bg-linear-to-br from-primary to-secondary flex items-center justify-center text-primary-content text-4xl font-bold">
-                                        {profileData.firstName[0]}{profileData.lastName[0]}
+                                {/* Profile Photo */}
+                                <div className="relative mx-auto mb-6">
+                                    <div className="w-32 h-32 rounded-full overflow-hidden bg-base-300 mx-auto relative">
+                                        {displayPhoto ? (
+                                            <Image
+                                                src={displayPhoto}
+                                                alt={userProfile.displayName}
+                                                fill
+                                                className="object-cover"
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-primary to-secondary text-primary-content text-4xl font-bold">
+                                                {userProfile.displayName?.charAt(0).toUpperCase()}
+                                            </div>
+                                        )}
                                     </div>
-                                    <button className="absolute bottom-0 right-0 p-2 bg-primary text-primary-content rounded-full hover:opacity-90 transition-opacity shadow-lg">
-                                        <Camera className="w-4 h-4" />
-                                    </button>
+                                    {isEditing && (
+                                        <label
+                                            htmlFor="photo-upload"
+                                            className="absolute bottom-0 right-1/2 translate-x-18 bg-primary text-primary-content p-2 rounded-full cursor-pointer hover:opacity-90 transition-opacity shadow-lg"
+                                        >
+                                            <Upload className="w-4 h-4" />
+                                            <input
+                                                id="photo-upload"
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={handlePhotoChange}
+                                                className="hidden"
+                                            />
+                                        </label>
+                                    )}
                                 </div>
 
-                                <h2 className="text-2xl font-bold text-base-content mb-1">
-                                    {profileData.firstName} {profileData.lastName}
-                                </h2>
-                                <p className="text-base-content/60 mb-6">{profileData.email}</p>
-
-                                <div className="grid grid-cols-2 gap-3 mb-6">
-                                    {stats.map((stat, idx) => (
-                                        <div key={idx} className="bg-base-100 rounded-lg p-3">
-                                            <div className="text-2xl mb-1">{stat.icon}</div>
-                                            <div className="text-lg font-bold text-base-content">{stat.value}</div>
-                                            <div className="text-xs text-base-content/60">{stat.label}</div>
-                                        </div>
-                                    ))}
+                                {/* User Info */}
+                                <div className="space-y-2 mb-6">
+                                    {isEditing ? (
+                                        <input
+                                            type="text"
+                                            value={editData.displayName}
+                                            onChange={(e) => setEditData({ ...editData, displayName: e.target.value })}
+                                            className="w-full px-4 py-2 bg-base-100 border-2 border-base-300 rounded-lg text-center text-xl font-bold focus:outline-none focus:border-primary"
+                                        />
+                                    ) : (
+                                        <h2 className="text-2xl font-bold text-base-content">
+                                            {userProfile.displayName}
+                                        </h2>
+                                    )}
+                                    <p className="text-base-content/60 flex items-center justify-center gap-2">
+                                        <Mail className="w-4 h-4" />
+                                        {userProfile.email}
+                                    </p>
+                                    <div className="flex items-center justify-center gap-2">
+                                        <Shield className="w-4 h-4 text-primary" />
+                                        <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-semibold capitalize">
+                                            {userProfile.role}
+                                        </span>
+                                    </div>
                                 </div>
 
-                                {!isEditing && (
+                                {/* Action Buttons */}
+                                {!isEditing ? (
                                     <button
                                         onClick={() => setIsEditing(true)}
-                                        className="w-full bg-linear-to-r from-primary to-secondary text-primary-content px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition-all duration-300 flex items-center justify-center gap-2"
+                                        className="w-full flex items-center justify-center gap-2 bg-primary text-primary-content px-4 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity"
                                     >
-                                        <Edit2 className="w-4 h-4" />
+                                        <Edit className="w-4 h-4" />
                                         Edit Profile
                                     </button>
+                                ) : (
+                                    <div className="flex gap-3">
+                                        <button
+                                            onClick={handleSave}
+                                            disabled={isSaving}
+                                            className="flex-1 flex items-center justify-center gap-2 bg-success text-success-content px-4 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+                                        >
+                                            <Save className="w-4 h-4" />
+                                            {isSaving ? 'Saving...' : 'Save'}
+                                        </button>
+                                        <button
+                                            onClick={handleCancel}
+                                            disabled={isSaving}
+                                            className="flex-1 flex items-center justify-center gap-2 bg-error text-error-content px-4 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+                                        >
+                                            <X className="w-4 h-4" />
+                                            Cancel
+                                        </button>
+                                    </div>
                                 )}
+
+                                {/* Account Info */}
+                                <div className="mt-6 pt-6 border-t border-base-300 space-y-3 text-left">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-sm text-base-content/60">Provider</span>
+                                        <span className="text-sm font-semibold text-base-content capitalize">
+                                            {userProfile.provider}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-sm text-base-content/60">Member Since</span>
+                                        <span className="text-sm font-semibold text-base-content">
+                                            {new Date(userProfile.createdAt).toLocaleDateString('en-US', {
+                                                month: 'short',
+                                                year: 'numeric'
+                                            })}
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
                         </motion.div>
 
-                        {/* Profile Information */}
-                        <motion.div
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: 0.2 }}
-                            className="lg:col-span-2 space-y-6"
-                        >
-                            {/* Personal Information */}
-                            <div className="card bg-base-200">
-                                <h3 className="text-2xl font-bold text-base-content mb-6">
-                                    Personal Information
-                                </h3>
+                        {/* Stats & Activity */}
+                        <div className="lg:col-span-2 space-y-6">
+                            {/* Stats Cards */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.2 }}
+                                className="grid md:grid-cols-3 gap-6"
+                            >
+                                {[
+                                    { icon: Package, label: 'Total Orders', value: orderStats.total, color: 'primary' },
+                                    { icon: CheckCircle, label: 'Delivered', value: orderStats.delivered, color: 'success' },
+                                    { icon: Clock, label: 'Processing', value: orderStats.processing, color: 'warning' },
+                                ].map((stat, idx) => (
+                                    <div key={idx} className={`card bg-${stat.color}/10 border-2 border-${stat.color}/20`}>
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <div className="text-base-content/60 text-sm mb-1">{stat.label}</div>
+                                                <div className={`text-3xl font-bold text-${stat.color}`}>{stat.value}</div>
+                                            </div>
+                                            <stat.icon className={`w-12 h-12 text-${stat.color}/30`} />
+                                        </div>
+                                    </div>
+                                ))}
+                            </motion.div>
 
-                                <div className="grid md:grid-cols-2 gap-4">
-                                    {[
-                                        ['firstName', 'First Name', User],
-                                        ['lastName', 'Last Name', User],
-                                        ['email', 'Email Address', Mail],
-                                        ['phone', 'Phone Number', Phone]
-                                    ].map(([name, label, Icon]) => (
-                                        <div key={name}>
-                                            <label className="block text-sm font-semibold text-base-content mb-2">
-                                                {label}
-                                            </label>
-                                            <div className="relative">
-                                                <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-base-content/40" />
-                                                <input
-                                                    type="text"
-                                                    name={name}
-                                                    value={profileData[name]}
-                                                    onChange={handleInputChange}
-                                                    disabled={!isEditing}
-                                                    className="w-full pl-10 pr-4 py-3 rounded-lg bg-base-100 border border-base-300 text-base-content focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
-                                                />
+                            {/* Quick Actions */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.3 }}
+                                className="card bg-base-200"
+                            >
+                                <h3 className="text-2xl font-bold text-base-content mb-6">Quick Actions</h3>
+                                <div className="grid md:grid-cols-3 gap-4">
+                                    <Link
+                                        href="/orders"
+                                        className="flex flex-col items-center gap-3 p-6 bg-base-100 rounded-lg hover:shadow-lg transition-all duration-300 group"
+                                    >
+                                        <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary group-hover:text-primary-content transition-colors">
+                                            <Package className="w-8 h-8" />
+                                        </div>
+                                        <span className="font-semibold text-base-content">My Orders</span>
+                                    </Link>
+                                    <Link
+                                        href="/wishlist"
+                                        className="flex flex-col items-center gap-3 p-6 bg-base-100 rounded-lg hover:shadow-lg transition-all duration-300 group"
+                                    >
+                                        <div className="w-16 h-16 rounded-full bg-error/10 flex items-center justify-center group-hover:bg-error group-hover:text-error-content transition-colors">
+                                            <Heart className="w-8 h-8" />
+                                        </div>
+                                        <span className="font-semibold text-base-content">Wishlist</span>
+                                    </Link>
+                                    <Link
+                                        href="/products"
+                                        className="flex flex-col items-center gap-3 p-6 bg-base-100 rounded-lg hover:shadow-lg transition-all duration-300 group"
+                                    >
+                                        <div className="w-16 h-16 rounded-full bg-secondary/10 flex items-center justify-center group-hover:bg-secondary group-hover:text-secondary-content transition-colors">
+                                            <ShoppingCart className="w-8 h-8" />
+                                        </div>
+                                        <span className="font-semibold text-base-content">Shop Now</span>
+                                    </Link>
+                                </div>
+                            </motion.div>
+
+                            {/* Account Details */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.4 }}
+                                className="card bg-base-200"
+                            >
+                                <h3 className="text-2xl font-bold text-base-content mb-6">Account Details</h3>
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between p-4 bg-base-100 rounded-lg">
+                                        <div className="flex items-center gap-3">
+                                            <User className="w-5 h-5 text-primary" />
+                                            <div>
+                                                <div className="text-sm text-base-content/60">Full Name</div>
+                                                <div className="font-semibold text-base-content">{userProfile.displayName}</div>
                                             </div>
                                         </div>
-                                    ))}
-                                </div>
-
-                                <div className="mt-4">
-                                    <label className="block text-sm font-semibold text-base-content mb-2">
-                                        Bio
-                                    </label>
-                                    <textarea
-                                        name="bio"
-                                        value={profileData.bio}
-                                        onChange={handleInputChange}
-                                        disabled={!isEditing}
-                                        rows={3}
-                                        className="w-full px-4 py-3 rounded-lg bg-base-100 border border-base-300 text-base-content focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 resize-none"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Address Information */}
-                            <div className="card bg-base-200">
-                                <h3 className="text-2xl font-bold text-base-content mb-6">
-                                    Address Information
-                                </h3>
-
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-semibold text-base-content mb-2">
-                                            Street Address
-                                        </label>
-                                        <div className="relative">
-                                            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-base-content/40" />
-                                            <input
-                                                type="text"
-                                                name="address"
-                                                value={profileData.address}
-                                                onChange={handleInputChange}
-                                                disabled={!isEditing}
-                                                className="w-full pl-10 pr-4 py-3 rounded-lg bg-base-100 border border-base-300 text-base-content focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
-                                            />
+                                    </div>
+                                    <div className="flex items-center justify-between p-4 bg-base-100 rounded-lg">
+                                        <div className="flex items-center gap-3">
+                                            <Mail className="w-5 h-5 text-primary" />
+                                            <div>
+                                                <div className="text-sm text-base-content/60">Email Address</div>
+                                                <div className="font-semibold text-base-content">{userProfile.email}</div>
+                                            </div>
                                         </div>
                                     </div>
-
-                                    <div className="grid md:grid-cols-3 gap-4">
-                                        {['city', 'state', 'zipCode'].map((field) => (
-                                            <input
-                                                key={field}
-                                                type="text"
-                                                name={field}
-                                                value={profileData[field]}
-                                                onChange={handleInputChange}
-                                                disabled={!isEditing}
-                                                className="w-full px-4 py-3 rounded-lg bg-base-100 border border-base-300 text-base-content focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
-                                            />
-                                        ))}
+                                    <div className="flex items-center justify-between p-4 bg-base-100 rounded-lg">
+                                        <div className="flex items-center gap-3">
+                                            <Shield className="w-5 h-5 text-primary" />
+                                            <div>
+                                                <div className="text-sm text-base-content/60">Account Type</div>
+                                                <div className="font-semibold text-base-content capitalize">{userProfile.role}</div>
+                                            </div>
+                                        </div>
                                     </div>
-
-                                    <input
-                                        type="text"
-                                        name="country"
-                                        value={profileData.country}
-                                        onChange={handleInputChange}
-                                        disabled={!isEditing}
-                                        className="w-full px-4 py-3 rounded-lg bg-base-100 border border-base-300 text-base-content focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
-                                    />
+                                    <div className="flex items-center justify-between p-4 bg-base-100 rounded-lg">
+                                        <div className="flex items-center gap-3">
+                                            <Calendar className="w-5 h-5 text-primary" />
+                                            <div>
+                                                <div className="text-sm text-base-content/60">Member Since</div>
+                                                <div className="font-semibold text-base-content">
+                                                    {new Date(userProfile.createdAt).toLocaleDateString('en-US', {
+                                                        year: 'numeric',
+                                                        month: 'long',
+                                                        day: 'numeric'
+                                                    })}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-
-                            {isEditing && (
-                                <div className="flex gap-4">
-                                    <button
-                                        onClick={handleSave}
-                                        className="flex-1 bg-linear-to-r from-primary to-secondary text-primary-content px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2"
-                                    >
-                                        <Save className="w-5 h-5" />
-                                        Save Changes
-                                    </button>
-                                    <button
-                                        onClick={() => setIsEditing(false)}
-                                        className="flex-1 bg-base-100 text-base-content px-6 py-3 rounded-lg font-semibold border-2 border-base-300"
-                                    >
-                                        Cancel
-                                    </button>
-                                </div>
-                            )}
-                        </motion.div>
+                            </motion.div>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -12,13 +12,20 @@ export default function PaymentSuccessPage() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const { clearCart } = useCart()
+
     const [isVerifying, setIsVerifying] = useState(true)
     const [paymentDetails, setPaymentDetails] = useState(null)
+    const hasVerifiedRef = useRef(false)
 
     const sessionId = searchParams.get('session_id')
     const orderId = searchParams.get('order_id')
 
     useEffect(() => {
+
+        if (hasVerifiedRef.current) return
+        hasVerifiedRef.current = true
+
+
         const verifyPayment = async () => {
             if (!sessionId || !orderId) {
                 toast.error('Invalid payment session')

@@ -119,7 +119,7 @@ export default function OrdersPage() {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen pt-32 flex items-center justify-center">
+            <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
                     <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                     <p className="text-base-content/70 text-lg">Loading your orders...</p>
@@ -130,7 +130,7 @@ export default function OrdersPage() {
 
     if (orders.length === 0) {
         return (
-            <div className="min-h-screen pt-32">
+            <div className="min-h-screen">
                 <div className="section-padding">
                     <div className="container-custom">
                         <motion.div {...fadeInUp} className="text-center max-w-md mx-auto">
@@ -155,7 +155,7 @@ export default function OrdersPage() {
     }
 
     return (
-        <div className="min-h-screen pt-32">
+        <div className="min-h-screen">
             <div className="section-padding">
                 <div className="container-custom">
                     {/* Header */}

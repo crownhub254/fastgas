@@ -52,11 +52,21 @@ router.get('/', async (req, res) => {
     }
 });
 
-// Get single product by ID
+// Get single product by ID (supports both custom 'id' and MongoDB '_id')
 router.get('/:id', async (req, res) => {
     try {
-        const product = await Product.findOne({ id: req.params.id })
+        const productId = req.params.id;
+        let product;
+
+        // Try to find by custom 'id' field first
+        product = await Product.findOne({ id: productId })
             .populate('reviews.userId', 'displayName photoURL');
+
+        // If not found, try MongoDB _id (for ObjectId format)
+        if (!product && productId.match(/^[0-9a-fA-F]{24}$/)) {
+            product = await Product.findById(productId)
+                .populate('reviews.userId', 'displayName photoURL');
+        }
 
         if (!product) {
             return res.status(404).json({
@@ -107,8 +117,8 @@ router.post('/', async (req, res) => {
         const product = new Product({
             ...req.body,
             id: productId,
-            rating: 0,
-            reviews: []
+            rating: req.body.rating || 0,
+            reviews: req.body.reviews || []
         });
 
         await product.save();
@@ -135,7 +145,16 @@ router.post('/', async (req, res) => {
 // Update product
 router.patch('/:id', async (req, res) => {
     try {
-        const product = await Product.findOne({ id: req.params.id });
+        const productId = req.params.id;
+        let product;
+
+        // Try custom id first
+        product = await Product.findOne({ id: productId });
+
+        // If not found, try MongoDB _id
+        if (!product && productId.match(/^[0-9a-fA-F]{24}$/)) {
+            product = await Product.findById(productId);
+        }
 
         if (!product) {
             return res.status(404).json({
@@ -154,7 +173,7 @@ router.patch('/:id', async (req, res) => {
 
         await product.save();
 
-        console.log('Product updated:', product.id);
+        console.log('Product updated:', product.id || product._id);
         res.status(200).json({ success: true, product });
     } catch (error) {
         console.error('Update product error:', error);
@@ -185,7 +204,16 @@ router.post('/:id/reviews', async (req, res) => {
             });
         }
 
-        const product = await Product.findOne({ id: req.params.id });
+        const productId = req.params.id;
+        let product;
+
+        // Try custom id first
+        product = await Product.findOne({ id: productId });
+
+        // If not found, try MongoDB _id
+        if (!product && productId.match(/^[0-9a-fA-F]{24}$/)) {
+            product = await Product.findById(productId);
+        }
 
         if (!product) {
             return res.status(404).json({
@@ -225,7 +253,7 @@ router.post('/:id/reviews', async (req, res) => {
 
         await product.save();
 
-        console.log('Review added to product:', product.id, 'by user:', userId);
+        console.log('Review added to product:', product.id || product._id);
         res.status(200).json({ success: true, product });
     } catch (error) {
         console.error('Add review error:', error);
@@ -239,7 +267,16 @@ router.post('/:id/reviews', async (req, res) => {
 // Delete product (admin only)
 router.delete('/:id', async (req, res) => {
     try {
-        const product = await Product.findOneAndDelete({ id: req.params.id });
+        const productId = req.params.id;
+        let product;
+
+        // Try custom id first
+        product = await Product.findOneAndDelete({ id: productId });
+
+        // If not found, try MongoDB _id
+        if (!product && productId.match(/^[0-9a-fA-F]{24}$/)) {
+            product = await Product.findByIdAndDelete(productId);
+        }
 
         if (!product) {
             return res.status(404).json({
@@ -248,7 +285,7 @@ router.delete('/:id', async (req, res) => {
             });
         }
 
-        console.log('Product deleted:', req.params.id);
+        console.log('Product deleted:', productId);
         res.status(200).json({
             success: true,
             message: 'Product deleted successfully'

@@ -370,6 +370,201 @@ export default function HomePage() {
                     </motion.div>
                 </div>
             </section>
+            {/* Section 7: Product Categories */}
+            <section className="section-padding bg-base-100">
+                <div className="container-custom">
+                    <motion.div {...fadeInUp} className="text-center mb-16">
+                        <h2 className="text-4xl md:text-5xl font-bold mb-4 text-base-content">Shop by Category</h2>
+                        <p className="text-base-content/70 text-lg max-w-2xl mx-auto">
+                            Explore our diverse range of premium products across multiple categories
+                        </p>
+                    </motion.div>
+
+                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {[
+                            { name: 'Electronics', icon: '💻', count: '150+ Items', color: 'from-blue-500 to-cyan-500' },
+                            { name: 'Audio', icon: '🎧', count: '80+ Items', color: 'from-purple-500 to-pink-500' },
+                            { name: 'Photography', icon: '📷', count: '60+ Items', color: 'from-orange-500 to-red-500' },
+                            { name: 'Computers', icon: '🖥️', count: '120+ Items', color: 'from-green-500 to-teal-500' },
+                            { name: 'Smart Home', icon: '🏠', count: '90+ Items', color: 'from-indigo-500 to-purple-500' },
+                            { name: 'Fitness', icon: '⌚', count: '70+ Items', color: 'from-pink-500 to-rose-500' },
+                            { name: 'Gaming', icon: '🎮', count: '100+ Items', color: 'from-yellow-500 to-orange-500' },
+                            { name: 'Accessories', icon: '🎒', count: '200+ Items', color: 'from-cyan-500 to-blue-500' },
+                        ].map((category, idx) => (
+                            <motion.div
+                                key={idx}
+                                initial={{ opacity: 0, y: 30 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: idx * 0.08, duration: 0.5 }}
+                            >
+                                <Link href={`/products?category=${category.name}`} className="group block">
+                                    <div className="card h-full hover:scale-105 transition-all duration-300 hover:shadow-xl text-center">
+                                        <div className={`w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br ${category.color} flex items-center justify-center text-4xl group-hover:scale-110 transition-transform duration-300`}>
+                                            {category.icon}
+                                        </div>
+                                        <h3 className="text-xl font-bold mb-2 text-base-content group-hover:text-primary transition-colors">
+                                            {category.name}
+                                        </h3>
+                                        <p className="text-base-content/60">{category.count}</p>
+                                    </div>
+                                </Link>
+                            </motion.div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* Section 8: Trust Badges */}
+            <section className="section-padding bg-base-200">
+                <div className="container-custom">
+                    <motion.div {...fadeInUp} className="text-center mb-16">
+                        <h2 className="text-4xl md:text-5xl font-bold mb-4 text-base-content">Trusted Worldwide</h2>
+                        <p className="text-base-content/70 text-lg max-w-2xl mx-auto">
+                            Your satisfaction and security are our top priorities
+                        </p>
+                    </motion.div>
+
+                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                        {[
+                            {
+                                icon: <Shield className="w-10 h-10" />,
+                                title: '100% Secure',
+                                description: 'SSL encrypted checkout with PCI DSS compliance',
+                                color: 'from-green-500 to-emerald-500'
+                            },
+                            {
+                                icon: <CheckCircle className="w-10 h-10" />,
+                                title: 'Money Back Guarantee',
+                                description: '30-day return policy on all products',
+                                color: 'from-blue-500 to-cyan-500'
+                            },
+                            {
+                                icon: <Award className="w-10 h-10" />,
+                                title: 'Certified Products',
+                                description: 'All items verified for authenticity',
+                                color: 'from-purple-500 to-pink-500'
+                            },
+                            {
+                                icon: <Users className="w-10 h-10" />,
+                                title: 'Expert Support',
+                                description: 'Dedicated team available 24/7',
+                                color: 'from-orange-500 to-red-500'
+                            }
+                        ].map((badge, idx) => (
+                            <motion.div
+                                key={idx}
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                whileInView={{ opacity: 1, scale: 1 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: idx * 0.1, duration: 0.5 }}
+                                className="text-center"
+                            >
+                                <div className={`inline-flex p-5 rounded-2xl bg-gradient-to-br ${badge.color} text-white mb-4 shadow-lg`}>
+                                    {badge.icon}
+                                </div>
+                                <h3 className="text-xl font-bold mb-2 text-base-content">{badge.title}</h3>
+                                <p className="text-base-content/70">{badge.description}</p>
+                            </motion.div>
+                        ))}
+                    </div>
+
+                    <motion.div
+                        {...fadeInUp}
+                        className="mt-16 bg-gradient-to-br from-primary/10 to-secondary/10 rounded-2xl p-8 border-2 border-primary/20"
+                    >
+                        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                            <div className="text-center md:text-left">
+                                <h3 className="text-2xl font-bold text-base-content mb-2">
+                                    Still Have Questions?
+                                </h3>
+                                <p className="text-base-content/70">
+                                    Our customer support team is here to help you
+                                </p>
+                            </div>
+                            <Link
+                                href="/contact"
+                                className="btn-primary whitespace-nowrap px-8"
+                            >
+                                Contact Support
+                            </Link>
+                        </div>
+                    </motion.div>
+                </div>
+            </section>
+
+            {/* Section 9: Brand Partners / Social Proof */}
+            <section className="section-padding bg-base-100">
+                <div className="container-custom">
+                    <motion.div {...fadeInUp} className="text-center mb-16">
+                        <h2 className="text-4xl md:text-5xl font-bold mb-4 text-base-content">As Featured In</h2>
+                        <p className="text-base-content/70 text-lg max-w-2xl mx-auto">
+                            Recognized by leading publications and trusted by industry experts
+                        </p>
+                    </motion.div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16">
+                        {[
+                            { name: 'TechCrunch', rating: '4.9/5' },
+                            { name: 'Forbes', rating: 'Featured' },
+                            { name: 'Wired', rating: 'Top Pick' },
+                            { name: 'The Verge', rating: 'Editor\'s Choice' }
+                        ].map((brand, idx) => (
+                            <motion.div
+                                key={idx}
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: idx * 0.1, duration: 0.5 }}
+                                className="card bg-base-200 hover:bg-base-300 transition-colors text-center"
+                            >
+                                <div className="text-2xl font-bold text-base-content mb-2">{brand.name}</div>
+                                <div className="text-primary font-semibold">{brand.rating}</div>
+                            </motion.div>
+                        ))}
+                    </div>
+
+                    <motion.div
+                        {...fadeInUp}
+                        className="grid md:grid-cols-3 gap-6"
+                    >
+                        {[
+                            {
+                                stat: '98%',
+                                label: 'Customer Satisfaction',
+                                icon: <Star className="w-6 h-6" />
+                            },
+                            {
+                                stat: '50K+',
+                                label: 'Orders Delivered',
+                                icon: <ShoppingBag className="w-6 h-6" />
+                            },
+                            {
+                                stat: '4.8★',
+                                label: 'Average Rating',
+                                icon: <Award className="w-6 h-6" />
+                            }
+                        ].map((item, idx) => (
+                            <motion.div
+                                key={idx}
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                whileInView={{ opacity: 1, scale: 1 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: idx * 0.15, duration: 0.5 }}
+                                className="card bg-gradient-to-br from-primary/5 to-secondary/5 text-center"
+                            >
+                                <div className="inline-flex p-3 bg-gradient-to-br from-primary to-secondary rounded-xl text-primary-content mb-4 mx-auto">
+                                    {item.icon}
+                                </div>
+                                <div className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent mb-2">
+                                    {item.stat}
+                                </div>
+                                <div className="text-base-content/70 font-medium">{item.label}</div>
+                            </motion.div>
+                        ))}
+                    </motion.div>
+                </div>
+            </section>
         </div>
     )
 }

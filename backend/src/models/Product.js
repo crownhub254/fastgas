@@ -1,29 +1,5 @@
+// backend/src/models/Product.js
 const mongoose = require('mongoose');
-
-const reviewSchema = new mongoose.Schema({
-    userId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
-    },
-    userName: String,
-    userPhoto: String,
-    rating: {
-        type: Number,
-        min: 1,
-        max: 5,
-        required: true
-    },
-    comment: String,
-    verified: {
-        type: Boolean,
-        default: false
-    },
-    date: {
-        type: Date,
-        default: Date.now
-    }
-});
 
 const productSchema = new mongoose.Schema({
     id: {
@@ -47,6 +23,9 @@ const productSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    images: [{
+        type: String
+    }],
     category: {
         type: String,
         required: true
@@ -59,16 +38,63 @@ const productSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
-    features: [String],
+    features: [{
+        type: String
+    }],
     specifications: {
-        type: Map,
-        of: String
+        type: mongoose.Schema.Types.Mixed,
+        default: {}
     },
-    reviews: [reviewSchema],
-    sellerId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
+    reviews: [{
+        userId: {
+            type: String,
+            required: true
+        },
+        userName: String,
+        userPhoto: String,
+        rating: {
+            type: Number,
+            required: true,
+            min: 1,
+            max: 5
+        },
+        comment: String,
+        verified: {
+            type: Boolean,
+            default: false
+        },
+        date: {
+            type: Date,
+            default: Date.now
+        }
+    }],
+    // NEW FIELDS FOR SELLER INFO
+    sellerEmail: {
+        type: String,
+        default: null
+    },
+    userId: {
+        type: String,
+        default: null
+    },
+    sellerName: {
+        type: String,
+        default: null
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now
+    },
+    updatedAt: {
+        type: Date,
+        default: Date.now
     }
-}, { timestamps: true });
+});
+
+// Update the updatedAt field on save
+productSchema.pre('save', function (next) {
+    this.updatedAt = new Date();
+    next();
+});
 
 module.exports = mongoose.model('Product', productSchema);

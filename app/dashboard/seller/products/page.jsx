@@ -1,11 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Search, Edit, Trash2, Package, Plus } from 'lucide-react'
+import { Search, Trash2, Package, Plus } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
 import useFirebaseAuth from '@/lib/hooks/useFirebaseAuth'
+import DataTable from '../../components/DataTable'
 
 export default function SellerProducts() {
     const [products, setProducts] = useState([])
@@ -90,6 +91,80 @@ export default function SellerProducts() {
     }
 
     const categories = ['all', ...new Set(products.map(p => p.category))]
+
+    const columns = [
+        {
+            header: 'Product',
+            accessor: 'name',
+            render: (row) => (
+                <div className="flex items-center gap-3">
+                    <div className="avatar">
+                        <div className="w-12 h-12 rounded-lg">
+                            {row.image ? (
+                                <Image
+                                    src={row.image}
+                                    alt={row.name}
+                                    width={48}
+                                    height={48}
+                                    className="object-cover"
+                                />
+                            ) : (
+                                <div className="w-full h-full bg-base-300 flex items-center justify-center">
+                                    <Package className="w-6 h-6 text-base-content/30" />
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                    <div>
+                        <div className="font-bold">{row.name}</div>
+                        <div className="text-xs opacity-50">{row.id}</div>
+                    </div>
+                </div>
+            )
+        },
+        {
+            header: 'Category',
+            accessor: 'category',
+            render: (row) => <span className="badge badge-outline capitalize">{row.category}</span>
+        },
+        {
+            header: 'Price',
+            accessor: 'price',
+            render: (row) => <span className="font-bold text-primary">${row.price.toFixed(2)}</span>
+        },
+        {
+            header: 'Stock',
+            accessor: 'stock',
+            render: (row) => (
+                <span className={`badge ${(row.stock || 0) < 5 ? 'badge-error' : 'badge-success'}`}>
+                    {row.stock || 0}
+                </span>
+            )
+        },
+        {
+            header: 'Rating',
+            accessor: 'rating',
+            render: (row) => (
+                <div className="flex items-center gap-1">
+                    <span className="text-warning">★</span>
+                    <span>{(row.rating || 0).toFixed(1)}</span>
+                </div>
+            )
+        },
+        {
+            header: 'Actions',
+            accessor: 'actions',
+            render: (row) => (
+                <button
+                    onClick={() => handleDeleteProduct(row.id)}
+                    className="btn btn-sm btn-ghost text-error"
+                    title="Delete Product"
+                >
+                    <Trash2 className="w-4 h-4" />
+                </button>
+            )
+        }
+    ]
 
     if (loading) {
         return (
@@ -191,78 +266,19 @@ export default function SellerProducts() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredProducts.map((product) => (
-                    <div key={product.id} className="card bg-base-200 overflow-hidden hover:shadow-xl transition-shadow">
-                        <figure className="relative h-48 bg-base-300">
-                            {product.image ? (
-                                <Image
-                                    src={product.image}
-                                    alt={product.name}
-                                    fill
-                                    className="object-cover"
-                                />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center">
-                                    <Package className="w-16 h-16 text-base-content/30" />
-                                </div>
-                            )}
-                            {(product.stock || 0) < 5 && (
-                                <div className="absolute top-2 right-2 badge badge-error">
-                                    Low Stock
-                                </div>
-                            )}
-                        </figure>
-                        <div className="card-body">
-                            <h2 className="card-title text-lg">{product.name}</h2>
-                            <p className="text-sm text-base-content/70 line-clamp-2">
-                                {product.description}
-                            </p>
-                            <div className="flex items-center justify-between mt-2">
-                                <div>
-                                    <p className="text-2xl font-bold text-primary">
-                                        ${product.price.toFixed(2)}
-                                    </p>
-                                    <p className="text-xs text-base-content/60">
-                                        Stock: {product.stock || 0}
-                                    </p>
-                                </div>
-                                <div className="badge badge-outline capitalize">
-                                    {product.category}
-                                </div>
-                            </div>
-                            <div className="card-actions justify-end mt-4">
-                                <button
-                                    onClick={() => handleDeleteProduct(product.id)}
-                                    className="btn btn-sm btn-ghost text-error"
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                ))}
-            </div>
-
-            {filteredProducts.length === 0 && (
-                <div className="text-center py-12">
-                    <Package className="w-16 h-16 mx-auto mb-4 opacity-30" />
-                    <p className="text-base-content/70">
-                        {searchQuery || categoryFilter !== 'all'
+            <div className="card bg-base-200 p-6">
+                <DataTable
+                    columns={columns}
+                    data={filteredProducts}
+                    itemsPerPage={5}
+                    emptyMessage={
+                        searchQuery || categoryFilter !== 'all'
                             ? 'No products found matching your filters'
-                            : 'You haven\'t added any products yet'}
-                    </p>
-                    {!searchQuery && categoryFilter === 'all' && (
-                        <Link
-                            href="/dashboard/seller/add-product"
-                            className="btn btn-primary mt-4"
-                        >
-                            <Plus className="w-5 h-5" />
-                            Add Your First Product
-                        </Link>
-                    )}
-                </div>
-            )}
+                            : "You haven't added any products yet"
+                    }
+                    EmptyIcon={Package}
+                />
+            </div>
         </div>
     )
 }

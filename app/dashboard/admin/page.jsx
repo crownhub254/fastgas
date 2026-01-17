@@ -49,7 +49,6 @@ export default function AdminDashboard() {
             const products = productsData.products || []
             const orders = ordersData.orders || []
             const payments = paymentsData.payments || []
-            console.log(users)
 
             // Calculate total revenue
             const totalRevenue = payments

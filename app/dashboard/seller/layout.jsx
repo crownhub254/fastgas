@@ -63,32 +63,32 @@ export default function SellerDashboardLayout({ children }) {
     const navigation = [
         {
             name: 'Dashboard',
-            href: 'seller',
+            href: '/dashboard/seller',
             icon: LayoutDashboard,
         },
         {
             name: 'Add Product',
-            href: 'seller/add-product',
+            href: '/dashboard/seller/add-product',
             icon: Plus,
         },
         {
             name: 'My Products',
-            href: 'seller/products',
+            href: '/dashboard/seller/products',
             icon: Package,
         },
         {
             name: 'Orders',
-            href: 'seller/orders',
+            href: '/dashboard/seller/orders',
             icon: ShoppingCart,
         },
         {
             name: 'Settings',
-            href: 'seller/settings',
+            href: '/dashboard/seller/settings',
             icon: Settings,
         }
     ]
 
-    const isActive = (href) => pathname === href || pathname.startsWith(href + '/')
+    const isActive = (href) => pathname === href || pathname.startsWith(href + '/dashboard')
 
     if (loading || !userData) {
         return (
@@ -136,10 +136,10 @@ export default function SellerDashboardLayout({ children }) {
                             return (
                                 <li key={item.href}>
                                     <Link
-                                        href={`/dashboard/${item.href}`}
+                                        href={item.href}
                                         className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${active
-                                                ? 'bg-linear-to-r from-primary to-secondary text-primary-content shadow-lg'
-                                                : 'text-base-content hover:bg-base-300'
+                                            ? 'bg-linear-to-r from-primary to-secondary text-primary-content shadow-lg'
+                                            : 'text-base-content hover:bg-base-300'
                                             } ${isCollapsed ? 'justify-center' : ''}`}
                                         title={isCollapsed ? item.name : ''}
                                     >

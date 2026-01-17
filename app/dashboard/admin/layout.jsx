@@ -107,7 +107,7 @@ export default function AdminDashboardLayout({ children }) {
         }
     ]
 
-    const isActive = (href) => pathname === href || pathname.startsWith(href + '/')
+    const isActive = (href) => pathname === href || pathname.startsWith(href + '/dashboard')
 
     if (loading || !userData) {
         return (

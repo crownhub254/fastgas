@@ -112,15 +112,15 @@ export default function SellerDashboardLayout({ children }) {
                     <Link href="/" className="flex items-center gap-3">
                         {!isCollapsed ? (
                             <div className="flex items-center gap-2">
-                                <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center">
+                                <div className="w-10 h-10 bg-linear-to-br from-primary to-secondary rounded-lg flex items-center justify-center">
                                     <Package className="w-6 h-6 text-white" />
                                 </div>
-                                <span className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                                <span className="text-xl font-bold bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent">
                                     ShopHub
                                 </span>
                             </div>
                         ) : (
-                            <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center mx-auto">
+                            <div className="w-10 h-10 bg-linear-to-br from-primary to-secondary rounded-lg flex items-center justify-center mx-auto">
                                 <Package className="w-6 h-6 text-white" />
                             </div>
                         )}
@@ -138,7 +138,7 @@ export default function SellerDashboardLayout({ children }) {
                                     <Link
                                         href={item.href}
                                         className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${active
-                                                ? 'bg-gradient-to-r from-primary to-secondary text-primary-content shadow-lg'
+                                                ? 'bg-linear-to-r from-primary to-secondary text-primary-content shadow-lg'
                                                 : 'text-base-content hover:bg-base-300'
                                             } ${isCollapsed ? 'justify-center' : ''}`}
                                         title={isCollapsed ? item.name : ''}

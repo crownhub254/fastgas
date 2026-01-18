@@ -4,7 +4,6 @@ import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import useFirebaseAuth from '@/lib/hooks/useFirebaseAuth'
 import { Shield, Lock } from 'lucide-react'
-import Error403 from './error-pages/Error403'
 import Loading from '@/app/dashboard/loading'
 
 export default function ProtectedRoute({ children, allowedRoles = [] }) {
@@ -12,27 +11,27 @@ export default function ProtectedRoute({ children, allowedRoles = [] }) {
     const router = useRouter()
 
     useEffect(() => {
-        if (!loading) {
-            // Redirect to login if not authenticated
-            if (!user) {
-                router.push('/login')
-                return
-            }
+        if (!loading && !user) {
+            // Store the current URL to redirect back after login
+            const currentPath = window.location.pathname
+            router.push(`/login?redirect=${encodeURIComponent(currentPath)}`)
+        }
+    }, [user, loading, router])
 
+    useEffect(() => {
+        if (!loading && user && userData && allowedRoles.length > 0) {
             // Check role-based access
-            if (allowedRoles.length > 0 && userData) {
-                if (!allowedRoles.includes(userData.role)) {
-                    // Redirect to appropriate dashboard based on role
-                    switch (userData.role) {
-                        case 'admin':
-                            router.push('/dashboard/admin')
-                            break
-                        case 'seller':
-                            router.push('/dashboard/seller')
-                            break
-                        default:
-                            router.push('/dashboard/user')
-                    }
+            if (!allowedRoles.includes(userData.role)) {
+                // Redirect to appropriate dashboard based on role
+                switch (userData.role) {
+                    case 'admin':
+                        router.push('/dashboard/admin')
+                        break
+                    case 'seller':
+                        router.push('/dashboard/seller')
+                        break
+                    default:
+                        router.push('/dashboard/user')
                 }
             }
         }
@@ -40,16 +39,10 @@ export default function ProtectedRoute({ children, allowedRoles = [] }) {
 
     // Show loading state
     if (loading) {
-        return (
-            <Loading />
-        )
+        return <Loading />
     }
 
-    // if (!hasPermission) {
-    //     return <Error403 />
-    // }
-
-    // Show unauthorized state
+    // Show unauthorized state - user not logged in
     if (!user) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-base-100 via-base-200 to-base-100">
@@ -63,7 +56,7 @@ export default function ProtectedRoute({ children, allowedRoles = [] }) {
                     </p>
                     <button
                         onClick={() => router.push('/login')}
-                        className="btn btn-primary btn-lg"
+                        className="btn-primary"
                     >
                         Go to Login
                     </button>
@@ -82,11 +75,11 @@ export default function ProtectedRoute({ children, allowedRoles = [] }) {
                     </div>
                     <h2 className="text-3xl font-bold text-base-content mb-4">Insufficient Permissions</h2>
                     <p className="text-base-content/70 mb-6">
-                        You don't have permission to access this page. Your role: {userData.role}
+                        You don't have permission to access this page. Your role: <strong>{userData.role}</strong>
                     </p>
                     <button
                         onClick={() => router.push('/')}
-                        className="btn btn-primary btn-lg"
+                        className="btn-primary"
                     >
                         Go to Home
                     </button>

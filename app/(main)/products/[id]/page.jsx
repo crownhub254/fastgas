@@ -24,8 +24,6 @@ export default function ProductDetailPage() {
         fetchProduct()
     }, [id])
 
-    console.log(product)
-
     const fetchProduct = async () => {
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products/${id}`)
@@ -280,13 +278,13 @@ export default function ProductDetailPage() {
                                 <div className="grid grid-cols-2 gap-3">
                                     <button
                                         onClick={handleWishlistToggle}
-                                        className={`${inWishlist
+                                        className={`${isInWishlist
                                             ? 'bg-error/10 text-error border-error/20'
                                             : 'bg-base-100 text-base-content border-base-300'
                                             } px-6 py-3 rounded-lg font-semibold hover:bg-base-200 transition-all duration-300 border-2 flex items-center justify-center gap-2`}
                                     >
-                                        <Heart className={`w-5 h-5 ${inWishlist ? 'fill-current' : ''}`} />
-                                        <span>{inWishlist ? 'Saved' : 'Wishlist'}</span>
+                                        <Heart className={`w-5 h-5 ${isInWishlist ? 'fill-current' : ''}`} />
+                                        <span>{isInWishlist ? 'Saved' : 'Wishlist'}</span>
                                     </button>
                                     <button
                                         onClick={handleShare}

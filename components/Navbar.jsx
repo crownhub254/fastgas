@@ -9,6 +9,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
 import Image from 'next/image'
+import useFirebaseAuth from '@/lib/hooks/useFirebaseAuth'
 
 // Theme Hook
 function useTheme() {
@@ -39,6 +40,7 @@ export default function Navbar() {
     const [isProfileOpen, setIsProfileOpen] = useState(false)
     const { theme, toggleTheme, mounted } = useTheme()
     const { cartItems } = useCart()
+    const { user: us } = useFirebaseAuth()
 
     // Real Firebase Auth State
     const [user, setUser] = useState(null)
@@ -112,7 +114,7 @@ export default function Navbar() {
         { href: '/products', label: 'Products' },
         { href: '/about', label: 'About' },
         { href: '/contact', label: 'Contact' },
-        { href: `${getDashboardRoute()}`, label: 'Dashboard' },
+        { href: `${us ? getDashboardRoute() : ''}`, label: us ? 'Dashboard' : '' },
     ]
 
     const handleLogout = async () => {

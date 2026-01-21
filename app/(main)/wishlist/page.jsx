@@ -23,7 +23,7 @@ export default function WishlistPage() {
 
     if (wishlistItems.length === 0) {
         return (
-            <div className="min-h-screen pt-32">
+            <div className="min-h-screen">
                 <div className="section-padding">
                     <div className="container-custom">
                         <motion.div
@@ -52,7 +52,7 @@ export default function WishlistPage() {
     }
 
     return (
-        <div className="min-h-screen pt-32">
+        <div className="min-h-screen">
             <div className="section-padding">
                 <div className="container-custom">
                     {/* Header */}

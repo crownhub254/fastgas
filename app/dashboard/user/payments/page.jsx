@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { CreditCard, CheckCircle, XCircle, Clock, Calendar, DollarSign, Search } from 'lucide-react'
 import toast from 'react-hot-toast'
 import useFirebaseAuth from '@/lib/hooks/useFirebaseAuth'
+import Loading from '../../loading'
 
 export default function UserPayments() {
     const [payments, setPayments] = useState([])
@@ -125,14 +126,7 @@ export default function UserPayments() {
     ]
 
     if (loading) {
-        return (
-            <div className="flex items-center justify-center h-full">
-                <div className="text-center">
-                    <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-base-content/70">Loading payments...</p>
-                </div>
-            </div>
-        )
+        return <Loading />
     }
 
     return (
@@ -190,8 +184,8 @@ export default function UserPayments() {
                         key={filter.value}
                         onClick={() => setStatusFilter(filter.value)}
                         className={`px-6 py-3 rounded-lg font-semibold transition-all duration-200 whitespace-nowrap ${statusFilter === filter.value
-                                ? 'bg-linear-to-r from-primary to-secondary text-primary-content shadow-lg'
-                                : 'bg-base-200 text-base-content hover:bg-base-300'
+                            ? 'bg-linear-to-r from-primary to-secondary text-primary-content shadow-lg'
+                            : 'bg-base-200 text-base-content hover:bg-base-300'
                             }`}
                     >
                         {filter.label} ({filter.count})

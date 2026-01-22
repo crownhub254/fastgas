@@ -7,6 +7,7 @@ import Link from 'next/link'
 import toast from 'react-hot-toast'
 import useFirebaseAuth from '@/lib/hooks/useFirebaseAuth'
 import DataTable from '../../components/DataTable'
+import Loading from '../../loading'
 
 export default function SellerProducts() {
     const [products, setProducts] = useState([])
@@ -167,14 +168,7 @@ export default function SellerProducts() {
     ]
 
     if (loading) {
-        return (
-            <div className="flex items-center justify-center h-full">
-                <div className="text-center">
-                    <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-base-content/70">Loading products...</p>
-                </div>
-            </div>
-        )
+        return <Loading />
     }
 
     return (

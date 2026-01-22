@@ -15,6 +15,7 @@ import {
 import DashboardNavbar from '../components/DashboardNavbar'
 import useFirebaseAuth from '@/lib/hooks/useFirebaseAuth'
 import ProtectedRoute from '@/components/ProtectedRoute'
+import Loading from '../loading'
 
 export default function UserDashboardLayout({ children }) {
     const [isCollapsed, setIsCollapsed] = useState(false)
@@ -81,14 +82,7 @@ export default function UserDashboardLayout({ children }) {
     const isActive = (href) => pathname === href || pathname.startsWith(href + '/dashboard')
 
     if (loading || !userData) {
-        return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="text-center">
-                    <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-base-content/70">Loading dashboard...</p>
-                </div>
-            </div>
-        )
+        return <Loading />
     }
 
     return (

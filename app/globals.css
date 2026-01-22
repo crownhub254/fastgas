@@ -102,6 +102,10 @@
   }
 }
 
+.card-title{
+    @apply flex gap-2
+}
+
 /* Chrome, Edge, Safari */
 ::-webkit-scrollbar {
   width: 0px;

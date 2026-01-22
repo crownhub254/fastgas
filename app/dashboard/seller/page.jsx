@@ -1,9 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Package, ShoppingCart, DollarSign, TrendingUp } from 'lucide-react'
+import { Package, ShoppingCart, DollarSign, TrendingUp, CreditCard, Eye } from 'lucide-react'
 import { LineChart, AreaChart, PieChart, StatsCard } from '../components/charts/Index'
+import DataTable from '../components/DataTable'
 import useFirebaseAuth from '@/lib/hooks/useFirebaseAuth'
+import Link from 'next/link'
+import Loading from '../loading'
 
 export default function SellerDashboardHome() {
     const [loading, setLoading] = useState(true)
@@ -18,6 +21,10 @@ export default function SellerDashboardHome() {
         salesOverTime: [],
         productOrders: [],
         ordersByStatus: []
+    })
+    const [tableData, setTableData] = useState({
+        recentOrders: [],
+        recentPayments: []
     })
 
     useEffect(() => {
@@ -42,22 +49,32 @@ export default function SellerDashboardHome() {
             const ordersData = await ordersRes.json()
             const allOrders = ordersData.orders || []
 
-            // Filter orders that contain seller's products
+            // Filter orders containing seller's products
             const productIds = products.map(p => p.id)
             const sellerOrders = allOrders.filter(order =>
                 order.items.some(item => productIds.includes(item.id))
             )
+
+            // Fetch payments for seller's orders
+            const paymentsPromises = sellerOrders.map(order =>
+                fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/order/${order.orderId}`)
+                    .then(res => res.json())
+                    .catch(() => null)
+            )
+            const paymentsResults = await Promise.all(paymentsPromises)
+            const payments = paymentsResults
+                .filter(p => p && p.success && p.payment)
+                .map(p => p.payment)
 
             // Calculate earnings
             const totalEarnings = sellerOrders
                 .filter(o => o.paymentStatus === 'completed')
                 .reduce((sum, order) => {
                     const sellerItems = order.items.filter(item => productIds.includes(item.id))
-                    const orderTotal = sellerItems.reduce((s, item) => s + (item.price * item.quantity), 0)
-                    return sum + orderTotal
+                    return sum + sellerItems.reduce((s, item) => s + (item.price * item.quantity), 0)
                 }, 0)
 
-            // Generate sales over time (last 7 days)
+            // Generate charts
             const now = new Date()
             const salesOverTime = []
             for (let i = 6; i >= 0; i--) {
@@ -81,7 +98,6 @@ export default function SellerDashboardHome() {
                 })
             }
 
-            // Product orders distribution
             const productOrderCounts = {}
             sellerOrders.forEach(order => {
                 order.items.forEach(item => {
@@ -96,7 +112,6 @@ export default function SellerDashboardHome() {
                 .sort((a, b) => b.value - a.value)
                 .slice(0, 5)
 
-            // Orders by status
             const statusCounts = sellerOrders.reduce((acc, order) => {
                 acc[order.status] = (acc[order.status] || 0) + 1
                 return acc
@@ -107,6 +122,21 @@ export default function SellerDashboardHome() {
                 value
             }))
 
+            // Prepare table data
+            const recentOrders = sellerOrders
+                .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                .slice(0, 10)
+                .map(order => ({
+                    ...order,
+                    sellerTotal: order.items
+                        .filter(item => productIds.includes(item.id))
+                        .reduce((sum, item) => sum + (item.price * item.quantity), 0)
+                }))
+
+            const recentPayments = payments
+                .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                .slice(0, 10)
+
             setStats({
                 totalProducts: products.length,
                 totalOrders: sellerOrders.length,
@@ -114,11 +144,8 @@ export default function SellerDashboardHome() {
                 pendingOrders: sellerOrders.filter(o => o.status === 'processing' || o.status === 'pending').length
             })
 
-            setChartData({
-                salesOverTime,
-                productOrders,
-                ordersByStatus
-            })
+            setChartData({ salesOverTime, productOrders, ordersByStatus })
+            setTableData({ recentOrders, recentPayments })
         } catch (error) {
             console.error('Failed to fetch dashboard data:', error)
         } finally {
@@ -126,15 +153,91 @@ export default function SellerDashboardHome() {
         }
     }
 
+    const orderColumns = [
+        { header: 'Order ID', accessor: 'orderId' },
+        {
+            header: 'Customer',
+            render: (row) => row.shippingAddress?.city || 'N/A'
+        },
+        {
+            header: 'Items',
+            render: (row) => {
+                const sellerItems = row.items.filter(item =>
+                    tableData.recentOrders.find(o => o.orderId === row.orderId)
+                )
+                return sellerItems.length || row.items.length
+            }
+        },
+        {
+            header: 'Earnings',
+            render: (row) => `$${row.sellerTotal?.toFixed(2) || '0.00'}`
+        },
+        {
+            header: 'Status',
+            render: (row) => (
+                <span className={`badge ${row.status === 'delivered' ? 'badge-success' :
+                    row.status === 'shipped' ? 'badge-info' :
+                        row.status === 'processing' ? 'badge-warning' :
+                            'badge-error'
+                    }`}>
+                    {row.status}
+                </span>
+            )
+        },
+        {
+            header: 'Date',
+            render: (row) => new Date(row.createdAt).toLocaleDateString()
+        },
+        {
+            header: 'Actions',
+            render: (row) => (
+                <Link
+                    href={`/orders/${row.orderId}`}
+                    className="btn btn-xs btn-ghost"
+                >
+                    <Eye className="w-3 h-3" />
+                </Link>
+            )
+        }
+    ]
+
+    const paymentColumns = [
+        {
+            header: 'Transaction ID',
+            render: (row) => (
+                <span className="font-mono text-xs">
+                    {row.transactionId?.substring(0, 16)}...
+                </span>
+            )
+        },
+        { header: 'Order ID', accessor: 'orderId' },
+        {
+            header: 'Amount',
+            render: (row) => `$${row.amount?.toFixed(2) || '0.00'}`
+        },
+        {
+            header: 'Status',
+            render: (row) => (
+                <span className={`badge ${row.status === 'succeeded' ? 'badge-success' :
+                    row.status === 'pending' ? 'badge-warning' :
+                        'badge-error'
+                    }`}>
+                    {row.status}
+                </span>
+            )
+        },
+        {
+            header: 'Method',
+            accessor: 'paymentMethod'
+        },
+        {
+            header: 'Date',
+            render: (row) => new Date(row.createdAt).toLocaleDateString()
+        }
+    ]
+
     if (loading) {
-        return (
-            <div className="flex items-center justify-center h-full">
-                <div className="text-center">
-                    <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-base-content/70">Loading dashboard...</p>
-                </div>
-            </div>
-        )
+        return <Loading />
     }
 
     return (
@@ -196,6 +299,43 @@ export default function SellerDashboardHome() {
                     title="Top 5 Products by Orders"
                     colors={['#8b5cf6', '#ec4899', '#06b6d4', '#10b981', '#f59e0b']}
                 />
+            </div>
+
+            {/* Tables Section */}
+            <div className="grid grid-cols-1 gap-6">
+                {/* Recent Orders */}
+                <div className="card bg-base-200">
+                    <div className="card-body">
+                        <h2 className="card-title text-2xl mb-4">
+                            <ShoppingCart className="w-6 h-6" />
+                            Recent Orders
+                        </h2>
+                        <DataTable
+                            columns={orderColumns}
+                            data={tableData.recentOrders}
+                            itemsPerPage={5}
+                            emptyMessage="No orders found"
+                            EmptyIcon={ShoppingCart}
+                        />
+                    </div>
+                </div>
+
+                {/* Recent Payments */}
+                <div className="card bg-base-200">
+                    <div className="card-body">
+                        <h2 className="card-title text-2xl mb-4">
+                            <CreditCard className="w-6 h-6" />
+                            Recent Payments
+                        </h2>
+                        <DataTable
+                            columns={paymentColumns}
+                            data={tableData.recentPayments}
+                            itemsPerPage={5}
+                            emptyMessage="No payments found"
+                            EmptyIcon={CreditCard}
+                        />
+                    </div>
+                </div>
             </div>
         </div>
     )

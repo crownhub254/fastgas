@@ -9,6 +9,7 @@ import useFirebaseAuth from '@/lib/hooks/useFirebaseAuth'
 import toast from 'react-hot-toast'
 import Loading from '../loading'
 import Image from 'next/image'
+import Link from 'next/link'
 
 export default function DashboardNavbar({ notifications = [], isCollapsed, setIsCollapsed, setIsMobileSidebarOpen, isMobileSidebarOpen }) {
     const [showNotifications, setShowNotifications] = useState(false)
@@ -172,15 +173,17 @@ export default function DashboardNavbar({ notifications = [], isCollapsed, setIs
                         {showProfile && (
                             <div className="absolute right-0 mt-2 w-72 bg-base-100 rounded-xl shadow-2xl border border-base-300 overflow-hidden z-50">
                                 {/* Profile Header */}
-                                <div className="bg-gradient-to-br from-primary/10 to-secondary/10 border-b border-base-300">
+                                <div className="bg-linear-to-br from-primary/10 to-secondary/10 border-b border-base-300">
                                     <div className="px-4 py-4">
                                         <div className="flex items-center gap-3">
                                             <div className="avatar">
                                                 <div className="w-12 rounded-full ring-2 ring-primary overflow-hidden">
                                                     {photoURL ? (
-                                                        <img
-                                                            src={photoURL}
-                                                            alt={displayName}
+                                                        <Image
+                                                            src={photoURL || '/default-avatar.png'}
+                                                            alt={displayName || 'User'}
+                                                            width={40}
+                                                            height={40}
                                                             className="w-full h-full object-cover"
                                                         />
                                                     ) : (
@@ -207,7 +210,7 @@ export default function DashboardNavbar({ notifications = [], isCollapsed, setIs
 
                                 {/* Menu Items */}
                                 <div className="py-2">
-                                    <a
+                                    <Link
                                         href="/"
                                         className="flex items-center gap-3 px-4 py-3 hover:bg-primary/10 transition-colors"
                                     >
@@ -220,9 +223,9 @@ export default function DashboardNavbar({ notifications = [], isCollapsed, setIs
                                                 Back to main site
                                             </span>
                                         </div>
-                                    </a>
+                                    </Link>
 
-                                    <a
+                                    <Link
                                         href="/profile"
                                         className="flex items-center gap-3 px-4 py-3 hover:bg-info/10 transition-colors"
                                     >
@@ -235,9 +238,9 @@ export default function DashboardNavbar({ notifications = [], isCollapsed, setIs
                                                 View and edit profile
                                             </span>
                                         </div>
-                                    </a>
+                                    </Link>
 
-                                    <a
+                                    <Link
                                         href="/settings"
                                         className="flex items-center gap-3 px-4 py-3 hover:bg-warning/10 transition-colors"
                                     >
@@ -250,7 +253,7 @@ export default function DashboardNavbar({ notifications = [], isCollapsed, setIs
                                                 Preferences & settings
                                             </span>
                                         </div>
-                                    </a>
+                                    </Link>
                                 </div>
 
                                 {/* Logout Button */}
@@ -262,7 +265,7 @@ export default function DashboardNavbar({ notifications = [], isCollapsed, setIs
                                         <div className="w-8 h-8 rounded-lg bg-error/10 flex items-center justify-center">
                                             <LogOut size={18} />
                                         </div>
-                                        <div className="flex flex-col leading-tight">
+                                        <div className="flex flex-col leading-tight text-start">
                                             <span className="font-medium text-sm">Logout</span>
                                             <span className="text-xs text-error/60">
                                                 Sign out of your account

@@ -5,6 +5,7 @@ import { Heart, ShoppingCart, Trash2, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useCart } from '@/contexts/CartContext'
+import toast from 'react-hot-toast'
 
 export default function WishlistPage() {
     const { wishlistItems, removeFromWishlist, addToCart } = useCart()
@@ -17,13 +18,17 @@ export default function WishlistPage() {
 
     const handleAddToCart = (item) => {
         addToCart(item, 1)
-        // Optionally show a success message
-        alert(`${item.name} added to cart!`)
+        toast.success(`${item.name} added to cart!`)
+    }
+
+    const handleAddAllToCart = () => {
+        wishlistItems.forEach(item => addToCart(item, 1))
+        toast.success(`All ${wishlistItems.length} items added to cart!`)
     }
 
     if (wishlistItems.length === 0) {
         return (
-            <div className="min-h-screen">
+            <div className="min-h-screen pt-32">
                 <div className="section-padding">
                     <div className="container-custom">
                         <motion.div
@@ -52,7 +57,7 @@ export default function WishlistPage() {
     }
 
     return (
-        <div className="min-h-screen">
+        <div className="min-h-screen pt-32">
             <div className="section-padding">
                 <div className="container-custom">
                     {/* Header */}
@@ -80,7 +85,7 @@ export default function WishlistPage() {
                     <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {wishlistItems.map((item, index) => (
                             <motion.div
-                                key={item.id}
+                                key={item._id}
                                 initial={{ opacity: 0, scale: 0.9 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ delay: index * 0.1 }}
@@ -88,7 +93,7 @@ export default function WishlistPage() {
                             >
                                 {/* Product Image */}
                                 <div className="relative aspect-square rounded-lg overflow-hidden bg-base-300 mb-4">
-                                    <Link href={`/products/${item.id}`}>
+                                    <Link href={`/products/${item.id || item._id}`}>
                                         <Image
                                             src={item.image}
                                             alt={item.name}
@@ -99,7 +104,10 @@ export default function WishlistPage() {
 
                                     {/* Remove Button */}
                                     <button
-                                        onClick={() => removeFromWishlist(item.id)}
+                                        onClick={() => {
+                                            removeFromWishlist(item._id)
+                                            toast.success('Removed from wishlist')
+                                        }}
                                         className="absolute top-3 right-3 p-2 bg-base-100/90 hover:bg-error/90 text-error hover:text-white rounded-full transition-all duration-200 shadow-lg"
                                         aria-label="Remove from wishlist"
                                     >
@@ -115,7 +123,7 @@ export default function WishlistPage() {
                                 {/* Product Info */}
                                 <div>
                                     <Link
-                                        href={`/products/${item.id}`}
+                                        href={`/products/${item.id || item._id}`}
                                         className="text-lg font-bold text-base-content hover:text-primary transition-colors line-clamp-2 mb-2 block"
                                     >
                                         {item.name}
@@ -127,7 +135,7 @@ export default function WishlistPage() {
                                             {[...Array(5)].map((_, i) => (
                                                 <svg
                                                     key={i}
-                                                    className={`w-4 h-4 ${i < Math.floor(item.rating)
+                                                    className={`w-4 h-4 ${i < Math.floor(item.rating || 0)
                                                         ? 'fill-current'
                                                         : 'fill-base-300'
                                                         }`}
@@ -137,12 +145,12 @@ export default function WishlistPage() {
                                                 </svg>
                                             ))}
                                         </div>
-                                        <span className="text-sm text-base-content/60">{item.rating}</span>
+                                        <span className="text-sm text-base-content/60">{(item.rating || 0).toFixed(1)}</span>
                                     </div>
 
                                     {/* Price */}
                                     <div className="text-2xl font-bold bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent mb-4">
-                                        ${item.price}
+                                        ${item.price.toFixed(2)}
                                     </div>
 
                                     {/* Add to Cart Button */}
@@ -167,10 +175,7 @@ export default function WishlistPage() {
                             className="mt-8 text-center"
                         >
                             <button
-                                onClick={() => {
-                                    wishlistItems.forEach(item => addToCart(item, 1))
-                                    alert('All items added to cart!')
-                                }}
+                                onClick={handleAddAllToCart}
                                 className="inline-flex items-center gap-2 bg-base-200 hover:bg-base-300 text-base-content px-8 py-4 rounded-lg font-semibold transition-all duration-300 border-2 border-base-300"
                             >
                                 <ShoppingCart className="w-5 h-5" />

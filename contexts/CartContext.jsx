@@ -16,10 +16,20 @@ export function CartProvider({ children }) {
         const savedWishlist = localStorage.getItem('wishlist')
 
         if (savedCart) {
-            setCartItems(JSON.parse(savedCart))
+            try {
+                setCartItems(JSON.parse(savedCart))
+            } catch (err) {
+                console.error('Error loading cart:', err)
+                setCartItems([])
+            }
         }
         if (savedWishlist) {
-            setWishlistItems(JSON.parse(savedWishlist))
+            try {
+                setWishlistItems(JSON.parse(savedWishlist))
+            } catch (err) {
+                console.error('Error loading wishlist:', err)
+                setWishlistItems([])
+            }
         }
     }, [])
 
@@ -37,15 +47,20 @@ export function CartProvider({ children }) {
         }
     }, [wishlistItems, mounted])
 
+    // Helper function to get product ID (handles both MongoDB _id and custom id)
+    const getProductId = (product) => {
+        return product._id || product.id
+    }
+
     const addToCart = (product, quantity = 1) => {
-        const productId = product._id || product.id
+        const productId = getProductId(product)
 
         setCartItems(prevItems => {
-            const existingItem = prevItems.find(item => item.id === productId)
+            const existingItem = prevItems.find(item => item._id === productId)
 
             if (existingItem) {
                 return prevItems.map(item =>
-                    item.id === productId
+                    item._id === productId
                         ? { ...item, quantity: item.quantity + quantity }
                         : item
                 )
@@ -54,7 +69,8 @@ export function CartProvider({ children }) {
             return [
                 ...prevItems,
                 {
-                    id: productId,
+                    _id: productId,
+                    id: product.id || productId, // Keep custom id if it exists
                     name: product.name,
                     price: product.price,
                     image: product.image,
@@ -67,7 +83,7 @@ export function CartProvider({ children }) {
 
     const removeFromCart = (productId) => {
         setCartItems(prevItems =>
-            prevItems.filter(item => item.id !== productId)
+            prevItems.filter(item => item._id !== productId)
         )
     }
 
@@ -79,7 +95,7 @@ export function CartProvider({ children }) {
 
         setCartItems(prevItems =>
             prevItems.map(item =>
-                item.id === productId ? { ...item, quantity } : item
+                item._id === productId ? { ...item, quantity } : item
             )
         )
     }
@@ -89,21 +105,22 @@ export function CartProvider({ children }) {
     }
 
     const addToWishlist = (product) => {
-        const productId = product._id || product.id
+        const productId = getProductId(product)
 
         setWishlistItems(prevItems => {
-            const exists = prevItems.find(item => item.id === productId)
+            const exists = prevItems.find(item => item._id === productId)
             if (exists) return prevItems
 
             return [
                 ...prevItems,
                 {
-                    id: productId,
+                    _id: productId,
+                    id: product.id || productId,
                     name: product.name,
                     price: product.price,
                     image: product.image,
                     category: product.category,
-                    rating: product.rating
+                    rating: product.rating || 0
                 }
             ]
         })
@@ -111,12 +128,12 @@ export function CartProvider({ children }) {
 
     const removeFromWishlist = (productId) => {
         setWishlistItems(prevItems =>
-            prevItems.filter(item => item.id !== productId)
+            prevItems.filter(item => item._id !== productId)
         )
     }
 
     const isInWishlist = (productId) => {
-        return wishlistItems.some(item => item.id === productId)
+        return wishlistItems.some(item => item._id === productId)
     }
 
     const getCartTotal = () => {
@@ -124,6 +141,10 @@ export function CartProvider({ children }) {
             (total, item) => total + item.price * item.quantity,
             0
         )
+    }
+
+    const getWishlistTotal = () => {
+        return wishlistItems.length
     }
 
     return (
@@ -138,7 +159,8 @@ export function CartProvider({ children }) {
                 addToWishlist,
                 removeFromWishlist,
                 isInWishlist,
-                getCartTotal
+                getCartTotal,
+                getWishlistTotal
             }}
         >
             {children}

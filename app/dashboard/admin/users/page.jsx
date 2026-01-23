@@ -5,6 +5,7 @@ import { Search, Edit, Trash2, UserCog, X, Check } from 'lucide-react'
 import Image from 'next/image'
 import toast from 'react-hot-toast'
 import Loading from '../../loading'
+import DataTable from '../../components/DataTable'
 
 export default function UserManagement() {
     const [users, setUsers] = useState([])
@@ -141,10 +142,100 @@ export default function UserManagement() {
     }
 
     if (loading) {
-        return (
-            <Loading />
-        )
+        return <Loading />
     }
+
+    // DataTable columns configuration
+    const columns = [
+        {
+            header: 'User',
+            accessor: 'displayName',
+            render: (row) => (
+                <div className="flex items-center gap-3">
+                    <div className="avatar">
+                        <div className="w-10 h-10 rounded-full ring ring-primary ring-offset-2 ring-offset-base-100">
+                            {row.photoURL ? (
+                                <Image
+                                    src={row.photoURL}
+                                    alt={row.displayName}
+                                    width={40}
+                                    height={40}
+                                    className="object-cover"
+                                />
+                            ) : (
+                                <div className="bg-primary/10 flex items-center justify-center w-full h-full text-primary font-bold">
+                                    {row.displayName?.charAt(0) || 'U'}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                    <div>
+                        <div className="font-bold">{row.displayName}</div>
+                        <div className="text-xs opacity-50">{row.uid.slice(0, 8)}...</div>
+                    </div>
+                </div>
+            )
+        },
+        {
+            header: 'Email',
+            accessor: 'email'
+        },
+        {
+            header: 'Role',
+            accessor: 'role',
+            render: (row) => (
+                <select
+                    className="select select-sm select-bordered capitalize"
+                    value={row.role}
+                    onChange={(e) => handleChangeRole(row.uid, e.target.value)}
+                >
+                    <option value="user">User</option>
+                    <option value="seller">Seller</option>
+                    <option value="admin">Admin</option>
+                </select>
+            )
+        },
+        {
+            header: 'Provider',
+            accessor: 'provider',
+            render: (row) => (
+                <span className="badge badge-sm capitalize">{row.provider}</span>
+            )
+        },
+        {
+            header: 'Joined',
+            accessor: 'createdAt',
+            render: (row) => (
+                new Date(row.createdAt).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                })
+            )
+        },
+        {
+            header: 'Actions',
+            accessor: 'actions',
+            render: (row) => (
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => handleEditUser(row)}
+                        className="btn btn-sm btn-ghost"
+                        title="Edit User"
+                    >
+                        <Edit className="w-4 h-4" />
+                    </button>
+                    <button
+                        onClick={() => handleDeleteUser(row.uid)}
+                        className="btn btn-sm btn-ghost text-error"
+                        title="Delete User"
+                    >
+                        <Trash2 className="w-4 h-4" />
+                    </button>
+                </div>
+            )
+        }
+    ]
 
     return (
         <div className="space-y-6">
@@ -164,14 +255,12 @@ export default function UserManagement() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Search */}
                     <div className="form-control">
-                        <div className="input">
-                            <span className="">
-                                <Search className="w-5 h-5" />
-                            </span>
+                        <div className="input input-bordered flex items-center gap-2">
+                            <Search className="w-5 h-5" />
                             <input
                                 type="text"
                                 placeholder="Search by name, email, or ID..."
-                                className="flex-1"
+                                className="flex-1 outline-none bg-transparent"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
@@ -194,97 +283,15 @@ export default function UserManagement() {
                 </div>
             </div>
 
-            {/* Users Table */}
-            <div className="card bg-base-200 overflow-x-auto">
-                <table className="table table-zebra">
-                    <thead>
-                        <tr>
-                            <th>User</th>
-                            <th>Email</th>
-                            <th>Role</th>
-                            <th>Provider</th>
-                            <th>Joined</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredUsers.map((user) => (
-                            <tr key={user.uid}>
-                                <td>
-                                    <div className="flex items-center gap-3">
-                                        <div className="avatar">
-                                            <div className="w-10 h-10 rounded-full ring ring-primary ring-offset-2 ring-offset-base-100">
-                                                {user.photoURL ? (
-                                                    <Image
-                                                        src={user.photoURL}
-                                                        alt={user.displayName}
-                                                        width={40}
-                                                        height={40}
-                                                    />
-                                                ) : (
-                                                    <div className="bg-primary/10 flex items-center justify-center w-full h-full text-primary font-bold">
-                                                        {user.displayName?.charAt(0) || 'U'}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <div className="font-bold">{user.displayName}</div>
-                                            <div className="text-xs opacity-50">{user.uid.slice(0, 8)}...</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>{user.email}</td>
-                                <td>
-                                    <select
-                                        className="select select-sm select-bordered capitalize"
-                                        value={user.role}
-                                        onChange={(e) => handleChangeRole(user.uid, e.target.value)}
-                                    >
-                                        <option value="user">User</option>
-                                        <option value="seller">Seller</option>
-                                        <option value="admin">Admin</option>
-                                    </select>
-                                </td>
-                                <td>
-                                    <span className="badge badge-sm capitalize">{user.provider}</span>
-                                </td>
-                                <td>
-                                    {new Date(user.createdAt).toLocaleDateString('en-US', {
-                                        year: 'numeric',
-                                        month: 'short',
-                                        day: 'numeric'
-                                    })}
-                                </td>
-                                <td>
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={() => handleEditUser(user)}
-                                            className="btn btn-sm btn-ghost"
-                                            title="Edit User"
-                                        >
-                                            <Edit className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                            onClick={() => handleDeleteUser(user.uid)}
-                                            className="btn btn-sm btn-ghost text-error"
-                                            title="Delete User"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-
-                {filteredUsers.length === 0 && (
-                    <div className="text-center py-12">
-                        <UserCog className="w-16 h-16 mx-auto mb-4 opacity-30" />
-                        <p className="text-base-content/70">No users found</p>
-                    </div>
-                )}
+            {/* Users Table using DataTable Component */}
+            <div className="card bg-base-200 p-6">
+                <DataTable
+                    columns={columns}
+                    data={filteredUsers}
+                    itemsPerPage={5}
+                    emptyMessage="No users found"
+                    EmptyIcon={UserCog}
+                />
             </div>
 
             {/* Edit User Modal */}

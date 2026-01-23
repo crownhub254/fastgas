@@ -94,21 +94,6 @@ router.post('/create-checkout-session', async (req, res) => {
             cancel_url: `${process.env.FRONTEND_URL}/payment-cancel?order_id=${orderId}`,
         });
 
-        if (payment && order) {
-            // Notify user
-            await NotificationService.notifyPaymentSuccess(
-                order.userId,
-                order.orderId,
-                payment.amount
-            );
-
-            // Notify order confirmed
-            await NotificationService.notifyOrderConfirmed(
-                order.userId,
-                order.orderId
-            );
-        }
-
         res.status(200).json({
             success: true,
             sessionId: session.id,
@@ -185,7 +170,7 @@ router.post('/verify-session', async (req, res) => {
                 success: true,
                 payment,
                 order,
-                alreadyProcessed: true, // Frontend can use this flag
+                alreadyProcessed: true,
                 message: 'Payment already verified'
             });
         }
@@ -208,7 +193,25 @@ router.post('/verify-session', async (req, res) => {
 
         console.log('✅ Payment verified successfully for order:', orderId);
 
-        // --- STEP 6: Generate Invoice ---
+        // --- STEP 6: Send Notifications (after payment is created) ---
+        try {
+            await NotificationService.notifyPaymentSuccess(
+                order.userId,
+                order.orderId,
+                payment.amount
+            );
+
+            await NotificationService.notifyOrderConfirmed(
+                order.userId,
+                order.orderId
+            );
+            console.log('✅ Notifications sent successfully');
+        } catch (notifyError) {
+            console.error('⚠️ Notification sending failed:', notifyError);
+            // Continue - don't block response if notifications fail
+        }
+
+        // --- STEP 7: Generate Invoice ---
         let invoicePDF;
         try {
             invoicePDF = await generateInvoice({ order, payment });
@@ -230,8 +233,7 @@ router.post('/verify-session', async (req, res) => {
             console.error('❌ Error fetching user for email:', err);
         }
 
-        // --- STEP 7: Send Email (async, don't block response) ---
-        // We'll send email asynchronously and not wait for it
+        // --- STEP 8: Send Email (async, don't block response) ---
         if (invoicePDF && userEmail) {
             sendOrderConfirmationEmail({
                 customerEmail: userEmail,
@@ -245,7 +247,7 @@ router.post('/verify-session', async (req, res) => {
             });
         }
 
-        // --- STEP 8: Return success response ---
+        // --- STEP 9: Return success response ---
         res.status(200).json({
             success: true,
             payment,
@@ -351,6 +353,22 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
                     order.paymentStatus = 'completed';
                     order.status = 'confirmed';
                     await order.save();
+
+                    // Send notifications
+                    try {
+                        await NotificationService.notifyPaymentSuccess(
+                            order.userId,
+                            order.orderId,
+                            payment.amount
+                        );
+
+                        await NotificationService.notifyOrderConfirmed(
+                            order.userId,
+                            order.orderId
+                        );
+                    } catch (notifyError) {
+                        console.error('⚠️ Webhook notification failed:', notifyError);
+                    }
                 }
                 break;
 
@@ -390,6 +408,7 @@ router.get('/order/:orderId', async (req, res) => {
         });
     }
 });
+
 router.get('/', async (req, res) => {
     try {
         const payments = await Payment.find()
@@ -407,7 +426,7 @@ router.get('/', async (req, res) => {
         res.status(500).json({
             success: false,
             error: error.message,
-            payments: []  // Return empty array on error
+            payments: []
         });
     }
 });

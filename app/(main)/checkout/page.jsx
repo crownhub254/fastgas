@@ -119,6 +119,12 @@ export default function CheckoutPage() {
                 body: JSON.stringify(orderData)
             })
 
+            if (!orderResponse.ok) {
+                const errorText = await orderResponse.text()
+                console.error('Order creation failed:', errorText)
+                throw new Error(`Failed to create order: ${orderResponse.status}`)
+            }
+
             const orderResult = await orderResponse.json()
             console.log('Order creation result:', orderResult)
 
@@ -132,35 +138,50 @@ export default function CheckoutPage() {
             if (paymentMethod === 'card') {
                 console.log('Creating Stripe checkout session for order:', orderId)
 
-                const checkoutResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/create-checkout-session`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        orderId: orderId,
-                        items: cartItems.map(item => ({
-                            name: item.name,
-                            price: item.price,
-                            quantity: item.quantity,
-                            image: item.image
-                        })),
-                        shipping: shipping,
-                        tax: tax,
-                        customerEmail: user.email
+                try {
+                    const checkoutResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/create-checkout-session`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            orderId: orderId,
+                            items: cartItems.map(item => ({
+                                name: item.name,
+                                price: item.price,
+                                quantity: item.quantity,
+                                image: item.image
+                            })),
+                            shipping: shipping,
+                            tax: tax,
+                            customerEmail: user.email
+                        })
                     })
-                })
 
-                const checkoutResult = await checkoutResponse.json()
-                console.log('Checkout session result:', checkoutResult)
+                    if (!checkoutResponse.ok) {
+                        const errorText = await checkoutResponse.text()
+                        console.error('Checkout session creation failed:', errorText)
+                        throw new Error(`Failed to create checkout session: ${checkoutResponse.status}`)
+                    }
 
-                if (!checkoutResult.success) {
-                    throw new Error(checkoutResult.error || 'Failed to create checkout session')
+                    const checkoutResult = await checkoutResponse.json()
+                    console.log('Checkout session result:', checkoutResult)
+
+                    if (!checkoutResult.success || !checkoutResult.url) {
+                        throw new Error(checkoutResult.error || 'Failed to create checkout session')
+                    }
+
+                    // Clear cart before redirecting
+                    clearCart()
+
+                    // Redirect to Stripe Checkout
+                    console.log('Redirecting to Stripe checkout:', checkoutResult.url)
+                    window.location.href = checkoutResult.url
+
+                } catch (checkoutError) {
+                    console.error('Checkout session error:', checkoutError)
+                    throw new Error('Failed to initiate payment. Please try again.')
                 }
-
-                // Redirect to Stripe Checkout
-                console.log('Redirecting to Stripe checkout:', checkoutResult.url)
-                window.location.href = checkoutResult.url
 
             } else {
                 // Cash on Delivery - directly redirect to success
@@ -171,14 +192,14 @@ export default function CheckoutPage() {
 
         } catch (error) {
             console.error('Checkout error:', error)
-            toast.error(error.message || 'Failed to process order')
+            toast.error(error.message || 'Failed to process order. Please try again.')
             setIsProcessing(false)
         }
     }
 
     if (cartItems.length === 0) {
         return (
-            <div className="min-h-screen">
+            <div className="min-h-screen pt-20">
                 <div className="section-padding">
                     <div className="container-custom max-w-md mx-auto text-center">
                         <Package className="w-16 h-16 text-base-content/30 mx-auto mb-4" />
@@ -197,7 +218,7 @@ export default function CheckoutPage() {
     }
 
     return (
-        <div className="min-h-screen">
+        <div className="min-h-screen pt-20">
             <div className="section-padding">
                 <div className="container-custom max-w-6xl">
                     <Link
@@ -376,7 +397,7 @@ export default function CheckoutPage() {
 
                                 <div className="space-y-4 mb-6 max-h-64 overflow-y-auto">
                                     {cartItems.map(item => (
-                                        <div key={item._id} className="flex gap-3">
+                                        <div key={item.id} className="flex gap-3">
                                             <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-base-200">
                                                 <Image
                                                     src={item.image}
@@ -442,6 +463,10 @@ export default function CheckoutPage() {
                                         </>
                                     )}
                                 </button>
+
+                                <p className="text-xs text-base-content/60 text-center mt-4">
+                                    By placing your order, you agree to our terms and conditions
+                                </p>
                             </div>
                         </motion.div>
                     </div>

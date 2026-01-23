@@ -7,6 +7,7 @@ import DataTable from '../components/DataTable'
 import useFirebaseAuth from '@/lib/hooks/useFirebaseAuth'
 import Link from 'next/link'
 import Loading from '../loading'
+import ProtectedRoute from '@/components/ProtectedRoute'
 
 export default function SellerDashboardHome() {
     const [loading, setLoading] = useState(true)
@@ -241,102 +242,104 @@ export default function SellerDashboardHome() {
     }
 
     return (
-        <div className="space-y-6">
-            <div>
-                <h1 className="text-3xl font-bold mb-2">Seller Dashboard</h1>
-                <p className="text-base-content/70">Manage your products and track your sales</p>
-            </div>
-
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatsCard
-                    title="Total Products"
-                    value={stats.totalProducts.toLocaleString()}
-                    icon={Package}
-                    trend="up"
-                />
-                <StatsCard
-                    title="Total Orders"
-                    value={stats.totalOrders.toLocaleString()}
-                    icon={ShoppingCart}
-                    trend="up"
-                />
-                <StatsCard
-                    title="Total Earnings"
-                    value={`$${stats.totalEarnings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                    icon={DollarSign}
-                    trend="up"
-                />
-                <StatsCard
-                    title="Pending Orders"
-                    value={stats.pendingOrders.toLocaleString()}
-                    icon={TrendingUp}
-                    trend="up"
-                />
-            </div>
-
-            {/* Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <AreaChart
-                    data={chartData.salesOverTime}
-                    dataKeys={[
-                        { key: 'sales', name: 'Sales ($)' },
-                        { key: 'orders', name: 'Orders' }
-                    ]}
-                    title="Sales Performance (Last 7 Days)"
-                    colors={['#8b5cf6', '#ec4899']}
-                />
-                <PieChart
-                    data={chartData.ordersByStatus}
-                    title="Orders by Status"
-                    colors={['#8b5cf6', '#ec4899', '#06b6d4', '#10b981']}
-                />
-            </div>
-
-            <div className="grid grid-cols-1 gap-6">
-                <PieChart
-                    data={chartData.productOrders}
-                    title="Top 5 Products by Orders"
-                    colors={['#8b5cf6', '#ec4899', '#06b6d4', '#10b981', '#f59e0b']}
-                />
-            </div>
-
-            {/* Tables Section */}
-            <div className="grid grid-cols-1 gap-6">
-                {/* Recent Orders */}
-                <div className="card bg-base-200">
-                    <div className="card-body">
-                        <h2 className="card-title text-2xl mb-4">
-                            <ShoppingCart className="w-6 h-6" />
-                            Recent Orders
-                        </h2>
-                        <DataTable
-                            columns={orderColumns}
-                            data={tableData.recentOrders}
-                            itemsPerPage={5}
-                            emptyMessage="No orders found"
-                            EmptyIcon={ShoppingCart}
-                        />
-                    </div>
+        <ProtectedRoute allowedRoles={['seller']}>
+            <div className="space-y-6">
+                <div>
+                    <h1 className="text-3xl font-bold mb-2">Seller Dashboard</h1>
+                    <p className="text-base-content/70">Manage your products and track your sales</p>
                 </div>
 
-                {/* Recent Payments */}
-                <div className="card bg-base-200">
-                    <div className="card-body">
-                        <h2 className="card-title text-2xl mb-4">
-                            <CreditCard className="w-6 h-6" />
-                            Recent Payments
-                        </h2>
-                        <DataTable
-                            columns={paymentColumns}
-                            data={tableData.recentPayments}
-                            itemsPerPage={5}
-                            emptyMessage="No payments found"
-                            EmptyIcon={CreditCard}
-                        />
+                {/* Stats Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <StatsCard
+                        title="Total Products"
+                        value={stats.totalProducts.toLocaleString()}
+                        icon={Package}
+                        trend="up"
+                    />
+                    <StatsCard
+                        title="Total Orders"
+                        value={stats.totalOrders.toLocaleString()}
+                        icon={ShoppingCart}
+                        trend="up"
+                    />
+                    <StatsCard
+                        title="Total Earnings"
+                        value={`$${stats.totalEarnings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                        icon={DollarSign}
+                        trend="up"
+                    />
+                    <StatsCard
+                        title="Pending Orders"
+                        value={stats.pendingOrders.toLocaleString()}
+                        icon={TrendingUp}
+                        trend="up"
+                    />
+                </div>
+
+                {/* Charts */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <AreaChart
+                        data={chartData.salesOverTime}
+                        dataKeys={[
+                            { key: 'sales', name: 'Sales ($)' },
+                            { key: 'orders', name: 'Orders' }
+                        ]}
+                        title="Sales Performance (Last 7 Days)"
+                        colors={['#8b5cf6', '#ec4899']}
+                    />
+                    <PieChart
+                        data={chartData.ordersByStatus}
+                        title="Orders by Status"
+                        colors={['#8b5cf6', '#ec4899', '#06b6d4', '#10b981']}
+                    />
+                </div>
+
+                <div className="grid grid-cols-1 gap-6">
+                    <PieChart
+                        data={chartData.productOrders}
+                        title="Top 5 Products by Orders"
+                        colors={['#8b5cf6', '#ec4899', '#06b6d4', '#10b981', '#f59e0b']}
+                    />
+                </div>
+
+                {/* Tables Section */}
+                <div className="grid grid-cols-1 gap-6">
+                    {/* Recent Orders */}
+                    <div className="card bg-base-200">
+                        <div className="card-body">
+                            <h2 className="card-title text-2xl mb-4">
+                                <ShoppingCart className="w-6 h-6" />
+                                Recent Orders
+                            </h2>
+                            <DataTable
+                                columns={orderColumns}
+                                data={tableData.recentOrders}
+                                itemsPerPage={5}
+                                emptyMessage="No orders found"
+                                EmptyIcon={ShoppingCart}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Recent Payments */}
+                    <div className="card bg-base-200">
+                        <div className="card-body">
+                            <h2 className="card-title text-2xl mb-4">
+                                <CreditCard className="w-6 h-6" />
+                                Recent Payments
+                            </h2>
+                            <DataTable
+                                columns={paymentColumns}
+                                data={tableData.recentPayments}
+                                itemsPerPage={5}
+                                emptyMessage="No payments found"
+                                EmptyIcon={CreditCard}
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </ProtectedRoute>
     )
 }

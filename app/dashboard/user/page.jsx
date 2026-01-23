@@ -7,6 +7,7 @@ import DataTable from '../components/DataTable'
 import useFirebaseAuth from '@/lib/hooks/useFirebaseAuth'
 import Link from 'next/link'
 import Loading from '../loading'
+import ProtectedRoute from '@/components/ProtectedRoute'
 
 export default function UserDashboardHome() {
     const [loading, setLoading] = useState(true)
@@ -282,120 +283,122 @@ export default function UserDashboardHome() {
     }
 
     return (
-        <div className="space-y-6">
-            <div>
-                <h1 className="text-3xl font-bold mb-2">Welcome back, {userData?.displayName}!</h1>
-                <p className="text-base-content/70">Track your orders and manage your account</p>
-            </div>
-
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatsCard
-                    title="Total Orders"
-                    value={stats.totalOrders.toLocaleString()}
-                    icon={ShoppingBag}
-                    trend="up"
-                />
-                <StatsCard
-                    title="Pending Orders"
-                    value={stats.pendingOrders.toLocaleString()}
-                    icon={TrendingUp}
-                    trend="up"
-                />
-                <StatsCard
-                    title="Completed Orders"
-                    value={stats.completedOrders.toLocaleString()}
-                    icon={Package}
-                    trend="up"
-                />
-                <StatsCard
-                    title="Total Spent"
-                    value={`$${stats.totalSpent.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                    icon={DollarSign}
-                    trend="up"
-                />
-            </div>
-
-            {/* Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <AreaChart
-                    data={chartData.spendingOverTime}
-                    dataKeys={[
-                        { key: 'spent', name: 'Spent ($)' },
-                        { key: 'orders', name: 'Orders' }
-                    ]}
-                    title="Spending Activity (Last 7 Days)"
-                    colors={['#8b5cf6', '#ec4899']}
-                />
-                <PieChart
-                    data={chartData.ordersByStatus}
-                    title="Orders by Status"
-                    colors={['#8b5cf6', '#ec4899', '#06b6d4', '#10b981']}
-                />
-            </div>
-
-            <div className="grid grid-cols-1 gap-6">
-                <LineChart
-                    data={chartData.monthlySpending}
-                    dataKeys={[{ key: 'amount', name: 'Spending ($)' }]}
-                    title="Monthly Spending Trend (Last 6 Months)"
-                    colors={['#8b5cf6']}
-                />
-            </div>
-
-            {/* Tables Section */}
-            <div className="grid grid-cols-1 gap-6">
-                {/* Recent Orders */}
-                <div className="card bg-base-200">
-                    <div className="card-body">
-                        <h2 className="card-title text-2xl mb-4">
-                            <ShoppingBag className="w-6 h-6" />
-                            Recent Orders
-                        </h2>
-                        <DataTable
-                            columns={orderColumns}
-                            data={tableData.recentOrders}
-                            itemsPerPage={5}
-                            emptyMessage="No orders found"
-                            EmptyIcon={ShoppingBag}
-                        />
-                    </div>
+        <ProtectedRoute allowedRoles={['user']}>
+            <div className="space-y-6">
+                <div>
+                    <h1 className="text-3xl font-bold mb-2">Welcome back, {userData?.displayName}!</h1>
+                    <p className="text-base-content/70">Track your orders and manage your account</p>
                 </div>
 
-                {/* Recent Payments */}
-                <div className="card bg-base-200">
-                    <div className="card-body">
-                        <h2 className="card-title text-2xl mb-4">
-                            <CreditCard className="w-6 h-6" />
-                            Recent Payments
-                        </h2>
-                        <DataTable
-                            columns={paymentColumns}
-                            data={tableData.recentPayments}
-                            itemsPerPage={5}
-                            emptyMessage="No payments found"
-                            EmptyIcon={CreditCard}
-                        />
-                    </div>
+                {/* Stats Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <StatsCard
+                        title="Total Orders"
+                        value={stats.totalOrders.toLocaleString()}
+                        icon={ShoppingBag}
+                        trend="up"
+                    />
+                    <StatsCard
+                        title="Pending Orders"
+                        value={stats.pendingOrders.toLocaleString()}
+                        icon={TrendingUp}
+                        trend="up"
+                    />
+                    <StatsCard
+                        title="Completed Orders"
+                        value={stats.completedOrders.toLocaleString()}
+                        icon={Package}
+                        trend="up"
+                    />
+                    <StatsCard
+                        title="Total Spent"
+                        value={`$${stats.totalSpent.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                        icon={DollarSign}
+                        trend="up"
+                    />
                 </div>
 
-                {/* Saved Items / Wishlist */}
-                <div className="card bg-base-200">
-                    <div className="card-body">
-                        <h2 className="card-title text-2xl mb-4">
-                            <Package className="w-6 h-6 text-warning" />
-                            Wishlist Items
-                        </h2>
-                        <DataTable
-                            columns={wishlistColumns}
-                            data={tableData.savedItems}
-                            itemsPerPage={5}
-                            emptyMessage="No items in wishlist"
-                            EmptyIcon={Package}
-                        />
+                {/* Charts */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <AreaChart
+                        data={chartData.spendingOverTime}
+                        dataKeys={[
+                            { key: 'spent', name: 'Spent ($)' },
+                            { key: 'orders', name: 'Orders' }
+                        ]}
+                        title="Spending Activity (Last 7 Days)"
+                        colors={['#8b5cf6', '#ec4899']}
+                    />
+                    <PieChart
+                        data={chartData.ordersByStatus}
+                        title="Orders by Status"
+                        colors={['#8b5cf6', '#ec4899', '#06b6d4', '#10b981']}
+                    />
+                </div>
+
+                <div className="grid grid-cols-1 gap-6">
+                    <LineChart
+                        data={chartData.monthlySpending}
+                        dataKeys={[{ key: 'amount', name: 'Spending ($)' }]}
+                        title="Monthly Spending Trend (Last 6 Months)"
+                        colors={['#8b5cf6']}
+                    />
+                </div>
+
+                {/* Tables Section */}
+                <div className="grid grid-cols-1 gap-6">
+                    {/* Recent Orders */}
+                    <div className="card bg-base-200">
+                        <div className="card-body">
+                            <h2 className="card-title text-2xl mb-4">
+                                <ShoppingBag className="w-6 h-6" />
+                                Recent Orders
+                            </h2>
+                            <DataTable
+                                columns={orderColumns}
+                                data={tableData.recentOrders}
+                                itemsPerPage={5}
+                                emptyMessage="No orders found"
+                                EmptyIcon={ShoppingBag}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Recent Payments */}
+                    <div className="card bg-base-200">
+                        <div className="card-body">
+                            <h2 className="card-title text-2xl mb-4">
+                                <CreditCard className="w-6 h-6" />
+                                Recent Payments
+                            </h2>
+                            <DataTable
+                                columns={paymentColumns}
+                                data={tableData.recentPayments}
+                                itemsPerPage={5}
+                                emptyMessage="No payments found"
+                                EmptyIcon={CreditCard}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Saved Items / Wishlist */}
+                    <div className="card bg-base-200">
+                        <div className="card-body">
+                            <h2 className="card-title text-2xl mb-4">
+                                <Package className="w-6 h-6 text-warning" />
+                                Wishlist Items
+                            </h2>
+                            <DataTable
+                                columns={wishlistColumns}
+                                data={tableData.savedItems}
+                                itemsPerPage={5}
+                                emptyMessage="No items in wishlist"
+                                EmptyIcon={Package}
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </ProtectedRoute>
     )
 }

@@ -239,7 +239,7 @@ export default function RegisterPage() {
                     initial={{ opacity: 0, x: -50 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.6 }}
-                    className="hidden lg:flex lg:items-center lg:h-full"
+                    className="hidden lg:flex lg:mt-40 lg:h-full"
                 >
                     <div className="space-y-6 w-full">
                         <div className="inline-block px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-semibold mb-4">

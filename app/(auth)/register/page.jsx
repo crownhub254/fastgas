@@ -1,4 +1,3 @@
-// app/register/page.jsx
 'use client'
 
 import { useState } from 'react'
@@ -6,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
-import { Mail, Lock, User, UserCircle, Eye, EyeOff, Upload, ArrowRight, Shield } from 'lucide-react'
+import { Mail, Lock, User, UserCircle, Eye, EyeOff, Upload, ArrowRight, Shield, Phone, Bike } from 'lucide-react'
 import { registerWithEmail, loginWithGoogle } from '@/lib/firebase/auth'
 import { uploadImageToImgBB, validateImage } from '@/utils/imageUpload'
 import toast from 'react-hot-toast'
@@ -16,9 +15,14 @@ export default function RegisterPage() {
     const [formData, setFormData] = useState({
         displayName: '',
         email: '',
+        phoneNumber: '',
         password: '',
         confirmPassword: '',
-        role: 'user'
+        role: 'user',
+        // Rider specific fields
+        vehicleType: '',
+        vehicleNumber: '',
+        licenseNumber: ''
     })
     const [photoFile, setPhotoFile] = useState(null)
     const [photoPreview, setPhotoPreview] = useState('')
@@ -57,6 +61,21 @@ export default function RegisterPage() {
             return
         }
 
+        // Validate phone number (Bangladesh format)
+        const phoneRegex = /^01[3-9]\d{8}$/
+        if (!phoneRegex.test(formData.phoneNumber)) {
+            toast.error('Please enter a valid Bangladesh phone number (01XXXXXXXXX)')
+            return
+        }
+
+        // Validate rider fields if role is rider
+        if (formData.role === 'rider') {
+            if (!formData.vehicleType || !formData.vehicleNumber || !formData.licenseNumber) {
+                toast.error('Please fill in all rider information')
+                return
+            }
+        }
+
         setIsLoading(true)
 
         try {
@@ -90,20 +109,36 @@ export default function RegisterPage() {
                 return
             }
 
+            // Prepare user data
+            const userData = {
+                uid: user.uid,
+                email: user.email,
+                displayName: formData.displayName,
+                phoneNumber: formData.phoneNumber,
+                photoURL: photoURL || user.photoURL || '',
+                role: formData.role,
+                provider: 'email'
+            }
+
+            // Add rider info if role is rider
+            if (formData.role === 'rider') {
+                userData.riderInfo = {
+                    vehicleType: formData.vehicleType,
+                    vehicleNumber: formData.vehicleNumber,
+                    licenseNumber: formData.licenseNumber,
+                    isAvailable: true,
+                    completedDeliveries: 0,
+                    rating: 5.0
+                }
+            }
+
             // Save user to MongoDB
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    uid: user.uid,
-                    email: user.email,
-                    displayName: formData.displayName,
-                    photoURL: photoURL || user.photoURL || '',
-                    role: formData.role,
-                    provider: 'email'
-                })
+                body: JSON.stringify(userData)
             })
 
             const data = await response.json()
@@ -111,7 +146,13 @@ export default function RegisterPage() {
             if (data.success) {
                 toast.success('🎉 Account created successfully!')
                 setTimeout(() => {
-                    router.push('/products')
+                    if (formData.role === 'rider') {
+                        router.push('/dashboard/rider')
+                    } else if (formData.role === 'seller') {
+                        router.push('/dashboard/seller')
+                    } else {
+                        router.push('/products')
+                    }
                 }, 1000)
             } else {
                 toast.error('Failed to save user data. Please try logging in.')
@@ -141,7 +182,21 @@ export default function RegisterPage() {
                 return
             }
 
-            // Check if user exists, if not create with default role
+            // For Google sign-in, we need phone number
+            const phoneNumber = prompt('Please enter your phone number (01XXXXXXXXX):')
+            if (!phoneNumber) {
+                toast.error('Phone number is required')
+                setIsLoading(false)
+                return
+            }
+
+            const phoneRegex = /^01[3-9]\d{8}$/
+            if (!phoneRegex.test(phoneNumber)) {
+                toast.error('Please enter a valid Bangladesh phone number')
+                setIsLoading(false)
+                return
+            }
+
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, {
                 method: 'POST',
                 headers: {
@@ -151,8 +206,9 @@ export default function RegisterPage() {
                     uid: user.uid,
                     email: user.email,
                     displayName: user.displayName,
+                    phoneNumber: phoneNumber,
                     photoURL: user.photoURL || '',
-                    role: 'user', // Default role for Google sign-in
+                    role: 'user',
                     provider: 'google'
                 })
             })
@@ -175,21 +231,10 @@ export default function RegisterPage() {
         }
     }
 
-    const features = [
-        { icon: '🎁', text: 'Exclusive welcome bonus' },
-        { icon: '🚀', text: 'Fast account setup' },
-        { icon: '💳', text: 'Secure payment options' },
-        { icon: '🌟', text: 'Premium member benefits' },
-    ]
-
     return (
-        <div className="min-h-screen flex items-center justify-center section-padding bg-base-200 relative overflow-hidden">
-            {/* Background Decoration */}
-            <div className="absolute top-20 right-10 w-96 h-96 bg-primary/10 rounded-full blur-3xl"></div>
-            <div className="absolute bottom-20 left-10 w-96 h-96 bg-secondary/10 rounded-full blur-3xl"></div>
-
+        <div className="min-h-screen flex items-center justify-center section-padding bg-base-200 relative overflow-hidden py-12">
             <div className="container-custom grid lg:grid-cols-2 gap-12 items-start lg:items-center relative z-10">
-                {/* Left Side - Info */}
+                {/* Left Side - Info (Same as before) */}
                 <motion.div
                     initial={{ opacity: 0, x: -50 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -202,46 +247,13 @@ export default function RegisterPage() {
                         </div>
                         <h1 className="text-5xl font-bold text-base-content leading-tight">
                             Start Your Journey with
-                            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-primary via-secondary to-accent mt-2">
+                            <span className="block text-transparent bg-clip-text bg-linear-to-r from-primary via-secondary to-accent mt-2">
                                 ShopHub
                             </span>
                         </h1>
                         <p className="text-base-content/70 text-xl leading-relaxed">
                             Create your account to unlock premium features, exclusive deals, and a personalized shopping experience.
                         </p>
-
-                        <div className="space-y-4 pt-6">
-                            {features.map((item, idx) => (
-                                <motion.div
-                                    key={idx}
-                                    initial={{ opacity: 0, x: -20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: 0.2 + idx * 0.1 }}
-                                    className="flex items-center gap-4"
-                                >
-                                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center text-2xl">
-                                        {item.icon}
-                                    </div>
-                                    <span className="text-base-content/80 text-lg font-medium">{item.text}</span>
-                                </motion.div>
-                            ))}
-                        </div>
-
-                        <div className="pt-8">
-                            <div className="card bg-base-100 border-2 border-primary/20">
-                                <div className="flex items-start gap-4">
-                                    <div className="text-4xl">👋</div>
-                                    <div>
-                                        <h3 className="font-bold text-base-content mb-2">Already have an account?</h3>
-                                        <p className="text-base-content/60 text-sm mb-3">Sign in to access your account and continue shopping.</p>
-                                        <Link href="/login" className="text-primary font-semibold hover:text-primary/80 transition-colors inline-flex items-center gap-2">
-                                            Sign In Now
-                                            <ArrowRight className="w-4 h-4" />
-                                        </Link>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </motion.div>
 
@@ -253,14 +265,9 @@ export default function RegisterPage() {
                     className="w-full max-w-md mx-auto lg:mx-0"
                 >
                     <div className="card bg-base-100 shadow-2xl">
-                        <div className="text-center mb-8">
-                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary via-secondary to-accent flex items-center justify-center text-3xl mx-auto mb-4 shadow-lg">
-                                🛍️
-                            </div>
-                            <h2 className="text-3xl font-bold text-base-content mb-2">
-                                Create Account
-                            </h2>
-                            <p className="text-base-content/60">Join ShopHub today and start shopping</p>
+                        <div className="text-center mb-6">
+                            <h2 className="text-3xl font-bold text-base-content mb-2">Create Account</h2>
+                            <p className="text-base-content/60">Join ShopHub today</p>
                         </div>
 
                         {/* Profile Photo Upload */}
@@ -268,51 +275,31 @@ export default function RegisterPage() {
                             <div className="relative group">
                                 <div className="w-24 h-24 rounded-full overflow-hidden bg-base-200 flex items-center justify-center border-4 border-base-300 group-hover:border-primary transition-colors relative">
                                     {photoPreview ? (
-                                        <Image
-                                            src={photoPreview}
-                                            alt="Preview"
-                                            fill
-                                            className="object-cover"
-                                        />
+                                        <Image src={photoPreview} alt="Preview" fill className="object-cover" />
                                     ) : (
                                         <UserCircle className="w-16 h-16 text-base-content/30" />
                                     )}
                                 </div>
-                                <label
-                                    htmlFor="photo-upload"
-                                    className="absolute bottom-0 right-0 bg-primary text-primary-content p-2.5 rounded-full cursor-pointer hover:bg-primary/90 transition-all shadow-lg group-hover:scale-110"
-                                >
+                                <label htmlFor="photo-upload" className="absolute bottom-0 right-0 bg-primary text-primary-content p-2.5 rounded-full cursor-pointer hover:bg-primary/90 transition-all shadow-lg group-hover:scale-110">
                                     <Upload className="w-4 h-4" />
-                                    <input
-                                        id="photo-upload"
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={handlePhotoChange}
-                                        className="hidden"
-                                    />
+                                    <input id="photo-upload" type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
                                 </label>
                             </div>
-                            <p className="text-xs text-base-content/60 mt-2">Upload profile photo (optional)</p>
                         </div>
 
-                        <form onSubmit={handleRegister} className="space-y-5">
+                        <form onSubmit={handleRegister} className="space-y-4">
                             {/* Display Name */}
                             <div>
-                                <label htmlFor="displayName" className="block text-sm font-semibold text-base-content mb-2">
-                                    Full Name
-                                </label>
+                                <label className="block text-sm font-semibold text-base-content mb-2">Full Name</label>
                                 <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                        <User className="w-5 h-5 text-base-content/40" />
-                                    </div>
+                                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-base-content/40" />
                                     <input
                                         type="text"
-                                        id="displayName"
                                         name="displayName"
                                         value={formData.displayName}
                                         onChange={handleChange}
                                         required
-                                        className="w-full pl-12 pr-4 py-3.5 rounded-lg bg-base-200 border-2 border-base-300 focus:border-primary focus:bg-base-100 outline-none transition-all text-base-content"
+                                        className="w-full pl-12 pr-4 py-3 rounded-lg bg-base-200 border-2 border-base-300 focus:border-primary focus:bg-base-100 outline-none transition-all"
                                         placeholder="John Doe"
                                     />
                                 </div>
@@ -320,76 +307,133 @@ export default function RegisterPage() {
 
                             {/* Email */}
                             <div>
-                                <label htmlFor="email" className="block text-sm font-semibold text-base-content mb-2">
-                                    Email Address
-                                </label>
+                                <label className="block text-sm font-semibold text-base-content mb-2">Email Address</label>
                                 <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                        <Mail className="w-5 h-5 text-base-content/40" />
-                                    </div>
+                                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-base-content/40" />
                                     <input
                                         type="email"
-                                        id="email"
                                         name="email"
                                         value={formData.email}
                                         onChange={handleChange}
                                         required
-                                        className="w-full pl-12 pr-4 py-3.5 rounded-lg bg-base-200 border-2 border-base-300 focus:border-primary focus:bg-base-100 outline-none transition-all text-base-content"
+                                        className="w-full pl-12 pr-4 py-3 rounded-lg bg-base-200 border-2 border-base-300 focus:border-primary focus:bg-base-100 outline-none transition-all"
                                         placeholder="john@example.com"
                                     />
                                 </div>
                             </div>
 
+                            {/* Phone Number */}
+                            <div>
+                                <label className="block text-sm font-semibold text-base-content mb-2">Phone Number</label>
+                                <div className="relative">
+                                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-base-content/40" />
+                                    <input
+                                        type="tel"
+                                        name="phoneNumber"
+                                        value={formData.phoneNumber}
+                                        onChange={handleChange}
+                                        required
+                                        className="w-full pl-12 pr-4 py-3 rounded-lg bg-base-200 border-2 border-base-300 focus:border-primary focus:bg-base-100 outline-none transition-all"
+                                        placeholder="01XXXXXXXXX"
+                                        pattern="01[3-9]\d{8}"
+                                    />
+                                </div>
+                                <p className="text-xs text-base-content/60 mt-1">Format: 01XXXXXXXXX</p>
+                            </div>
+
                             {/* Role Selection */}
                             <div>
-                                <label htmlFor="role" className="block text-sm font-semibold text-base-content mb-2">
-                                    Account Type
-                                </label>
+                                <label className="block text-sm font-semibold text-base-content mb-2">Account Type</label>
                                 <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                        <Shield className="w-5 h-5 text-base-content/40" />
-                                    </div>
+                                    <Shield className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-base-content/40" />
                                     <select
-                                        id="role"
                                         name="role"
                                         value={formData.role}
                                         onChange={handleChange}
-                                        className="w-full pl-12 pr-4 py-3.5 rounded-lg bg-base-200 border-2 border-base-300 focus:border-primary focus:bg-base-100 outline-none transition-all text-base-content appearance-none cursor-pointer"
+                                        className="w-full pl-12 pr-4 py-3 rounded-lg bg-base-200 border-2 border-base-300 focus:border-primary focus:bg-base-100 outline-none transition-all appearance-none cursor-pointer"
                                     >
                                         <option value="user">User - Shop and browse products</option>
                                         <option value="seller">Seller - List and sell products</option>
+                                        <option value="rider">Rider - Deliver products</option>
                                     </select>
-                                    <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                                        <svg className="w-5 h-5 text-base-content/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                        </svg>
-                                    </div>
                                 </div>
                             </div>
 
+                            {/* Rider Specific Fields */}
+                            {formData.role === 'rider' && (
+                                <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    className="space-y-4 p-4 bg-info/5 border-2 border-info/20 rounded-lg"
+                                >
+                                    <div className="flex items-center gap-2 text-info mb-2">
+                                        <Bike className="w-5 h-5" />
+                                        <span className="font-semibold">Rider Information</span>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-semibold text-base-content mb-2">Vehicle Type</label>
+                                        <select
+                                            name="vehicleType"
+                                            value={formData.vehicleType}
+                                            onChange={handleChange}
+                                            required={formData.role === 'rider'}
+                                            className="w-full px-4 py-3 rounded-lg bg-base-200 border-2 border-base-300 focus:border-primary outline-none"
+                                        >
+                                            <option value="">Select Vehicle Type</option>
+                                            <option value="bike">Motorcycle</option>
+                                            <option value="bicycle">Bicycle</option>
+                                            <option value="car">Car</option>
+                                            <option value="van">Van</option>
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-semibold text-base-content mb-2">Vehicle Number</label>
+                                        <input
+                                            type="text"
+                                            name="vehicleNumber"
+                                            value={formData.vehicleNumber}
+                                            onChange={handleChange}
+                                            required={formData.role === 'rider'}
+                                            className="w-full px-4 py-3 rounded-lg bg-base-200 border-2 border-base-300 focus:border-primary outline-none"
+                                            placeholder="Dhaka Metro Ka-12-3456"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-semibold text-base-content mb-2">Driving License Number</label>
+                                        <input
+                                            type="text"
+                                            name="licenseNumber"
+                                            value={formData.licenseNumber}
+                                            onChange={handleChange}
+                                            required={formData.role === 'rider'}
+                                            className="w-full px-4 py-3 rounded-lg bg-base-200 border-2 border-base-300 focus:border-primary outline-none"
+                                            placeholder="License Number"
+                                        />
+                                    </div>
+                                </motion.div>
+                            )}
+
                             {/* Password */}
                             <div>
-                                <label htmlFor="password" className="block text-sm font-semibold text-base-content mb-2">
-                                    Password
-                                </label>
+                                <label className="block text-sm font-semibold text-base-content mb-2">Password</label>
                                 <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                        <Lock className="w-5 h-5 text-base-content/40" />
-                                    </div>
+                                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-base-content/40" />
                                     <input
                                         type={showPassword ? 'text' : 'password'}
-                                        id="password"
                                         name="password"
                                         value={formData.password}
                                         onChange={handleChange}
                                         required
-                                        className="w-full pl-12 pr-12 py-3.5 rounded-lg bg-base-200 border-2 border-base-300 focus:border-primary focus:bg-base-100 outline-none transition-all text-base-content"
+                                        className="w-full pl-12 pr-12 py-3 rounded-lg bg-base-200 border-2 border-base-300 focus:border-primary focus:bg-base-100 outline-none transition-all"
                                         placeholder="••••••••"
                                     />
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute inset-y-0 right-0 pr-4 flex items-center text-base-content/40 hover:text-base-content"
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-base-content/40"
                                     >
                                         {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                                     </button>
@@ -398,27 +442,22 @@ export default function RegisterPage() {
 
                             {/* Confirm Password */}
                             <div>
-                                <label htmlFor="confirmPassword" className="block text-sm font-semibold text-base-content mb-2">
-                                    Confirm Password
-                                </label>
+                                <label className="block text-sm font-semibold text-base-content mb-2">Confirm Password</label>
                                 <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                        <Lock className="w-5 h-5 text-base-content/40" />
-                                    </div>
+                                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-base-content/40" />
                                     <input
                                         type={showConfirmPassword ? 'text' : 'password'}
-                                        id="confirmPassword"
                                         name="confirmPassword"
                                         value={formData.confirmPassword}
                                         onChange={handleChange}
                                         required
-                                        className="w-full pl-12 pr-12 py-3.5 rounded-lg bg-base-200 border-2 border-base-300 focus:border-primary focus:bg-base-100 outline-none transition-all text-base-content"
+                                        className="w-full pl-12 pr-12 py-3 rounded-lg bg-base-200 border-2 border-base-300 focus:border-primary focus:bg-base-100 outline-none transition-all"
                                         placeholder="••••••••"
                                     />
                                     <button
                                         type="button"
                                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                        className="absolute inset-y-0 right-0 pr-4 flex items-center text-base-content/40 hover:text-base-content"
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-base-content/40"
                                     >
                                         {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                                     </button>
@@ -427,21 +466,12 @@ export default function RegisterPage() {
 
                             {/* Terms & Conditions */}
                             <div className="flex items-start gap-2">
-                                <input
-                                    type="checkbox"
-                                    id="terms"
-                                    required
-                                    className="checkbox checkbox-primary checkbox-sm mt-1"
-                                />
+                                <input type="checkbox" id="terms" required className="checkbox checkbox-primary checkbox-sm mt-1" />
                                 <label htmlFor="terms" className="text-sm text-base-content/70 cursor-pointer">
                                     I agree to the{' '}
-                                    <Link href="/terms" className="text-primary hover:text-primary/80 font-semibold">
-                                        Terms & Conditions
-                                    </Link>
+                                    <Link href="/terms" className="text-primary hover:text-primary/80 font-semibold">Terms & Conditions</Link>
                                     {' '}and{' '}
-                                    <Link href="/privacy" className="text-primary hover:text-primary/80 font-semibold">
-                                        Privacy Policy
-                                    </Link>
+                                    <Link href="/privacy" className="text-primary hover:text-primary/80 font-semibold">Privacy Policy</Link>
                                 </label>
                             </div>
 
@@ -449,7 +479,7 @@ export default function RegisterPage() {
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className="btn-primary w-full flex items-center justify-center gap-3 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="btn-primary w-full flex items-center justify-center gap-3 text-lg disabled:opacity-50"
                             >
                                 {isLoading ? (
                                     <>
@@ -479,7 +509,7 @@ export default function RegisterPage() {
                         <button
                             onClick={handleGoogleRegister}
                             disabled={isLoading}
-                            className="w-full flex items-center justify-center gap-3 bg-base-200 text-base-content py-3.5 rounded-lg font-semibold hover:bg-base-300 transition-all duration-300 border-2 border-base-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full flex items-center justify-center gap-3 bg-base-200 text-base-content py-3.5 rounded-lg font-semibold hover:bg-base-300 transition-all duration-300 border-2 border-base-300"
                         >
                             <svg className="w-5 h-5" viewBox="0 0 24 24">
                                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -493,24 +523,8 @@ export default function RegisterPage() {
                         {/* Sign In Link */}
                         <div className="mt-6 text-center text-sm text-base-content/70">
                             Already have an account?{' '}
-                            <Link href="/login" className="text-primary hover:text-primary/80 font-semibold">
-                                Sign in
-                            </Link>
+                            <Link href="/login" className="text-primary hover:text-primary/80 font-semibold">Sign in</Link>
                         </div>
-                    </div>
-
-                    {/* Trust Badges */}
-                    <div className="grid grid-cols-3 gap-4 mt-8">
-                        {[
-                            { icon: '🔒', text: 'Secure' },
-                            { icon: '⚡', text: 'Fast Setup' },
-                            { icon: '✨', text: 'Free' },
-                        ].map((badge, idx) => (
-                            <div key={idx} className="text-center">
-                                <div className="text-2xl mb-1">{badge.icon}</div>
-                                <div className="text-xs text-base-content/60 font-medium">{badge.text}</div>
-                            </div>
-                        ))}
                     </div>
                 </motion.div>
             </div>

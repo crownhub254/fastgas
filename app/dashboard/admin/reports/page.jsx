@@ -25,7 +25,6 @@ export default function AdminReports() {
 
     const fetchStats = async () => {
         try {
-            // Fetch statistics from your API
             const [ordersRes, usersRes, productsRes, paymentsRes] = await Promise.all([
                 fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders`),
                 fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/users`),
@@ -43,7 +42,6 @@ export default function AdminReports() {
             const products = productsData.products || []
             const payments = paymentsData.payments || []
 
-            // Calculate total revenue from payments (same logic as dashboard)
             const totalRevenue = payments
                 .filter(p => p.status === 'succeeded')
                 .reduce((sum, p) => sum + p.amount, 0)
@@ -60,12 +58,58 @@ export default function AdminReports() {
         }
     }
 
+    // Format date from ISO to readable format
+    const formatDate = (isoDate) => {
+        if (!isoDate) return 'N/A'
+        const date = new Date(isoDate)
+        const dateStr = date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: '2-digit'
+        })
+        const timeStr = date.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        })
+        return `${dateStr}, ${timeStr}`
+    }
+
+    // Convert camelCase to Title Case
+    const toTitleCase = (str) => {
+        return str
+            .replace(/([A-Z])/g, ' $1')
+            .replace(/^./, (s) => s.toUpperCase())
+            .trim()
+    }
+
+    // Fetch user data by UID
+    const fetchUserByUid = async (uid) => {
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/user/${uid}`)
+            const data = await response.json()
+            return data.success ? data.user : null
+        } catch (error) {
+            console.error('Error fetching user:', error)
+            return null
+        }
+    }
+
     const convertToCSV = (data, headers) => {
-        const headerRow = headers.join(',')
+        const headerRow = headers.map(h => toTitleCase(h)).join(',')
         const rows = data.map(row =>
             headers.map(header => {
-                const value = row[header] || ''
-                return typeof value === 'string' && value.includes(',') ? `"${value}"` : value
+                let value = row[header] || 'N/A'
+                // Escape commas, quotes, and newlines
+                if (typeof value === 'string') {
+                    // Replace newlines with spaces
+                    value = value.replace(/\n/g, ' ')
+                    // Wrap in quotes if contains comma, quote, or newline
+                    if (value.includes(',') || value.includes('"')) {
+                        value = `"${value.replace(/"/g, '""')}"`
+                    }
+                }
+                return value
             }).join(',')
         )
         return [headerRow, ...rows].join('\n')
@@ -84,23 +128,83 @@ export default function AdminReports() {
     }
 
     const downloadExcel = async (data, headers, filename) => {
-        // For Excel, we'll create a simple HTML table that Excel can read
-        let htmlContent = '<table><thead><tr>'
+        // Create properly formatted Excel HTML with styling
+        let htmlContent = `
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+    <meta charset="utf-8">
+    <xml>
+        <x:ExcelWorkbook>
+            <x:ExcelWorksheets>
+                <x:ExcelWorksheet>
+                    <x:Name>${filename}</x:Name>
+                    <x:WorksheetOptions>
+                        <x:DisplayGridlines/>
+                        <x:Print>
+                            <x:ValidPrinterInfo/>
+                        </x:Print>
+                    </x:WorksheetOptions>
+                </x:ExcelWorksheet>
+            </x:ExcelWorksheets>
+        </x:ExcelWorkbook>
+    </xml>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+        th {
+            background-color: #4F46E5;
+            color: white;
+            font-weight: bold;
+            padding: 14px 20px;
+            text-align: left;
+            border: 2px solid #3730A3;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+        td {
+            padding: 12px 20px;
+            border: 1px solid #d1d5db;
+            font-size: 12px;
+            vertical-align: top;
+        }
+        tr:nth-child(even) {
+            background-color: #f9fafb;
+        }
+        tr:hover {
+            background-color: #f3f4f6;
+        }
+        .number {
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <table>
+        <thead>
+            <tr>`
+
         headers.forEach(header => {
-            htmlContent += `<th>${header}</th>`
+            htmlContent += `<th>${toTitleCase(header)}</th>`
         })
         htmlContent += '</tr></thead><tbody>'
 
         data.forEach(row => {
             htmlContent += '<tr>'
             headers.forEach(header => {
-                htmlContent += `<td>${row[header] || ''}</td>`
+                const value = row[header] || 'N/A'
+                const isNumber = typeof value === 'string' && (value.startsWith('$') || !isNaN(value))
+                htmlContent += `<td class="${isNumber ? 'number' : ''}">${value}</td>`
             })
             htmlContent += '</tr>'
         })
-        htmlContent += '</tbody></table>'
+        htmlContent += '</tbody></table></body></html>'
 
-        const blob = new Blob([htmlContent], { type: 'application/vnd.ms-excel' })
+        const blob = new Blob([htmlContent], {
+            type: 'application/vnd.ms-excel;charset=utf-8'
+        })
         const link = document.createElement('a')
         const url = URL.createObjectURL(blob)
         link.setAttribute('href', url)
@@ -118,22 +222,50 @@ export default function AdminReports() {
             const data = await response.json()
 
             if (data.success) {
-                const headers = ['orderId', 'customerName', 'total', 'status', 'paymentStatus', 'date', 'paymentMethod']
-                const exportData = data.orders.map(order => ({
-                    orderId: order.orderId,
-                    customerName: order.customerName || 'N/A',
-                    total: order.total,
-                    status: order.status,
-                    paymentStatus: order.paymentStatus,
-                    date: order.date || order.createdAt,
-                    paymentMethod: order.paymentMethod
-                }))
+                // Fetch user details for each order
+                const ordersWithUserData = await Promise.all(
+                    data.orders.map(async (order) => {
+                        const user = await fetchUserByUid(order.userId)
+
+                        // Get product details from items
+                        const productNames = order.items?.map(item => item.name).join('; ') || 'N/A'
+                        const productQuantities = order.items?.map(item => `${item.name} (x${item.quantity})`).join('; ') || 'N/A'
+
+                        return {
+                            orderId: order.orderId,
+                            customerName: user?.displayName || 'N/A',
+                            customerEmail: user?.email || 'N/A',
+                            customerPhone: user?.phoneNumber || 'N/A',
+                            products: productNames,
+                            quantities: productQuantities,
+                            itemsCount: order.items?.length || 0,
+                            subtotal: `$${order.subtotal?.toFixed(2) || '0.00'}`,
+                            shipping: `$${order.shipping?.toFixed(2) || '0.00'}`,
+                            tax: `$${order.tax?.toFixed(2) || '0.00'}`,
+                            total: `$${order.total?.toFixed(2) || '0.00'}`,
+                            paymentMethod: order.paymentMethod || 'N/A',
+                            paymentStatus: order.paymentStatus || 'N/A',
+                            orderStatus: order.status || 'N/A',
+                            street: order.shippingAddress?.street || 'N/A',
+                            city: order.shippingAddress?.city || 'N/A',
+                            district: order.shippingAddress?.district || 'N/A',
+                            division: order.shippingAddress?.division || 'N/A',
+                            zipCode: order.shippingAddress?.zipCode || 'N/A',
+                            country: order.shippingAddress?.country || 'N/A',
+                            fullAddress: `${order.shippingAddress?.street || ''}, ${order.shippingAddress?.city || ''}, ${order.shippingAddress?.district || ''}, ${order.shippingAddress?.division || ''} - ${order.shippingAddress?.zipCode || ''}, ${order.shippingAddress?.country || ''}`.trim(),
+                            orderDate: formatDate(order.createdAt),
+                            lastUpdated: formatDate(order.updatedAt)
+                        }
+                    })
+                )
+
+                const headers = ['orderId', 'customerName', 'customerEmail', 'customerPhone', 'products', 'quantities', 'itemsCount', 'subtotal', 'shipping', 'tax', 'total', 'paymentMethod', 'paymentStatus', 'orderStatus', 'street', 'city', 'district', 'division', 'zipCode', 'country', 'fullAddress', 'orderDate', 'lastUpdated']
 
                 if (format === 'csv') {
-                    const csv = convertToCSV(exportData, headers)
-                    downloadCSV(csv, 'orders')
+                    const csv = convertToCSV(ordersWithUserData, headers)
+                    downloadCSV(csv, 'orders_report')
                 } else {
-                    await downloadExcel(exportData, headers, 'orders')
+                    await downloadExcel(ordersWithUserData, headers, 'orders_report')
                 }
                 toast.success(`Orders exported as ${format.toUpperCase()}!`)
             }
@@ -152,21 +284,31 @@ export default function AdminReports() {
             const data = await response.json()
 
             if (data.success) {
-                const headers = ['uid', 'email', 'displayName', 'role', 'provider', 'createdAt']
-                const exportData = data.users.map(user => ({
-                    uid: user.uid,
-                    email: user.email,
-                    displayName: user.displayName,
-                    role: user.role,
-                    provider: user.provider,
-                    createdAt: user.createdAt
-                }))
+                const headers = ['userId', 'displayName', 'email', 'phoneNumber', 'role', 'provider', 'photoURL', 'accountCreated', 'lastUpdated', 'accountAge']
+                const exportData = data.users.map(user => {
+                    const createdDate = new Date(user.createdAt)
+                    const now = new Date()
+                    const daysSinceCreation = Math.floor((now - createdDate) / (1000 * 60 * 60 * 24))
+
+                    return {
+                        userId: user.uid || 'N/A',
+                        displayName: user.displayName || 'N/A',
+                        email: user.email || 'N/A',
+                        phoneNumber: user.phoneNumber || 'N/A',
+                        role: user.role || 'user',
+                        provider: user.provider || 'N/A',
+                        photoURL: user.photoURL || 'N/A',
+                        accountCreated: formatDate(user.createdAt),
+                        lastUpdated: formatDate(user.updatedAt),
+                        accountAge: `${daysSinceCreation} days`
+                    }
+                })
 
                 if (format === 'csv') {
                     const csv = convertToCSV(exportData, headers)
-                    downloadCSV(csv, 'users')
+                    downloadCSV(csv, 'users_report')
                 } else {
-                    await downloadExcel(exportData, headers, 'users')
+                    await downloadExcel(exportData, headers, 'users_report')
                 }
                 toast.success(`Users exported as ${format.toUpperCase()}!`)
             }
@@ -185,23 +327,35 @@ export default function AdminReports() {
             const data = await response.json()
 
             if (data.success) {
-                const headers = ['id', 'name', 'price', 'category', 'stock', 'rating', 'sellerName', 'createdAt']
-                const exportData = data.products.map(product => ({
-                    id: product.id,
-                    name: product.name,
-                    price: product.price,
-                    category: product.category,
-                    stock: product.stock,
-                    rating: product.rating,
-                    sellerName: product.sellerName,
-                    createdAt: product.createdAt
-                }))
+                const headers = ['productId', 'productName', 'category', 'price', 'stock', 'stockStatus', 'rating', 'reviewsCount', 'dateAdded', 'lastUpdated']
+                const exportData = data.products.map(product => {
+                    // Get stock status
+                    const stock = product.stock || 0
+                    let stockStatus = 'Out of Stock'
+                    if (stock > 50) stockStatus = 'In Stock'
+                    else if (stock > 10) stockStatus = 'Low Stock'
+                    else if (stock > 0) stockStatus = 'Very Low Stock'
+
+
+                    return {
+                        productId: product.id || product._id || 'N/A',
+                        productName: product.name || 'N/A',
+                        category: product.category || 'N/A',
+                        price: `$${product.price?.toFixed(2) || '0.00'}`,
+                        stock: stock,
+                        stockStatus: stockStatus,
+                        rating: product.rating?.toFixed(1) || '0.0',
+                        reviewsCount: product.reviews?.length || 0,
+                        dateAdded: formatDate(product.createdAt),
+                        lastUpdated: formatDate(product.updatedAt)
+                    }
+                })
 
                 if (format === 'csv') {
                     const csv = convertToCSV(exportData, headers)
-                    downloadCSV(csv, 'products')
+                    downloadCSV(csv, 'products_report')
                 } else {
-                    await downloadExcel(exportData, headers, 'products')
+                    await downloadExcel(exportData, headers, 'products_report')
                 }
                 toast.success(`Products exported as ${format.toUpperCase()}!`)
             }
@@ -216,26 +370,55 @@ export default function AdminReports() {
     const exportPayments = async (format) => {
         setLoading(true)
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments`)
-            const data = await response.json()
+            const [paymentsRes, ordersRes] = await Promise.all([
+                fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments`),
+                fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders`)
+            ])
 
-            if (data.success) {
-                const headers = ['transactionId', 'orderId', 'amount', 'status', 'paymentMethod', 'currency', 'createdAt']
-                const exportData = data.payments.map(payment => ({
-                    transactionId: payment.transactionId,
-                    orderId: payment.orderId,
-                    amount: payment.amount,
-                    status: payment.status,
-                    paymentMethod: payment.paymentMethod,
-                    currency: payment.currency,
-                    createdAt: payment.createdAt
-                }))
+            const paymentsData = await paymentsRes.json()
+            const ordersData = await ordersRes.json()
+
+            if (paymentsData.success && ordersData.success) {
+                // Create order lookup map
+                const orderMap = {}
+                ordersData.orders.forEach(order => {
+                    orderMap[order.orderId] = order
+                })
+
+                // Fetch user details for each payment
+                const paymentsWithDetails = await Promise.all(
+                    paymentsData.payments.map(async (payment) => {
+                        const order = orderMap[payment.orderId]
+                        const user = order ? await fetchUserByUid(order.userId) : null
+
+                        // Get order items summary
+                        const itemsSummary = order?.items?.map(item => `${item.name} (x${item.quantity})`).join('; ') || 'N/A'
+
+                        return {
+                            paymentId: payment._id || 'N/A',
+                            transactionId: payment.transactionId || 'N/A',
+                            orderId: payment.orderId || 'N/A',
+                            customerName: user?.displayName || 'N/A',
+                            customerEmail: user?.email || 'N/A',
+                            orderItems: itemsSummary,
+                            amount: `$${payment.amount?.toFixed(2) || '0.00'}`,
+                            currency: (payment.currency || 'usd').toUpperCase(),
+                            paymentMethod: payment.paymentMethod || 'N/A',
+                            status: payment.status || 'N/A',
+                            orderStatus: order?.status || 'N/A',
+                            paymentDate: formatDate(payment.createdAt),
+                            processingTime: formatDate(payment.updatedAt)
+                        }
+                    })
+                )
+
+                const headers = ['paymentId', 'transactionId', 'orderId', 'customerName', 'customerEmail', 'orderItems', 'amount', 'currency', 'paymentMethod', 'status', 'orderStatus', 'paymentDate', 'processingTime']
 
                 if (format === 'csv') {
-                    const csv = convertToCSV(exportData, headers)
-                    downloadCSV(csv, 'payments')
+                    const csv = convertToCSV(paymentsWithDetails, headers)
+                    downloadCSV(csv, 'payments_report')
                 } else {
-                    await downloadExcel(exportData, headers, 'payments')
+                    await downloadExcel(paymentsWithDetails, headers, 'payments_report')
                 }
                 toast.success(`Payments exported as ${format.toUpperCase()}!`)
             }
@@ -250,26 +433,57 @@ export default function AdminReports() {
     const exportTransactions = async (format) => {
         setLoading(true)
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments`)
-            const data = await response.json()
+            const [paymentsRes, ordersRes] = await Promise.all([
+                fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments`),
+                fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders`)
+            ])
 
-            if (data.success) {
-                const headers = ['transactionId', 'orderId', 'amount', 'status', 'paymentMethod', 'currency', 'createdAt']
-                const exportData = data.payments.map(payment => ({
-                    transactionId: payment.transactionId,
-                    orderId: payment.orderId,
-                    amount: payment.amount,
-                    status: payment.status,
-                    paymentMethod: payment.paymentMethod,
-                    currency: payment.currency,
-                    createdAt: payment.createdAt
-                }))
+            const paymentsData = await paymentsRes.json()
+            const ordersData = await ordersRes.json()
+
+            if (paymentsData.success && ordersData.success) {
+                const orderMap = {}
+                ordersData.orders.forEach(order => {
+                    orderMap[order.orderId] = order
+                })
+
+                const transactionsWithDetails = await Promise.all(
+                    paymentsData.payments.map(async (payment) => {
+                        const order = orderMap[payment.orderId]
+                        const user = order ? await fetchUserByUid(order.userId) : null
+
+                        const itemsSummary = order?.items?.map(item => `${item.name} (x${item.quantity})`).join('; ') || 'N/A'
+
+                        return {
+                            transactionId: payment.transactionId || 'N/A',
+                            orderId: payment.orderId || 'N/A',
+                            customerName: user?.displayName || 'N/A',
+                            customerEmail: user?.email || 'N/A',
+                            customerPhone: user?.phoneNumber || 'N/A',
+                            orderItems: itemsSummary,
+                            itemsCount: order?.items?.length || 0,
+                            subtotal: order ? `$${order.subtotal?.toFixed(2) || '0.00'}` : 'N/A',
+                            tax: order ? `$${order.tax?.toFixed(2) || '0.00'}` : 'N/A',
+                            shipping: order ? `$${order.shipping?.toFixed(2) || '0.00'}` : 'N/A',
+                            totalAmount: `$${payment.amount?.toFixed(2) || '0.00'}`,
+                            currency: (payment.currency || 'usd').toUpperCase(),
+                            paymentMethod: payment.paymentMethod || 'N/A',
+                            transactionStatus: payment.status || 'N/A',
+                            orderStatus: order?.status || 'N/A',
+                            paymentStatus: order?.paymentStatus || 'N/A',
+                            transactionDate: formatDate(payment.createdAt),
+                            lastUpdated: formatDate(payment.updatedAt)
+                        }
+                    })
+                )
+
+                const headers = ['transactionId', 'orderId', 'customerName', 'customerEmail', 'customerPhone', 'orderItems', 'itemsCount', 'subtotal', 'tax', 'shipping', 'totalAmount', 'currency', 'paymentMethod', 'transactionStatus', 'orderStatus', 'paymentStatus', 'transactionDate', 'lastUpdated']
 
                 if (format === 'csv') {
-                    const csv = convertToCSV(exportData, headers)
-                    downloadCSV(csv, 'transactions')
+                    const csv = convertToCSV(transactionsWithDetails, headers)
+                    downloadCSV(csv, 'transactions_report')
                 } else {
-                    await downloadExcel(exportData, headers, 'transactions')
+                    await downloadExcel(transactionsWithDetails, headers, 'transactions_report')
                 }
                 toast.success(`Transactions exported as ${format.toUpperCase()}!`)
             }
@@ -504,10 +718,6 @@ export default function AdminReports() {
                                 <button className="btn btn-lg bg-white text-primary hover:bg-white/90 gap-2">
                                     <Download className="w-5 h-5" />
                                     Export All (CSV)
-                                </button>
-                                <button className="btn btn-lg bg-white text-primary hover:bg-white/90 gap-2">
-                                    <Download className="w-5 h-5" />
-                                    Export All (Excel)
                                 </button>
                             </div>
                         </div>

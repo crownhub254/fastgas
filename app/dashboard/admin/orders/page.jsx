@@ -238,7 +238,7 @@ export default function AdminOrdersPage() {
                         key={filter.value}
                         onClick={() => setStatusFilter(filter.value)}
                         className={`px-4 py-2 rounded-lg font-semibold transition-all whitespace-nowrap ${statusFilter === filter.value
-                                ? 'bg-gradient-to-r from-primary to-secondary text-primary-content shadow-lg'
+                                ? 'bg-linear-to-r from-primary to-secondary text-primary-content shadow-lg'
                                 : 'bg-base-200 text-base-content hover:bg-base-300'
                             }`}
                     >

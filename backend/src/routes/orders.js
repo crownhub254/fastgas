@@ -1,3 +1,4 @@
+// backend/src/routes/orders.js - UPDATED with rider functionality
 const express = require('express');
 const router = express.Router();
 const Order = require('../models/Order');
@@ -300,6 +301,28 @@ router.post('/', async (req, res) => {
         res.status(500).json({
             success: false,
             error: error.message || 'Failed to create order'
+        });
+    }
+});
+
+// Get all orders (admin only - add to existing routes)
+router.get('/', async (req, res) => {
+    try {
+        const orders = await Order.find()
+            .sort({ createdAt: -1 })
+            .limit(1000); // Limit to recent 1000 orders
+
+        console.log(`Found ${orders.length} total orders`);
+        res.status(200).json({
+            success: true,
+            count: orders.length,
+            orders
+        });
+    } catch (error) {
+        console.error('Get all orders error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Failed to get orders'
         });
     }
 });

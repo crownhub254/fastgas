@@ -19,7 +19,6 @@ export default function RegisterPage() {
         password: '',
         confirmPassword: '',
         role: 'user',
-        // Rider specific fields
         vehicleType: '',
         vehicleNumber: '',
         licenseNumber: ''
@@ -51,6 +50,7 @@ export default function RegisterPage() {
     const handleRegister = async (e) => {
         e.preventDefault()
 
+        // Validation
         if (formData.password !== formData.confirmPassword) {
             toast.error('Passwords do not match')
             return
@@ -61,14 +61,21 @@ export default function RegisterPage() {
             return
         }
 
-        // Validate phone number (Bangladesh format)
+        // Validate phone number
         const phoneRegex = /^01[3-9]\d{8}$/
-        if (!phoneRegex.test(formData.phoneNumber)) {
+        const cleanPhone = formData.phoneNumber.trim()
+
+        if (!cleanPhone) {
+            toast.error('Phone number is required')
+            return
+        }
+
+        if (!phoneRegex.test(cleanPhone)) {
             toast.error('Please enter a valid Bangladesh phone number (01XXXXXXXXX)')
             return
         }
 
-        // Validate rider fields if role is rider
+        // Validate rider fields
         if (formData.role === 'rider') {
             if (!formData.vehicleType || !formData.vehicleNumber || !formData.licenseNumber) {
                 toast.error('Please fill in all rider information')
@@ -79,12 +86,12 @@ export default function RegisterPage() {
         setIsLoading(true)
 
         try {
-            // Upload photo to ImgBB if provided
+            // Upload photo
             let photoURL = ''
             if (photoFile) {
-                toast.loading('Uploading profile photo...')
+                const uploadToast = toast.loading('Uploading profile photo...')
                 const uploadResult = await uploadImageToImgBB(photoFile)
-                toast.dismiss()
+                toast.dismiss(uploadToast)
 
                 if (uploadResult.success) {
                     photoURL = uploadResult.url
@@ -94,14 +101,14 @@ export default function RegisterPage() {
             }
 
             // Register with Firebase
-            toast.loading('Creating your account...')
+            const registerToast = toast.loading('Creating your account...')
             const { user, error } = await registerWithEmail(
                 formData.email,
                 formData.password,
                 formData.displayName
             )
 
-            toast.dismiss()
+            toast.dismiss(registerToast)
 
             if (error) {
                 toast.error(error)
@@ -109,30 +116,41 @@ export default function RegisterPage() {
                 return
             }
 
-            // Prepare user data
+            if (!user) {
+                toast.error('Failed to create user account')
+                setIsLoading(false)
+                return
+            }
+
+            // Prepare user data with explicit phone number
             const userData = {
                 uid: user.uid,
                 email: user.email,
-                displayName: formData.displayName,
-                phoneNumber: formData.phoneNumber,
+                displayName: formData.displayName.trim(),
+                phoneNumber: cleanPhone, // Use the cleaned phone number
                 photoURL: photoURL || user.photoURL || '',
                 role: formData.role,
                 provider: 'email'
             }
 
-            // Add rider info if role is rider
+            // Add rider info if applicable
             if (formData.role === 'rider') {
                 userData.riderInfo = {
                     vehicleType: formData.vehicleType,
-                    vehicleNumber: formData.vehicleNumber,
-                    licenseNumber: formData.licenseNumber,
+                    vehicleNumber: formData.vehicleNumber.trim(),
+                    licenseNumber: formData.licenseNumber.trim(),
                     isAvailable: true,
                     completedDeliveries: 0,
                     rating: 5.0
                 }
             }
 
-            // Save user to MongoDB
+            // Debug: Log the data being sent
+            console.log('📤 Sending user data to backend:', userData)
+            console.log('📞 Phone number being sent:', userData.phoneNumber)
+
+            // Save to MongoDB
+            const saveToast = toast.loading('Saving your information...')
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, {
                 method: 'POST',
                 headers: {
@@ -141,7 +159,18 @@ export default function RegisterPage() {
                 body: JSON.stringify(userData)
             })
 
+            toast.dismiss(saveToast)
+
+            if (!response.ok) {
+                const errorData = await response.json()
+                console.error('❌ Backend error:', errorData)
+                toast.error(errorData.error || 'Failed to save user data')
+                setIsLoading(false)
+                return
+            }
+
             const data = await response.json()
+            console.log('✅ Backend response:', data)
 
             if (data.success) {
                 toast.success('🎉 Account created successfully!')
@@ -155,14 +184,11 @@ export default function RegisterPage() {
                     }
                 }, 1000)
             } else {
-                toast.error('Failed to save user data. Please try logging in.')
-                setTimeout(() => {
-                    router.push('/login')
-                }, 2000)
+                toast.error(data.error || 'Failed to save user data')
             }
         } catch (error) {
+            console.error('❌ Registration error:', error)
             toast.error('Registration failed. Please try again.')
-            console.error('Registration error:', error)
         } finally {
             setIsLoading(false)
         }
@@ -171,10 +197,10 @@ export default function RegisterPage() {
     const handleGoogleRegister = async () => {
         setIsLoading(true)
         try {
-            toast.loading('Signing in with Google...')
+            const googleToast = toast.loading('Signing in with Google...')
             const { user, error } = await loginWithGoogle()
 
-            toast.dismiss()
+            toast.dismiss(googleToast)
 
             if (error) {
                 toast.error(error)
@@ -182,38 +208,64 @@ export default function RegisterPage() {
                 return
             }
 
-            // For Google sign-in, we need phone number
-            const phoneNumber = prompt('Please enter your phone number (01XXXXXXXXX):')
+            if (!user) {
+                toast.error('Failed to sign in with Google')
+                setIsLoading(false)
+                return
+            }
+
+            // Get phone number from user
+            const phoneNumber = window.prompt('Please enter your phone number (01XXXXXXXXX):')
+
             if (!phoneNumber) {
-                toast.error('Phone number is required')
+                toast.error('Phone number is required for registration')
                 setIsLoading(false)
                 return
             }
 
             const phoneRegex = /^01[3-9]\d{8}$/
-            if (!phoneRegex.test(phoneNumber)) {
-                toast.error('Please enter a valid Bangladesh phone number')
+            const cleanPhone = phoneNumber.trim()
+
+            if (!phoneRegex.test(cleanPhone)) {
+                toast.error('Please enter a valid Bangladesh phone number (01XXXXXXXXX)')
                 setIsLoading(false)
                 return
             }
 
+            const userData = {
+                uid: user.uid,
+                email: user.email,
+                displayName: user.displayName || user.email.split('@')[0],
+                phoneNumber: cleanPhone, // Cleaned phone number
+                photoURL: user.photoURL || '',
+                role: 'user',
+                provider: 'google'
+            }
+
+            console.log('📤 Sending Google user data to backend:', userData)
+            console.log('📞 Phone number being sent:', userData.phoneNumber)
+
+            const saveToast = toast.loading('Saving your information...')
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    uid: user.uid,
-                    email: user.email,
-                    displayName: user.displayName,
-                    phoneNumber: phoneNumber,
-                    photoURL: user.photoURL || '',
-                    role: 'user',
-                    provider: 'google'
-                })
+                body: JSON.stringify(userData)
             })
 
+            toast.dismiss(saveToast)
+
+            if (!response.ok) {
+                const errorData = await response.json()
+                console.error('❌ Backend error:', errorData)
+                toast.error(errorData.error || 'Failed to save user data')
+                setIsLoading(false)
+                return
+            }
+
             const data = await response.json()
+            console.log('✅ Backend response:', data)
 
             if (data.success) {
                 toast.success('✨ Signed in with Google successfully!')
@@ -221,11 +273,11 @@ export default function RegisterPage() {
                     router.push('/products')
                 }, 1000)
             } else {
-                toast.error('Failed to save user data')
+                toast.error(data.error || 'Failed to save user data')
             }
         } catch (error) {
+            console.error('❌ Google sign-in error:', error)
             toast.error('Google sign-in failed')
-            console.error('Google sign-in error:', error)
         } finally {
             setIsLoading(false)
         }
@@ -234,7 +286,7 @@ export default function RegisterPage() {
     return (
         <div className="min-h-screen flex items-center justify-center section-padding bg-base-200 relative overflow-hidden py-12">
             <div className="container-custom grid lg:grid-cols-2 gap-12 items-start lg:items-center relative z-10">
-                {/* Left Side - Info (Same as before) */}
+                {/* Left Side - Info */}
                 <motion.div
                     initial={{ opacity: 0, x: -50 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -324,7 +376,9 @@ export default function RegisterPage() {
 
                             {/* Phone Number */}
                             <div>
-                                <label className="block text-sm font-semibold text-base-content mb-2">Phone Number</label>
+                                <label className="block text-sm font-semibold text-base-content mb-2">
+                                    Phone Number <span className="text-error">*</span>
+                                </label>
                                 <div className="relative">
                                     <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-base-content/40" />
                                     <input
@@ -336,9 +390,12 @@ export default function RegisterPage() {
                                         className="w-full pl-12 pr-4 py-3 rounded-lg bg-base-200 border-2 border-base-300 focus:border-primary focus:bg-base-100 outline-none transition-all"
                                         placeholder="01XXXXXXXXX"
                                         pattern="01[3-9]\d{8}"
+                                        title="Please enter a valid Bangladesh phone number (01XXXXXXXXX)"
                                     />
                                 </div>
-                                <p className="text-xs text-base-content/60 mt-1">Format: 01XXXXXXXXX</p>
+                                <p className="text-xs text-base-content/60 mt-1">
+                                    Format: 01XXXXXXXXX (Required)
+                                </p>
                             </div>
 
                             {/* Role Selection */}
@@ -427,6 +484,7 @@ export default function RegisterPage() {
                                         value={formData.password}
                                         onChange={handleChange}
                                         required
+                                        minLength={6}
                                         className="w-full pl-12 pr-12 py-3 rounded-lg bg-base-200 border-2 border-base-300 focus:border-primary focus:bg-base-100 outline-none transition-all"
                                         placeholder="••••••••"
                                     />
@@ -479,7 +537,7 @@ export default function RegisterPage() {
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className="btn-primary w-full flex items-center justify-center gap-3 text-lg disabled:opacity-50"
+                                className="btn-primary w-full flex items-center justify-center gap-3 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isLoading ? (
                                     <>
@@ -509,7 +567,7 @@ export default function RegisterPage() {
                         <button
                             onClick={handleGoogleRegister}
                             disabled={isLoading}
-                            className="w-full flex items-center justify-center gap-3 bg-base-200 text-base-content py-3.5 rounded-lg font-semibold hover:bg-base-300 transition-all duration-300 border-2 border-base-300"
+                            className="w-full flex items-center justify-center gap-3 bg-base-200 text-base-content py-3.5 rounded-lg font-semibold hover:bg-base-300 transition-all duration-300 border-2 border-base-300 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <svg className="w-5 h-5" viewBox="0 0 24 24">
                                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />

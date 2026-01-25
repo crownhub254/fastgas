@@ -6,12 +6,21 @@ const NotificationService = require('../utils/notificationService');
 // Register or update user from Firebase (with duplicate prevention and notifications)
 router.post('/register', async (req, res) => {
     try {
-        const { uid, email, displayName, photoURL, role, provider } = req.body;
+
+        // IMPORTANT: Extract phoneNumber and riderInfo from req.body
+        const { uid, email, displayName, photoURL, role, provider, phoneNumber, riderInfo } = req.body;
 
         if (!uid || !email) {
             return res.status(400).json({
                 success: false,
                 error: 'UID and email are required'
+            });
+        }
+
+        if (!phoneNumber) {
+            return res.status(400).json({
+                success: false,
+                error: 'Phone number is required'
             });
         }
 
@@ -27,8 +36,33 @@ router.post('/register', async (req, res) => {
                 hasChanges = true;
             }
 
+            if (phoneNumber && user.phoneNumber !== phoneNumber) {
+                user.phoneNumber = phoneNumber;
+                hasChanges = true;
+            }
+
             if (photoURL && user.photoURL !== photoURL) {
                 user.photoURL = photoURL;
+                hasChanges = true;
+            }
+
+            // Update role if changed
+            if (role && user.role !== role) {
+                user.role = role;
+                hasChanges = true;
+            }
+
+            // Update rider info if provided
+            if (role === 'rider' && riderInfo) {
+                user.riderInfo = {
+                    vehicleType: riderInfo.vehicleType,
+                    vehicleNumber: riderInfo.vehicleNumber,
+                    licenseNumber: riderInfo.licenseNumber,
+                    isAvailable: riderInfo.isAvailable !== undefined ? riderInfo.isAvailable : true,
+                    completedDeliveries: riderInfo.completedDeliveries || user.riderInfo?.completedDeliveries || 0,
+                    rating: riderInfo.rating || user.riderInfo?.rating || 5.0,
+                    currentLocation: riderInfo.currentLocation || user.riderInfo?.currentLocation || null
+                };
                 hasChanges = true;
             }
 
@@ -49,14 +83,32 @@ router.post('/register', async (req, res) => {
             }
         } else {
             // Create new user
-            user = new User({
+            const userData = {
                 uid,
                 email,
                 displayName: displayName || email.split('@')[0],
+                phoneNumber, // CRITICAL: Include phoneNumber
                 photoURL: photoURL || '',
                 role: role || 'user',
                 provider: provider || 'email'
-            });
+            };
+
+            // Add rider info if role is rider
+            if (role === 'rider' && riderInfo) {
+                userData.riderInfo = {
+                    vehicleType: riderInfo.vehicleType,
+                    vehicleNumber: riderInfo.vehicleNumber,
+                    licenseNumber: riderInfo.licenseNumber,
+                    isAvailable: riderInfo.isAvailable !== undefined ? riderInfo.isAvailable : true,
+                    completedDeliveries: riderInfo.completedDeliveries || 0,
+                    rating: riderInfo.rating || 5.0,
+                    currentLocation: riderInfo.currentLocation || null
+                };
+            }
+
+            console.log('Creating new user with data:', userData);
+
+            user = new User(userData);
             await user.save();
             isNewUser = true;
             console.log('New user created:', uid);
@@ -90,6 +142,15 @@ router.post('/register', async (req, res) => {
             return res.status(400).json({
                 success: false,
                 error: 'User with this email already exists'
+            });
+        }
+
+        // Handle validation errors
+        if (error.name === 'ValidationError') {
+            const messages = Object.values(error.errors).map(err => err.message);
+            return res.status(400).json({
+                success: false,
+                error: messages.join(', ')
             });
         }
 
@@ -186,7 +247,7 @@ router.get('/users', async (req, res) => {
 router.patch('/users/:uid', async (req, res) => {
     try {
         const { uid } = req.params;
-        const { displayName, role, photoURL } = req.body;
+        const { displayName, role, photoURL, phoneNumber } = req.body;
 
         const user = await User.findOne({ uid });
 
@@ -199,9 +260,10 @@ router.patch('/users/:uid', async (req, res) => {
 
         // Update allowed fields
         if (displayName) user.displayName = displayName;
+        if (phoneNumber) user.phoneNumber = phoneNumber;
         if (role) {
             // Validate role
-            const validRoles = ['user', 'seller', 'admin'];
+            const validRoles = ['user', 'seller', 'rider', 'admin'];
             if (!validRoles.includes(role)) {
                 return res.status(400).json({
                     success: false,

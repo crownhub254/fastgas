@@ -32,7 +32,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/riders', riderRoutes);
-app.use('/api/users', authRoutes); // For getting riders list
+app.use('/api/users', authRoutes);
 
 // Health Check
 app.get('/', (req, res) => {

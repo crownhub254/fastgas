@@ -1,115 +1,75 @@
+// app/dashboard/admin/orders/page.jsx
 'use client'
 
-import { useEffect, useState } from 'react'
-import { Search, Package, Clock, CheckCircle, Calendar } from 'lucide-react'
-import Image from 'next/image'
+import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
+import { ShoppingCart, Package, Truck, CheckCircle, XCircle, Eye, Filter } from 'lucide-react'
+import DataTable from '@/app/dashboard/components/DataTable'
+import useFirebaseAuth from '@/lib/hooks/useFirebaseAuth'
 import toast from 'react-hot-toast'
-import DataTable from '../../components/DataTable'
-import Loading from '../../loading'
 
-export default function AdminOrders() {
+export default function AdminOrdersPage() {
+    const { user, userData } = useFirebaseAuth()
     const [orders, setOrders] = useState([])
-    const [filteredOrders, setFilteredOrders] = useState([])
-    const [loading, setLoading] = useState(true)
-    const [searchQuery, setSearchQuery] = useState('')
+    const [isLoading, setIsLoading] = useState(true)
     const [statusFilter, setStatusFilter] = useState('all')
 
     useEffect(() => {
-        fetchOrders()
-    }, [])
-
-    useEffect(() => {
-        filterOrders()
-    }, [searchQuery, statusFilter, orders])
+        if (user && userData) {
+            fetchOrders()
+        }
+    }, [user, userData])
 
     const fetchOrders = async () => {
         try {
-            setLoading(true)
+            // Fetch all orders (no user filter for admin)
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders`)
             const data = await response.json()
 
             if (data.success) {
                 setOrders(data.orders || [])
-                setFilteredOrders(data.orders || [])
+            } else {
+                toast.error('Failed to fetch orders')
             }
         } catch (error) {
-            console.error('Failed to fetch orders:', error)
+            console.error('Error fetching orders:', error)
             toast.error('Failed to load orders')
         } finally {
-            setLoading(false)
+            setIsLoading(false)
         }
     }
 
-    const filterOrders = () => {
-        let filtered = orders
-
-        if (statusFilter !== 'all') {
-            filtered = filtered.filter(order => order.status === statusFilter)
+    const getStatusBadge = (status) => {
+        const badges = {
+            processing: { class: 'badge-info', text: 'Processing' },
+            confirmed: { class: 'badge-primary', text: 'Confirmed' },
+            assigned: { class: 'badge-warning', text: 'Assigned' },
+            collected: { class: 'badge-info', text: 'Collected' },
+            in_transit: { class: 'badge-primary', text: 'In Transit' },
+            out_for_delivery: { class: 'badge-secondary', text: 'Out for Delivery' },
+            delivered: { class: 'badge-success', text: 'Delivered' },
+            cancelled: { class: 'badge-error', text: 'Cancelled' }
         }
-
-        if (searchQuery) {
-            const query = searchQuery.toLowerCase()
-            filtered = filtered.filter(order =>
-                order.orderId?.toLowerCase().includes(query) ||
-                order.userId?.toLowerCase().includes(query)
-            )
-        }
-
-        setFilteredOrders(filtered)
+        return badges[status] || { class: 'badge-ghost', text: status }
     }
-
-    const handleUpdateStatus = async (orderId, newStatus) => {
-        try {
-            const response = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/orders/${orderId}/status`,
-                {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ status: newStatus })
-                }
-            )
-
-            const data = await response.json()
-
-            if (data.success) {
-                toast.success('Order status updated')
-                setOrders(orders.map(o =>
-                    o.orderId === orderId ? { ...o, status: newStatus } : o
-                ))
-            } else {
-                toast.error(data.error || 'Failed to update status')
-            }
-        } catch (error) {
-            console.error('Failed to update status:', error)
-            toast.error('Failed to update status')
-        }
-    }
-
-    const statusFilters = [
-        { value: 'all', label: 'All Orders', count: orders.length },
-        { value: 'pending', label: 'Pending', count: orders.filter(o => o.status === 'pending').length },
-        { value: 'processing', label: 'Processing', count: orders.filter(o => o.status === 'processing' || o.status === 'confirmed').length },
-        { value: 'shipped', label: 'Shipped', count: orders.filter(o => o.status === 'shipped').length },
-        { value: 'delivered', label: 'Delivered', count: orders.filter(o => o.status === 'delivered').length }
-    ]
-
-    const totalRevenue = orders
-        .filter(o => o.paymentStatus === 'completed')
-        .reduce((sum, o) => sum + o.total, 0)
 
     const columns = [
         {
             header: 'Order ID',
             accessor: 'orderId',
-            render: (row) => <span className="font-mono text-sm">{row.orderId}</span>
+            render: (row) => (
+                <div className="font-mono text-sm font-semibold text-primary">
+                    #{row.orderId}
+                </div>
+            )
         },
         {
-            header: 'Date',
-            accessor: 'createdAt',
+            header: 'Customer',
+            accessor: 'buyerInfo',
             render: (row) => (
-                <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-base-content/60" />
-                    <span className="text-sm">{new Date(row.createdAt).toLocaleDateString()}</span>
+                <div>
+                    <div className="font-semibold">{row.buyerInfo?.name || 'N/A'}</div>
+                    <div className="text-xs text-base-content/60">{row.buyerInfo?.email}</div>
                 </div>
             )
         },
@@ -117,36 +77,27 @@ export default function AdminOrders() {
             header: 'Items',
             accessor: 'items',
             render: (row) => (
-                <div className="flex items-center gap-2">
-                    {row.items.slice(0, 3).map((item, idx) => (
-                        <div key={idx} className="avatar">
-                            <div className="w-8 h-8 rounded">
-                                {item.image ? (
-                                    <Image src={item.image} alt={item.name} width={32} height={32} className="object-cover" />
-                                ) : (
-                                    <div className="w-full h-full bg-base-300 flex items-center justify-center">
-                                        <Package className="w-4 h-4" />
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    ))}
-                    {row.items.length > 3 && (
-                        <span className="text-xs text-base-content/60">+{row.items.length - 3}</span>
-                    )}
+                <div className="text-sm">
+                    {row.items?.length || 0} item(s)
                 </div>
             )
         },
         {
-            header: 'Total',
+            header: 'Amount',
             accessor: 'total',
-            render: (row) => <span className="font-bold text-primary">${row.total.toFixed(2)}</span>
+            render: (row) => (
+                <div className="font-bold text-success">
+                    ${row.total?.toFixed(2)}
+                </div>
+            )
         },
         {
             header: 'Payment',
             accessor: 'paymentStatus',
             render: (row) => (
-                <span className={`badge ${row.paymentStatus === 'completed' ? 'badge-success' : 'badge-warning'
+                <span className={`badge ${row.paymentStatus === 'completed' ? 'badge-success' :
+                        row.paymentStatus === 'pending' ? 'badge-warning' :
+                            'badge-error'
                     }`}>
                     {row.paymentStatus}
                 </span>
@@ -155,127 +106,170 @@ export default function AdminOrders() {
         {
             header: 'Status',
             accessor: 'status',
+            render: (row) => {
+                const badge = getStatusBadge(row.status)
+                return <span className={`badge ${badge.class}`}>{badge.text}</span>
+            }
+        },
+        {
+            header: 'Rider',
+            accessor: 'riderInfo',
             render: (row) => (
-                <select
-                    className="select select-sm select-bordered"
-                    value={row.status}
-                    onChange={(e) => handleUpdateStatus(row.orderId, e.target.value)}
+                <div className="text-sm">
+                    {row.riderInfo?.name || (
+                        <span className="text-base-content/40">Not assigned</span>
+                    )}
+                </div>
+            )
+        },
+        {
+            header: 'Date',
+            accessor: 'createdAt',
+            render: (row) => (
+                <div className="text-sm">
+                    {new Date(row.createdAt).toLocaleDateString()}
+                </div>
+            )
+        },
+        {
+            header: 'Actions',
+            accessor: 'actions',
+            render: (row) => (
+                <a
+                    href={`/orders/${row.orderId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-sm btn-ghost"
                 >
-                    <option value="pending">Pending</option>
-                    <option value="processing">Processing</option>
-                    <option value="shipped">Shipped</option>
-                    <option value="delivered">Delivered</option>
-                    <option value="cancelled">Cancelled</option>
-                </select>
+                    <Eye className="w-4 h-4" />
+                </a>
             )
         }
     ]
 
-    if (loading) {
-        return (
-           <Loading/>
-        )
+    const filteredOrders = orders.filter(order => {
+        if (statusFilter === 'all') return true
+        return order.status === statusFilter
+    })
+
+    const statusCounts = {
+        all: orders.length,
+        processing: orders.filter(o => o.status === 'processing').length,
+        confirmed: orders.filter(o => o.status === 'confirmed').length,
+        assigned: orders.filter(o => o.status === 'assigned').length,
+        in_transit: orders.filter(o => ['collected', 'in_transit', 'out_for_delivery'].includes(o.status)).length,
+        delivered: orders.filter(o => o.status === 'delivered').length,
+        cancelled: orders.filter(o => o.status === 'cancelled').length
     }
 
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-3xl font-bold mb-2">All Orders</h1>
-                <p className="text-base-content/70">Manage and track all customer orders</p>
+            {/* Header */}
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                    <h1 className="text-3xl font-bold text-base-content flex items-center gap-3">
+                        <ShoppingCart className="w-8 h-8 text-primary" />
+                        All Orders
+                    </h1>
+                    <p className="text-base-content/60 mt-1">
+                        View and manage all customer orders
+                    </p>
+                </div>
+                <button
+                    onClick={fetchOrders}
+                    className="btn btn-primary"
+                >
+                    Refresh Orders
+                </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="card bg-base-200 p-6">
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                            <Package className="w-6 h-6 text-primary" />
-                        </div>
-                        <div>
-                            <p className="text-2xl font-bold">{orders.length}</p>
-                            <p className="text-sm text-base-content/70">Total Orders</p>
-                        </div>
+            {/* Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                <div className="card bg-base-100 shadow-xl">
+                    <div className="text-center">
+                        <div className="text-2xl font-bold text-primary">{statusCounts.all}</div>
+                        <div className="text-xs text-base-content/60">Total Orders</div>
                     </div>
                 </div>
-                <div className="card bg-base-200 p-6">
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-lg bg-warning/10 flex items-center justify-center">
-                            <Clock className="w-6 h-6 text-warning" />
-                        </div>
-                        <div>
-                            <p className="text-2xl font-bold">
-                                {orders.filter(o => o.status === 'pending' || o.status === 'processing').length}
-                            </p>
-                            <p className="text-sm text-base-content/70">Pending</p>
-                        </div>
+                <div className="card bg-base-100 shadow-xl">
+                    <div className="text-center">
+                        <div className="text-2xl font-bold text-info">{statusCounts.processing}</div>
+                        <div className="text-xs text-base-content/60">Processing</div>
                     </div>
                 </div>
-                <div className="card bg-base-200 p-6">
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-lg bg-success/10 flex items-center justify-center">
-                            <CheckCircle className="w-6 h-6 text-success" />
-                        </div>
-                        <div>
-                            <p className="text-2xl font-bold">
-                                {orders.filter(o => o.status === 'delivered').length}
-                            </p>
-                            <p className="text-sm text-base-content/70">Delivered</p>
-                        </div>
+                <div className="card bg-base-100 shadow-xl">
+                    <div className="text-center">
+                        <div className="text-2xl font-bold text-warning">{statusCounts.assigned}</div>
+                        <div className="text-xs text-base-content/60">Assigned</div>
                     </div>
                 </div>
-                <div className="card bg-base-200 p-6">
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-lg bg-info/10 flex items-center justify-center">
-                            <Package className="w-6 h-6 text-info" />
-                        </div>
-                        <div>
-                            <p className="text-2xl font-bold">${totalRevenue.toFixed(2)}</p>
-                            <p className="text-sm text-base-content/70">Revenue</p>
-                        </div>
+                <div className="card bg-base-100 shadow-xl">
+                    <div className="text-center">
+                        <div className="text-2xl font-bold text-primary">{statusCounts.in_transit}</div>
+                        <div className="text-xs text-base-content/60">In Transit</div>
+                    </div>
+                </div>
+                <div className="card bg-base-100 shadow-xl">
+                    <div className="text-center">
+                        <div className="text-2xl font-bold text-success">{statusCounts.delivered}</div>
+                        <div className="text-xs text-base-content/60">Delivered</div>
+                    </div>
+                </div>
+                <div className="card bg-base-100 shadow-xl">
+                    <div className="text-center">
+                        <div className="text-2xl font-bold text-error">{statusCounts.cancelled}</div>
+                        <div className="text-xs text-base-content/60">Cancelled</div>
                     </div>
                 </div>
             </div>
 
+            {/* Filters */}
             <div className="flex gap-3 overflow-x-auto pb-2">
-                {statusFilters.map((filter) => (
+                {[
+                    { value: 'all', label: 'All Orders' },
+                    { value: 'processing', label: 'Processing' },
+                    { value: 'confirmed', label: 'Confirmed' },
+                    { value: 'assigned', label: 'Assigned' },
+                    { value: 'in_transit', label: 'In Transit' },
+                    { value: 'delivered', label: 'Delivered' },
+                    { value: 'cancelled', label: 'Cancelled' }
+                ].map((filter) => (
                     <button
                         key={filter.value}
                         onClick={() => setStatusFilter(filter.value)}
-                        className={`px-6 py-3 rounded-lg font-semibold transition-all duration-200 whitespace-nowrap ${statusFilter === filter.value
-                                ? 'bg-linear-to-r from-primary to-secondary text-primary-content shadow-lg'
+                        className={`px-4 py-2 rounded-lg font-semibold transition-all whitespace-nowrap ${statusFilter === filter.value
+                                ? 'bg-gradient-to-r from-primary to-secondary text-primary-content shadow-lg'
                                 : 'bg-base-200 text-base-content hover:bg-base-300'
                             }`}
                     >
-                        {filter.label} ({filter.count})
+                        {filter.label} ({statusCounts[filter.value] || 0})
                     </button>
                 ))}
             </div>
 
-            <div className="card bg-base-200 p-6">
-                <div className="form-control">
-                    <div className="input">
-                        <span className="">
-                            <Search className="w-5 h-5" />
-                        </span>
-                        <input
-                            type="text"
-                            placeholder="Search by order ID or user ID..."
-                            className="flex-1"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
+            {/* Orders Table */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="card bg-base-100 shadow-xl"
+            >
+                {isLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                        <div className="text-center">
+                            <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                            <p className="text-base-content/70">Loading orders...</p>
+                        </div>
                     </div>
-                </div>
-            </div>
-
-            <div className="card bg-base-200 p-6">
-                <DataTable
-                    columns={columns}
-                    data={filteredOrders}
-                    itemsPerPage={5}
-                    emptyMessage="No orders found"
-                    EmptyIcon={Package}
-                />
-            </div>
+                ) : (
+                    <DataTable
+                        data={filteredOrders}
+                        columns={columns}
+                        itemsPerPage={5}
+                        emptyMessage="No orders found"
+                        EmptyIcon={ShoppingCart}
+                    />
+                )}
+            </motion.div>
         </div>
     )
 }

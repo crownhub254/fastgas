@@ -1,3 +1,4 @@
+// app/dashboard/layout.jsx
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -15,16 +16,21 @@ import {
     Plus,
     ShoppingBag,
     CreditCard,
-    Motorbike,
+    Bike,
     ChevronLeft,
     ChevronRight,
     LogOut,
     Bell,
     Search,
     Menu,
-    X
+    X,
+    ListChecks,
+    DollarSign,
+    Wallet
 } from 'lucide-react'
 import useFirebaseAuth from '@/lib/hooks/useFirebaseAuth'
+import { signOut } from 'firebase/auth'
+import { auth } from '@/lib/firebase/config'
 import Loading from './loading'
 import DashboardNavbar from './components/DashboardNavbar'
 
@@ -56,6 +62,7 @@ export default function DashboardLayout({ children }) {
 
     const fetchNotifications = async () => {
         try {
+            if (!user) return
             const token = await user.getIdToken()
             const response = await fetch('/api/notifications', {
                 headers: {
@@ -73,7 +80,7 @@ export default function DashboardLayout({ children }) {
 
     const handleLogout = async () => {
         try {
-            await auth.signOut()
+            await signOut(auth)
             router.push('/login')
         } catch (error) {
             console.error('Logout error:', error)
@@ -111,6 +118,11 @@ export default function DashboardLayout({ children }) {
                     icon: ShoppingCart,
                 },
                 {
+                    name: 'Assign Riders',
+                    href: '/dashboard/admin/assign-rider',
+                    icon: Bike,
+                },
+                {
                     name: 'System Logs',
                     href: '/dashboard/admin/logs',
                     icon: FileText,
@@ -142,18 +154,39 @@ export default function DashboardLayout({ children }) {
                     icon: Package,
                 },
                 {
-                    name: 'Assign Riders',
-                    href: '/dashboard/seller/assign-rider',
-                    icon: Motorbike,
-                },
-                {
                     name: 'Orders',
                     href: '/dashboard/seller/orders',
                     icon: ShoppingCart,
                 },
                 {
+                    name: 'Assign Riders',
+                    href: '/dashboard/seller/assign-rider',
+                    icon: Bike,
+                },
+                {
                     name: 'Settings',
                     href: '/dashboard/seller/settings',
+                    icon: Settings,
+                }
+            ]
+        }
+
+        if (userData.role === 'rider') {
+            return [
+                ...baseNav,
+                {
+                    name: 'My Tasks',
+                    href: '/dashboard/rider/my-tasks',
+                    icon: ListChecks,
+                },
+                {
+                    name: 'Income',
+                    href: '/dashboard/rider/income',
+                    icon: DollarSign,
+                },
+                {
+                    name: 'Settings',
+                    href: '/dashboard/rider/settings',
                     icon: Settings,
                 }
             ]
@@ -201,15 +234,18 @@ export default function DashboardLayout({ children }) {
             <div className="drawer-content flex flex-col">
                 {/* Navbar */}
                 <DashboardNavbar
+                    user={user}
+                    userData={userData}
                     isCollapsed={isCollapsed}
                     setIsCollapsed={setIsCollapsed}
                     isMobileSidebarOpen={isMobileSidebarOpen}
                     setIsMobileSidebarOpen={setIsMobileSidebarOpen}
                     notifications={notifications}
+                    onLogout={handleLogout}
                 />
 
                 {/* Page Content */}
-                <main className="flex-1 p-4 lg:p-6 bg-base-300">
+                <main className="flex-1 p-4 lg:p-6 bg-base-200 min-h-screen">
                     {children}
                 </main>
             </div>
@@ -224,7 +260,7 @@ export default function DashboardLayout({ children }) {
                 ></label>
 
                 <div
-                    className={`flex min-h-full flex-col bg-base-200 transition-all duration-300 ${isCollapsed ? 'lg:w-20' : 'lg:w-64'
+                    className={`flex min-h-full flex-col bg-base-100 transition-all duration-300 ${isCollapsed ? 'lg:w-20' : 'lg:w-64'
                         } w-64`}
                 >
                     {/* Logo Section */}
@@ -283,7 +319,6 @@ export default function DashboardLayout({ children }) {
                                             } transition-all duration-200`}
                                         data-tip={isCollapsed && window.innerWidth >= 1024 ? item.name : ''}
                                         onClick={() => {
-                                            // Close sidebar on mobile when a link is clicked
                                             if (window.innerWidth < 1024) {
                                                 setIsMobileSidebarOpen(false)
                                             }
@@ -303,20 +338,28 @@ export default function DashboardLayout({ children }) {
                     <div className="p-4 border-t border-base-300">
                         <div className={`flex items-center gap-3 ${isCollapsed && window.innerWidth >= 1024 ? 'justify-center' : ''}`}>
                             <div className="avatar shrink-0">
-                                <div className="w-10 rounded-full ring-2 ring-primary ring-offset-2 ring-offset-base-200">
-                                    <Image
-                                        src={userData?.photoURL || '/default-avatar.png'}
-                                        alt={userData?.displayName || 'User'}
-                                        width={40}
-                                        height={40}
-                                        className="w-full h-full object-cover"
-                                    />
+                                <div className="w-10 rounded-full ring-2 ring-primary ring-offset-2 ring-offset-base-100">
+                                    {userData?.photoURL ? (
+                                        <Image
+                                            src={userData.photoURL}
+                                            alt={userData.displayName || 'User'}
+                                            width={40}
+                                            height={40}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full bg-primary/20 flex items-center justify-center">
+                                            <span className="text-primary font-bold">
+                                                {userData?.displayName?.charAt(0) || 'U'}
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                             {(!isCollapsed || window.innerWidth < 1024) && (
                                 <div className="flex-1 min-w-0">
                                     <div className="text-sm font-semibold truncate">
-                                        {user?.displayName || 'User'}
+                                        {userData?.displayName || 'User'}
                                     </div>
                                     <div className="text-xs text-base-content/60 capitalize truncate">
                                         {userData?.role || 'user'}

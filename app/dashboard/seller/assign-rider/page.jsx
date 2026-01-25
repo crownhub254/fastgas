@@ -6,6 +6,7 @@ import { Bike, Package, MapPin, Phone, Star, CheckCircle, X, Search } from 'luci
 import DataTable from '@/app/dashboard/components/DataTable'
 import { getCurrentUser } from '@/lib/firebase/auth'
 import toast from 'react-hot-toast'
+import useFirebaseAuth from '@/lib/hooks/useFirebaseAuth'
 
 export default function AssignRiderPage() {
     const [orders, setOrders] = useState([])
@@ -14,6 +15,7 @@ export default function AssignRiderPage() {
     const [isLoading, setIsLoading] = useState(true)
     const [showRiderModal, setShowRiderModal] = useState(false)
     const [searchRider, setSearchRider] = useState('')
+    const { user } = useFirebaseAuth()
 
     useEffect(() => {
         fetchOrders()
@@ -44,7 +46,7 @@ export default function AssignRiderPage() {
 
     const fetchRiders = async () => {
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/riders`)
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user.role}}`)
             const data = await response.json()
 
             if (data.success) {

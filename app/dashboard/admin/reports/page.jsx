@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { Download, FileText, Users, Package, DollarSign, CreditCard, TrendingUp, Calendar, Filter } from 'lucide-react'
 import toast from 'react-hot-toast'
-import Loading from '../../loading'
 
 export default function AdminReports() {
     const [loading, setLoading] = useState(false)
@@ -58,7 +57,6 @@ export default function AdminReports() {
         }
     }
 
-    // Format date from ISO to readable format
     const formatDate = (isoDate) => {
         if (!isoDate) return 'N/A'
         const date = new Date(isoDate)
@@ -75,7 +73,6 @@ export default function AdminReports() {
         return `${dateStr}, ${timeStr}`
     }
 
-    // Convert camelCase to Title Case
     const toTitleCase = (str) => {
         return str
             .replace(/([A-Z])/g, ' $1')
@@ -83,7 +80,6 @@ export default function AdminReports() {
             .trim()
     }
 
-    // Fetch user data by UID
     const fetchUserByUid = async (uid) => {
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/user/${uid}`)
@@ -100,11 +96,8 @@ export default function AdminReports() {
         const rows = data.map(row =>
             headers.map(header => {
                 let value = row[header] || 'N/A'
-                // Escape commas, quotes, and newlines
                 if (typeof value === 'string') {
-                    // Replace newlines with spaces
                     value = value.replace(/\n/g, ' ')
-                    // Wrap in quotes if contains comma, quote, or newline
                     if (value.includes(',') || value.includes('"')) {
                         value = `"${value.replace(/"/g, '""')}"`
                     }
@@ -128,7 +121,6 @@ export default function AdminReports() {
     }
 
     const downloadExcel = async (data, headers, filename) => {
-        // Create properly formatted Excel HTML with styling
         let htmlContent = `
 <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
 <head>
@@ -222,12 +214,9 @@ export default function AdminReports() {
             const data = await response.json()
 
             if (data.success) {
-                // Fetch user details for each order
                 const ordersWithUserData = await Promise.all(
                     data.orders.map(async (order) => {
                         const user = await fetchUserByUid(order.userId)
-
-                        // Get product details from items
                         const productNames = order.items?.map(item => item.name).join('; ') || 'N/A'
                         const productQuantities = order.items?.map(item => `${item.name} (x${item.quantity})`).join('; ') || 'N/A'
 
@@ -259,7 +248,7 @@ export default function AdminReports() {
                     })
                 )
 
-                const headers = ['orderId', 'customerName', 'customerEmail', 'customerPhone', 'products', 'quantities', 'itemsCount', 'subtotal', 'shipping', 'tax', 'total', 'paymentMethod', 'paymentStatus', 'orderStatus', 'street', 'city', 'district', 'division', 'zipCode', 'country', 'fullAddress', 'orderDate', 'lastUpdated']
+                const headers = ['orderId', 'customerName', 'customerEmail', 'customerPhone', 'products', 'quantities', 'itemsCount', 'subtotal', 'shipping', 'tax', 'total', 'paymentMethod', 'paymentStatus', 'orderStatus', 'orderDate']
 
                 if (format === 'csv') {
                     const csv = convertToCSV(ordersWithUserData, headers)
@@ -284,7 +273,7 @@ export default function AdminReports() {
             const data = await response.json()
 
             if (data.success) {
-                const headers = ['userId', 'displayName', 'email', 'phoneNumber', 'role', 'provider', 'photoURL', 'accountCreated', 'lastUpdated', 'accountAge']
+                const headers = ['userId', 'displayName', 'email', 'phoneNumber', 'role', 'provider', 'accountCreated']
                 const exportData = data.users.map(user => {
                     const createdDate = new Date(user.createdAt)
                     const now = new Date()
@@ -297,10 +286,7 @@ export default function AdminReports() {
                         phoneNumber: user.phoneNumber || 'N/A',
                         role: user.role || 'user',
                         provider: user.provider || 'N/A',
-                        photoURL: user.photoURL || 'N/A',
-                        accountCreated: formatDate(user.createdAt),
-                        lastUpdated: formatDate(user.updatedAt),
-                        accountAge: `${daysSinceCreation} days`
+                        accountCreated: formatDate(user.createdAt)
                     }
                 })
 
@@ -327,15 +313,13 @@ export default function AdminReports() {
             const data = await response.json()
 
             if (data.success) {
-                const headers = ['productId', 'productName', 'category', 'price', 'stock', 'stockStatus', 'rating', 'reviewsCount', 'dateAdded', 'lastUpdated']
+                const headers = ['productId', 'productName', 'category', 'price', 'stock', 'stockStatus', 'rating', 'reviewsCount']
                 const exportData = data.products.map(product => {
-                    // Get stock status
                     const stock = product.stock || 0
                     let stockStatus = 'Out of Stock'
                     if (stock > 50) stockStatus = 'In Stock'
                     else if (stock > 10) stockStatus = 'Low Stock'
                     else if (stock > 0) stockStatus = 'Very Low Stock'
-
 
                     return {
                         productId: product.id || product._id || 'N/A',
@@ -345,9 +329,7 @@ export default function AdminReports() {
                         stock: stock,
                         stockStatus: stockStatus,
                         rating: product.rating?.toFixed(1) || '0.0',
-                        reviewsCount: product.reviews?.length || 0,
-                        dateAdded: formatDate(product.createdAt),
-                        lastUpdated: formatDate(product.updatedAt)
+                        reviewsCount: product.reviews?.length || 0
                     }
                 })
 
@@ -379,40 +361,31 @@ export default function AdminReports() {
             const ordersData = await ordersRes.json()
 
             if (paymentsData.success && ordersData.success) {
-                // Create order lookup map
                 const orderMap = {}
                 ordersData.orders.forEach(order => {
                     orderMap[order.orderId] = order
                 })
 
-                // Fetch user details for each payment
                 const paymentsWithDetails = await Promise.all(
                     paymentsData.payments.map(async (payment) => {
                         const order = orderMap[payment.orderId]
                         const user = order ? await fetchUserByUid(order.userId) : null
-
-                        // Get order items summary
                         const itemsSummary = order?.items?.map(item => `${item.name} (x${item.quantity})`).join('; ') || 'N/A'
 
                         return {
-                            paymentId: payment._id || 'N/A',
                             transactionId: payment.transactionId || 'N/A',
                             orderId: payment.orderId || 'N/A',
                             customerName: user?.displayName || 'N/A',
-                            customerEmail: user?.email || 'N/A',
-                            orderItems: itemsSummary,
                             amount: `$${payment.amount?.toFixed(2) || '0.00'}`,
                             currency: (payment.currency || 'usd').toUpperCase(),
                             paymentMethod: payment.paymentMethod || 'N/A',
                             status: payment.status || 'N/A',
-                            orderStatus: order?.status || 'N/A',
-                            paymentDate: formatDate(payment.createdAt),
-                            processingTime: formatDate(payment.updatedAt)
+                            paymentDate: formatDate(payment.createdAt)
                         }
                     })
                 )
 
-                const headers = ['paymentId', 'transactionId', 'orderId', 'customerName', 'customerEmail', 'orderItems', 'amount', 'currency', 'paymentMethod', 'status', 'orderStatus', 'paymentDate', 'processingTime']
+                const headers = ['transactionId', 'orderId', 'customerName', 'amount', 'currency', 'paymentMethod', 'status', 'paymentDate']
 
                 if (format === 'csv') {
                     const csv = convertToCSV(paymentsWithDetails, headers)
@@ -452,32 +425,21 @@ export default function AdminReports() {
                         const order = orderMap[payment.orderId]
                         const user = order ? await fetchUserByUid(order.userId) : null
 
-                        const itemsSummary = order?.items?.map(item => `${item.name} (x${item.quantity})`).join('; ') || 'N/A'
-
                         return {
                             transactionId: payment.transactionId || 'N/A',
                             orderId: payment.orderId || 'N/A',
                             customerName: user?.displayName || 'N/A',
-                            customerEmail: user?.email || 'N/A',
-                            customerPhone: user?.phoneNumber || 'N/A',
-                            orderItems: itemsSummary,
                             itemsCount: order?.items?.length || 0,
-                            subtotal: order ? `$${order.subtotal?.toFixed(2) || '0.00'}` : 'N/A',
-                            tax: order ? `$${order.tax?.toFixed(2) || '0.00'}` : 'N/A',
-                            shipping: order ? `$${order.shipping?.toFixed(2) || '0.00'}` : 'N/A',
                             totalAmount: `$${payment.amount?.toFixed(2) || '0.00'}`,
-                            currency: (payment.currency || 'usd').toUpperCase(),
                             paymentMethod: payment.paymentMethod || 'N/A',
                             transactionStatus: payment.status || 'N/A',
                             orderStatus: order?.status || 'N/A',
-                            paymentStatus: order?.paymentStatus || 'N/A',
-                            transactionDate: formatDate(payment.createdAt),
-                            lastUpdated: formatDate(payment.updatedAt)
+                            transactionDate: formatDate(payment.createdAt)
                         }
                     })
                 )
 
-                const headers = ['transactionId', 'orderId', 'customerName', 'customerEmail', 'customerPhone', 'orderItems', 'itemsCount', 'subtotal', 'tax', 'shipping', 'totalAmount', 'currency', 'paymentMethod', 'transactionStatus', 'orderStatus', 'paymentStatus', 'transactionDate', 'lastUpdated']
+                const headers = ['transactionId', 'orderId', 'customerName', 'itemsCount', 'totalAmount', 'paymentMethod', 'transactionStatus', 'orderStatus', 'transactionDate']
 
                 if (format === 'csv') {
                     const csv = convertToCSV(transactionsWithDetails, headers)
@@ -495,59 +457,55 @@ export default function AdminReports() {
         }
     }
 
-    const exportCards = [
+    const reportTypes = [
         {
             title: 'Orders',
             icon: Package,
             count: stats.totalOrders,
-            linear: 'from-blue-500 to-cyan-500',
+            color: 'from-blue-500 to-cyan-500',
             exportFn: exportOrders
         },
         {
             title: 'Users',
             icon: Users,
             count: stats.totalUsers,
-            linear: 'from-purple-500 to-pink-500',
+            color: 'from-purple-500 to-pink-500',
             exportFn: exportUsers
         },
         {
             title: 'Products',
             icon: Package,
             count: stats.totalProducts,
-            linear: 'from-green-500 to-emerald-500',
+            color: 'from-green-500 to-emerald-500',
             exportFn: exportProducts
         },
         {
             title: 'Payments',
             icon: CreditCard,
             count: stats.totalTransactions,
-            linear: 'from-orange-500 to-red-500',
+            color: 'from-orange-500 to-red-500',
             exportFn: exportPayments
         },
         {
             title: 'Transactions',
             icon: DollarSign,
             count: stats.totalTransactions,
-            linear: 'from-yellow-500 to-amber-500',
+            color: 'from-yellow-500 to-amber-500',
             exportFn: exportTransactions
         }
     ]
 
-    if (loading) {
-        return <Loading />
-    }
-
     return (
-        <div className="min-h-screen bg-linear-to-br from-base-100 via-base-200 to-base-100">
-            <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="min-h-screen bg-gradient-to-br from-base-100 via-base-200 to-base-100">
+            <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
                 {/* Header */}
                 <div className="mb-8">
                     <div className="flex items-center gap-4 mb-4">
-                        <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-primary to-secondary flex items-center justify-center shadow-lg">
+                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg">
                             <FileText className="w-8 h-8 text-white" />
                         </div>
                         <div>
-                            <h1 className="text-5xl font-bold bg-linear-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+                            <h1 className="text-5xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
                                 Reports & Analytics
                             </h1>
                             <p className="text-base-content/70 text-lg mt-2">
@@ -558,8 +516,8 @@ export default function AdminReports() {
                 </div>
 
                 {/* Stats Overview */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    <div className="card bg-linear-to-br from-blue-500 to-cyan-500 text-white shadow-xl">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="card bg-gradient-to-br from-blue-500 to-cyan-500 text-white shadow-xl">
                         <div className="card-body">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -571,7 +529,7 @@ export default function AdminReports() {
                         </div>
                     </div>
 
-                    <div className="card bg-linear-to-br from-purple-500 to-pink-500 text-white shadow-xl">
+                    <div className="card bg-gradient-to-br from-purple-500 to-pink-500 text-white shadow-xl">
                         <div className="card-body">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -583,7 +541,7 @@ export default function AdminReports() {
                         </div>
                     </div>
 
-                    <div className="card bg-linear-to-br from-green-500 to-emerald-500 text-white shadow-xl">
+                    <div className="card bg-gradient-to-br from-green-500 to-emerald-500 text-white shadow-xl">
                         <div className="card-body">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -595,7 +553,7 @@ export default function AdminReports() {
                         </div>
                     </div>
 
-                    <div className="card bg-linear-to-br from-orange-500 to-red-500 text-white shadow-xl">
+                    <div className="card bg-gradient-to-br from-orange-500 to-red-500 text-white shadow-xl">
                         <div className="card-body">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -609,7 +567,7 @@ export default function AdminReports() {
                 </div>
 
                 {/* Date Range Filter */}
-                <div className="card bg-base-200 shadow-xl border border-base-300 mb-8">
+                <div className="card bg-base-100 shadow-xl border border-base-300">
                     <div className="card-body">
                         <div className="flex items-center gap-3 mb-4">
                             <Calendar className="w-6 h-6 text-primary" />
@@ -648,63 +606,79 @@ export default function AdminReports() {
                     </div>
                 </div>
 
-                {/* Export Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {exportCards.map((card) => {
-                        const Icon = card.icon
-                        return (
-                            <div key={card.title} className="card bg-base-200 shadow-xl border border-base-300 hover:shadow-2xl transition-all duration-300">
-                                <div className="card-body">
-                                    <div className="flex items-center gap-3 mb-4">
-                                        <div className={`w-14 h-14 rounded-xl bg-linear-to-br ${card.linear} flex items-center justify-center shadow-lg`}>
-                                            <Icon className="w-7 h-7 text-white" />
-                                        </div>
-                                        <div>
-                                            <h3 className="text-2xl font-bold">{card.title}</h3>
-                                            <p className="text-base-content/60">Total: {card.count}</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="divider my-2"></div>
-
-                                    <div className="space-y-2">
-                                        <button
-                                            onClick={() => card.exportFn('csv')}
-                                            disabled={loading}
-                                            className="btn btn-outline btn-primary w-full gap-2"
-                                        >
-                                            {loading ? (
-                                                <span className="loading loading-spinner"></span>
-                                            ) : (
-                                                <>
-                                                    <Download className="w-5 h-5" />
-                                                    Export as CSV
-                                                </>
-                                            )}
-                                        </button>
-                                        <button
-                                            onClick={() => card.exportFn('excel')}
-                                            disabled={loading}
-                                            className="btn btn-outline btn-success w-full gap-2"
-                                        >
-                                            {loading ? (
-                                                <span className="loading loading-spinner"></span>
-                                            ) : (
-                                                <>
-                                                    <Download className="w-5 h-5" />
-                                                    Export as Excel
-                                                </>
-                                            )}
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        )
-                    })}
+                {/* Export Table */}
+                <div className="card bg-base-100 shadow-xl border border-base-300">
+                    <div className="card-body">
+                        <h2 className="text-2xl font-bold mb-4">Export Reports</h2>
+                        <div className="overflow-x-auto">
+                            <table className="table w-full">
+                                <thead>
+                                    <tr className="bg-base-200">
+                                        <th className="font-bold">Report Type</th>
+                                        <th className="font-bold">Total Count</th>
+                                        <th className="font-bold">Export CSV</th>
+                                        <th className="font-bold">Export Excel</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {reportTypes.map((report) => {
+                                        const Icon = report.icon
+                                        return (
+                                            <tr key={report.title} className="hover:bg-base-200 transition-colors">
+                                                <td>
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${report.color} flex items-center justify-center`}>
+                                                            <Icon className="w-5 h-5 text-white" />
+                                                        </div>
+                                                        <span className="font-semibold text-base-content">{report.title}</span>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <span className="font-bold text-lg text-primary">{report.count}</span>
+                                                </td>
+                                                <td>
+                                                    <button
+                                                        onClick={() => report.exportFn('csv')}
+                                                        disabled={loading}
+                                                        className="btn btn-sm btn-outline btn-primary gap-2"
+                                                    >
+                                                        {loading ? (
+                                                            <span className="loading loading-spinner loading-sm"></span>
+                                                        ) : (
+                                                            <>
+                                                                <Download className="w-4 h-4" />
+                                                                CSV
+                                                            </>
+                                                        )}
+                                                    </button>
+                                                </td>
+                                                <td>
+                                                    <button
+                                                        onClick={() => report.exportFn('excel')}
+                                                        disabled={loading}
+                                                        className="btn btn-sm btn-outline btn-success gap-2"
+                                                    >
+                                                        {loading ? (
+                                                            <span className="loading loading-spinner loading-sm"></span>
+                                                        ) : (
+                                                            <>
+                                                                <Download className="w-4 h-4" />
+                                                                Excel
+                                                            </>
+                                                        )}
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        )
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Export All */}
-                <div className="card bg-linear-to-br from-primary to-secondary text-white shadow-xl mt-8">
+                <div className="card bg-gradient-to-br from-primary to-secondary text-white shadow-xl">
                     <div className="card-body">
                         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                             <div className="flex items-center gap-4">
@@ -714,12 +688,10 @@ export default function AdminReports() {
                                     <p className="text-white/80">Download complete dataset in one click</p>
                                 </div>
                             </div>
-                            <div className="flex gap-3">
-                                <button className="btn btn-lg bg-white text-primary hover:bg-white/90 gap-2">
-                                    <Download className="w-5 h-5" />
-                                    Export All (CSV)
-                                </button>
-                            </div>
+                            <button className="btn btn-lg bg-white text-primary hover:bg-white/90 gap-2">
+                                <Download className="w-5 h-5" />
+                                Export All (CSV)
+                            </button>
                         </div>
                     </div>
                 </div>

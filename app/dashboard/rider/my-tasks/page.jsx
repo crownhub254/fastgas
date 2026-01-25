@@ -333,14 +333,14 @@ export default function RiderMyTasksPage() {
                             </div>
 
                             {/* Modal Content */}
-                            <div className="p-6 space-y-6">
+                            <div className="p-4 space-y-4">
                                 {/* Order ID and Status */}
-                                <div className="flex justify-between items-start border-b border-base-300 pb-4">
+                                <div className="flex justify-between items-start border-b border-base-300 pb-3">
                                     <div>
                                         <h3 className="text-lg font-bold text-base-content">
                                             {selectedOrder.orderId}
                                         </h3>
-                                        <p className="text-sm text-base-content/60">
+                                        <p className="text-xs text-base-content/60">
                                             {selectedOrder.trackingId}
                                         </p>
                                     </div>
@@ -349,11 +349,11 @@ export default function RiderMyTasksPage() {
 
                                 {/* Customer Information */}
                                 <div>
-                                    <h4 className="font-bold text-base-content mb-3 flex items-center gap-2">
-                                        <Package className="w-5 h-5 text-primary" />
+                                    <h4 className="font-bold text-base-content mb-2 flex items-center gap-2 text-sm">
+                                        <Package className="w-4 h-4 text-primary" />
                                         Customer Information
                                     </h4>
-                                    <div className="bg-base-200 p-4 rounded-lg space-y-2">
+                                    <div className="bg-base-200 p-3 rounded-lg space-y-1 text-sm">
                                         <div className="flex justify-between">
                                             <span className="text-base-content/70">Name:</span>
                                             <span className="font-semibold text-base-content">
@@ -364,15 +364,15 @@ export default function RiderMyTasksPage() {
                                             <span className="text-base-content/70">Phone:</span>
                                             <a
                                                 href={`tel:${selectedOrder.buyerInfo?.phoneNumber}`}
-                                                className="font-semibold text-primary hover:underline flex items-center gap-1"
+                                                className="font-semibold text-primary hover:underline flex items-center gap-1 text-xs"
                                             >
-                                                <Phone className="w-4 h-4" />
+                                                <Phone className="w-3 h-3" />
                                                 {selectedOrder.buyerInfo?.phoneNumber || 'N/A'}
                                             </a>
                                         </div>
                                         <div className="flex justify-between">
                                             <span className="text-base-content/70">Email:</span>
-                                            <span className="font-semibold text-base-content">
+                                            <span className="font-semibold text-base-content text-xs">
                                                 {selectedOrder.buyerInfo?.email || 'N/A'}
                                             </span>
                                         </div>
@@ -381,46 +381,43 @@ export default function RiderMyTasksPage() {
 
                                 {/* Delivery Address */}
                                 <div>
-                                    <h4 className="font-bold text-base-content mb-3 flex items-center gap-2">
-                                        <MapPin className="w-5 h-5 text-primary" />
+                                    <h4 className="font-bold text-base-content mb-2 flex items-center gap-2 text-sm">
+                                        <MapPin className="w-4 h-4 text-primary" />
                                         Delivery Address
                                     </h4>
-                                    <div className="bg-base-200 p-4 rounded-lg">
+                                    <div className="bg-base-200 p-3 rounded-lg text-sm">
                                         <p className="text-base-content font-semibold">
                                             {selectedOrder.shippingAddress?.street}
                                         </p>
-                                        <p className="text-base-content/70">
+                                        <p className="text-base-content/70 text-xs">
                                             {selectedOrder.shippingAddress?.city}, {selectedOrder.shippingAddress?.district}
                                         </p>
-                                        <p className="text-base-content/70">
+                                        <p className="text-base-content/70 text-xs">
                                             {selectedOrder.shippingAddress?.division}, {selectedOrder.shippingAddress?.zipCode}
-                                        </p>
-                                        <p className="text-base-content/70">
-                                            {selectedOrder.shippingAddress?.country}
                                         </p>
                                     </div>
                                 </div>
 
                                 {/* Order Items */}
                                 <div>
-                                    <h4 className="font-bold text-base-content mb-3 flex items-center gap-2">
-                                        <Package className="w-5 h-5 text-primary" />
+                                    <h4 className="font-bold text-base-content mb-2 flex items-center gap-2 text-sm">
+                                        <Package className="w-4 h-4 text-primary" />
                                         Order Items ({selectedOrder.items?.length || 0})
                                     </h4>
-                                    <div className="bg-base-200 p-4 rounded-lg space-y-3">
+                                    <div className="bg-base-200 p-3 rounded-lg space-y-2">
                                         {selectedOrder.items?.map((item, i) => (
-                                            <div key={i} className="flex items-center justify-between border-b border-base-300 pb-3 last:border-0">
+                                            <div key={i} className="flex items-center justify-between border-b border-base-300 pb-2 last:border-0 text-sm">
                                                 <div>
-                                                    <p className="font-semibold text-base-content">{item.name}</p>
-                                                    <p className="text-sm text-base-content/60">
+                                                    <p className="font-semibold text-base-content text-xs">{item.name}</p>
+                                                    <p className="text-xs text-base-content/60">
                                                         Qty: {item.quantity}
                                                     </p>
                                                 </div>
                                                 <div className="text-right">
-                                                    <p className="font-bold text-base-content">
+                                                    <p className="font-bold text-base-content text-xs">
                                                         ${(item.price * item.quantity).toFixed(2)}
                                                     </p>
-                                                    <p className="text-sm text-base-content/60">
+                                                    <p className="text-xs text-base-content/60">
                                                         ${item.price.toFixed(2)} each
                                                     </p>
                                                 </div>
@@ -431,11 +428,11 @@ export default function RiderMyTasksPage() {
 
                                 {/* Order Summary */}
                                 <div>
-                                    <h4 className="font-bold text-base-content mb-3 flex items-center gap-2">
-                                        <DollarSign className="w-5 h-5 text-primary" />
+                                    <h4 className="font-bold text-base-content mb-2 flex items-center gap-2 text-sm">
+                                        <DollarSign className="w-4 h-4 text-primary" />
                                         Order Summary
                                     </h4>
-                                    <div className="bg-base-200 p-4 rounded-lg space-y-2">
+                                    <div className="bg-base-200 p-3 rounded-lg space-y-1 text-sm">
                                         <div className="flex justify-between">
                                             <span className="text-base-content/70">Subtotal:</span>
                                             <span className="font-semibold text-base-content">
@@ -460,87 +457,16 @@ export default function RiderMyTasksPage() {
                                                 ${selectedOrder.deliveryFee?.toFixed(2) || '50.00'}
                                             </span>
                                         </div>
-                                        <div className="border-t border-base-300 pt-2 mt-2 flex justify-between">
+                                        <div className="border-t border-base-300 pt-1 mt-1 flex justify-between">
                                             <span className="font-bold text-base-content">Total:</span>
-                                            <span className="font-bold text-lg text-primary">
+                                            <span className="font-bold text-base-content">
                                                 ${selectedOrder.total?.toFixed(2) || '0.00'}
                                             </span>
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Timeline */}
-                                {selectedOrder.timeline && selectedOrder.timeline.length > 0 && (
-                                    <div>
-                                        <h4 className="font-bold text-base-content mb-3 flex items-center gap-2">
-                                            <Clock className="w-5 h-5 text-primary" />
-                                            Delivery Timeline
-                                        </h4>
-                                        <div className="space-y-3">
-                                            {selectedOrder.timeline.map((event, i) => (
-                                                <div key={i} className="flex gap-3">
-                                                    <div className="flex flex-col items-center">
-                                                        <div className="w-3 h-3 bg-primary rounded-full"></div>
-                                                        {i < selectedOrder.timeline.length - 1 && (
-                                                            <div className="w-0.5 h-12 bg-base-300 my-1"></div>
-                                                        )}
-                                                    </div>
-                                                    <div className="pb-4">
-                                                        <p className="font-semibold text-base-content">
-                                                            {event.location || 'Update'}
-                                                        </p>
-                                                        <p className="text-sm text-base-content/60">
-                                                            {event.note}
-                                                        </p>
-                                                        <p className="text-xs text-base-content/50 mt-1">
-                                                            {new Date(event.timestamp).toLocaleString()}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
 
-                                {/* Action Buttons */}
-                                {!isActionDisabled(selectedOrder.riderStatus) && (
-                                    <div className="flex gap-3 pt-4 border-t border-base-300">
-                                        <button
-                                            onClick={() => handleAcceptDelivery(selectedOrder.orderId)}
-                                            disabled={actionLoading}
-                                            className="btn btn-success flex-1"
-                                        >
-                                            {actionLoading ? (
-                                                <>
-                                                    <Loader className="w-4 h-4 animate-spin" />
-                                                    Processing...
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <CheckCircle className="w-4 h-4" />
-                                                    Accept Delivery
-                                                </>
-                                            )}
-                                        </button>
-                                        <button
-                                            onClick={() => handleRejectDelivery(selectedOrder.orderId)}
-                                            disabled={actionLoading}
-                                            className="btn btn-error flex-1"
-                                        >
-                                            {actionLoading ? (
-                                                <>
-                                                    <Loader className="w-4 h-4 animate-spin" />
-                                                    Processing...
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <XCircle className="w-4 h-4" />
-                                                    Reject Delivery
-                                                </>
-                                            )}
-                                        </button>
-                                    </div>
-                                )}
                             </div>
                         </motion.div>
                     </motion.div>

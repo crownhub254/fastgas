@@ -1,13 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { Package, Upload, Plus, X, DollarSign, Tag, Image, FileText, Settings, Sparkles, Save } from 'lucide-react'
+import { Package, Plus, X, DollarSign, Tag, Image, FileText, Settings, Sparkles, Save } from 'lucide-react'
 import toast from 'react-hot-toast'
-import useFirebaseAuth from '@/lib/hooks/useFirebaseAuth'
 
 export default function AddProductPage() {
-    const { user, userData } = useFirebaseAuth()
     const [loading, setLoading] = useState(false)
+    const [user] = useState({ email: 'seller@example.com', uid: 'user123' })
+    const [userData] = useState({ displayName: 'Test Seller' })
+
     const [formData, setFormData] = useState({
         name: '',
         description: '',
@@ -71,6 +72,8 @@ export default function AddProductPage() {
             }))
             setSpecKey('')
             setSpecValue('')
+        } else {
+            toast.error('Please fill in both specification name and value')
         }
     }
 
@@ -83,6 +86,11 @@ export default function AddProductPage() {
     const handleSubmit = async () => {
         if (!formData.name || !formData.price || !formData.category || !formData.stock) {
             toast.error('Please fill in all required fields')
+            return
+        }
+
+        if (!formData.images[0]) {
+            toast.error('Please add at least one main image')
             return
         }
 
@@ -129,27 +137,30 @@ export default function AddProductPage() {
                     features: [''],
                     specifications: {}
                 })
+                setSpecKey('')
+                setSpecValue('')
             } else {
                 toast.error(data.error || 'Failed to add product')
             }
         } catch (error) {
             console.error('Error:', error)
-            toast.error('Failed to add product')
+            toast.error('Failed to add product: ' + error.message)
         } finally {
             setLoading(false)
         }
     }
 
     return (
-        <div className="min-h-screen bg-linear-to-br from-base-100 via-base-200 to-base-100">
+        <div className="min-h-screen bg-gradient-to-br from-base-100 via-base-200 to-base-100">
             <div className="max-w-6xl mx-auto px-4 py-8">
+                {/* Header */}
                 <div className="mb-8">
                     <div className="flex items-center gap-4 mb-4">
-                        <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-primary to-secondary flex items-center justify-center shadow-lg">
+                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg">
                             <Package className="w-8 h-8 text-white" />
                         </div>
                         <div>
-                            <h1 className="text-5xl font-bold bg-linear-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+                            <h1 className="text-5xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
                                 Add New Product
                             </h1>
                             <p className="text-base-content/70 text-lg mt-2">
@@ -160,17 +171,18 @@ export default function AddProductPage() {
                 </div>
 
                 <div className="space-y-6">
-                    {/* Basic Information */}
-                    <div className="card bg-base-200 shadow-xl border border-base-300">
+                    {/* Basic Information Card */}
+                    <div className="card bg-base-100 shadow-xl border border-base-300">
                         <div className="card-body">
                             <div className="flex items-center gap-3 mb-6">
-                                <div className="w-12 h-12 rounded-xl bg-linear-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
+                                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
                                     <FileText className="w-6 h-6 text-white" />
                                 </div>
                                 <h2 className="text-3xl font-bold">Basic Information</h2>
                             </div>
 
                             <div className="grid md:grid-cols-2 gap-6">
+                                {/* Product Name */}
                                 <div className="md:col-span-2">
                                     <label className="label">
                                         <span className="label-text font-bold text-base">Product Name *</span>
@@ -185,6 +197,7 @@ export default function AddProductPage() {
                                     />
                                 </div>
 
+                                {/* Description */}
                                 <div className="md:col-span-2">
                                     <label className="label">
                                         <span className="label-text font-bold text-base">Description *</span>
@@ -194,7 +207,7 @@ export default function AddProductPage() {
                                         value={formData.description}
                                         onChange={handleChange}
                                         className="textarea textarea-bordered textarea-lg h-32 w-full focus:textarea-primary leading-relaxed"
-                                        placeholder="Description"
+                                        placeholder="Enter a detailed description of your product..."
                                     />
                                     <label className="label">
                                         <span className="label-text-alt text-base-content/60">
@@ -203,6 +216,7 @@ export default function AddProductPage() {
                                     </label>
                                 </div>
 
+                                {/* Price */}
                                 <div>
                                     <label className="label">
                                         <span className="label-text font-bold text-base flex items-center gap-2">
@@ -222,6 +236,7 @@ export default function AddProductPage() {
                                     />
                                 </div>
 
+                                {/* Category */}
                                 <div>
                                     <label className="label">
                                         <span className="label-text font-bold text-base flex items-center gap-2">
@@ -242,6 +257,7 @@ export default function AddProductPage() {
                                     </select>
                                 </div>
 
+                                {/* Stock */}
                                 <div>
                                     <label className="label">
                                         <span className="label-text font-bold text-base flex items-center gap-2">
@@ -263,12 +279,12 @@ export default function AddProductPage() {
                         </div>
                     </div>
 
-                    {/* Images */}
-                    <div className="card bg-base-200 shadow-xl border border-base-300">
+                    {/* Images Card */}
+                    <div className="card bg-base-100 shadow-xl border border-base-300">
                         <div className="card-body">
                             <div className="flex items-center justify-between mb-6">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 rounded-xl bg-linear-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
                                         <Image className="w-6 h-6 text-white" />
                                     </div>
                                     <h2 className="text-3xl font-bold">Product Images</h2>
@@ -329,12 +345,12 @@ export default function AddProductPage() {
                         </div>
                     </div>
 
-                    {/* Features */}
-                    <div className="card bg-base-200 shadow-xl border border-base-300">
+                    {/* Features Card */}
+                    <div className="card bg-base-100 shadow-xl border border-base-300">
                         <div className="card-body">
                             <div className="flex items-center justify-between mb-6">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 rounded-xl bg-linear-to-br from-green-500 to-emerald-500 flex items-center justify-center">
+                                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
                                         <Sparkles className="w-6 h-6 text-white" />
                                     </div>
                                     <h2 className="text-3xl font-bold">Product Features</h2>
@@ -374,11 +390,11 @@ export default function AddProductPage() {
                         </div>
                     </div>
 
-                    {/* Specifications */}
-                    <div className="card bg-base-200 shadow-xl border border-base-300">
+                    {/* Specifications Card */}
+                    <div className="card bg-base-100 shadow-xl border border-base-300">
                         <div className="card-body">
                             <div className="flex items-center gap-3 mb-6">
-                                <div className="w-12 h-12 rounded-xl bg-linear-to-br from-orange-500 to-red-500 flex items-center justify-center">
+                                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center">
                                     <Settings className="w-6 h-6 text-white" />
                                 </div>
                                 <h2 className="text-3xl font-bold">Specifications</h2>
@@ -412,9 +428,9 @@ export default function AddProductPage() {
                             {Object.keys(formData.specifications).length > 0 && (
                                 <div className="grid md:grid-cols-2 gap-4">
                                     {Object.entries(formData.specifications).map(([key, value]) => (
-                                        <div key={key} className="flex items-center justify-between p-4 bg-base-100 rounded-lg">
+                                        <div key={key} className="flex items-center justify-between p-4 bg-base-200 rounded-lg border border-base-300">
                                             <div>
-                                                <p className="font-bold">{key}</p>
+                                                <p className="font-bold text-base-content">{key}</p>
                                                 <p className="text-sm text-base-content/60">{value}</p>
                                             </div>
                                             <button
@@ -431,7 +447,7 @@ export default function AddProductPage() {
                         </div>
                     </div>
 
-                    {/* Submit Button */}
+                    {/* Action Buttons */}
                     <div className="flex justify-end gap-4">
                         <button
                             type="button"

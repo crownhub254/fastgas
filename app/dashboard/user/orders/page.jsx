@@ -6,6 +6,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
 import useFirebaseAuth from '@/lib/hooks/useFirebaseAuth'
+import DataTable from '../../components/DataTable'
 import Loading from '../../loading'
 
 export default function UserOrders() {
@@ -76,13 +77,13 @@ export default function UserOrders() {
             case 'pending':
             case 'processing':
             case 'confirmed':
-                return <Clock className="w-5 h-5" />
+                return <Clock className="w-4 h-4" />
             case 'shipped':
-                return <Truck className="w-5 h-5" />
+                return <Truck className="w-4 h-4" />
             case 'delivered':
-                return <CheckCircle className="w-5 h-5" />
+                return <CheckCircle className="w-4 h-4" />
             default:
-                return <Package className="w-5 h-5" />
+                return <Package className="w-4 h-4" />
         }
     }
 
@@ -91,6 +92,86 @@ export default function UserOrders() {
         { value: 'pending', label: 'Pending', count: orders.filter(o => o.status === 'pending' || o.status === 'processing' || o.status === 'confirmed').length },
         { value: 'shipped', label: 'Shipped', count: orders.filter(o => o.status === 'shipped').length },
         { value: 'delivered', label: 'Delivered', count: orders.filter(o => o.status === 'delivered').length }
+    ]
+
+    const columns = [
+        {
+            header: 'Order ID',
+            accessor: 'orderId',
+            render: (order) => (
+                <div>
+                    <div className="font-bold text-base-content">#{order.orderId}</div>
+                    <div className="text-xs text-base-content/60">
+                        {new Date(order.createdAt).toLocaleDateString()}
+                    </div>
+                </div>
+            )
+        },
+        {
+            header: 'Items',
+            accessor: 'items',
+            render: (order) => (
+                <div>
+                    <div className="font-semibold text-base-content">{order.items?.length || 0} item(s)</div>
+                    <div className="text-xs text-base-content/60">
+                        {order.items?.map(i => i.name).join(', ')}
+                    </div>
+                </div>
+            )
+        },
+        {
+            header: 'Total',
+            accessor: 'total',
+            render: (order) => (
+                <div className="font-bold text-primary text-lg">
+                    ${order.total?.toFixed(2) || '0.00'}
+                </div>
+            )
+        },
+        {
+            header: 'Status',
+            accessor: 'status',
+            render: (order) => (
+                <span className={`px-3 py-1 rounded-lg font-semibold border-2 flex items-center gap-2 w-fit ${getStatusColor(order.status)}`}>
+                    {getStatusIcon(order.status)}
+                    {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                </span>
+            )
+        },
+        {
+            header: 'Address',
+            accessor: 'shippingAddress',
+            render: (order) => (
+                <div className="text-sm">
+                    <div className="font-semibold text-base-content">
+                        {order.shippingAddress?.city}
+                    </div>
+                    <div className="text-xs text-base-content/60">
+                        {order.shippingAddress?.street}
+                    </div>
+                </div>
+            )
+        },
+        {
+            header: 'Actions',
+            accessor: 'actions',
+            render: (order) => (
+                <div className="flex gap-2">
+                    <Link
+                        href={`/orders/${order.orderId}`}
+                        className="btn btn-primary btn-sm btn-outline"
+                    >
+                        <Eye className="w-4 h-4" />
+                        View
+                    </Link>
+                    {order.status === 'delivered' && (
+                        <button className="btn btn-outline btn-sm">
+                            Reorder
+                        </button>
+                    )}
+                </div>
+            )
+        }
     ]
 
     if (loading) {
@@ -110,7 +191,7 @@ export default function UserOrders() {
                         key={filter.value}
                         onClick={() => setStatusFilter(filter.value)}
                         className={`px-6 py-3 rounded-lg font-semibold transition-all duration-200 whitespace-nowrap ${statusFilter === filter.value
-                            ? 'bg-linear-to-r from-primary to-secondary text-primary-content shadow-lg'
+                            ? 'bg-gradient-to-r from-primary to-secondary text-primary-content shadow-lg'
                             : 'bg-base-200 text-base-content hover:bg-base-300'
                             }`}
                     >
@@ -119,105 +200,19 @@ export default function UserOrders() {
                 ))}
             </div>
 
-            <div className="space-y-6">
-                {filteredOrders.map((order) => (
-                    <div key={order.orderId} className="card bg-base-200">
-                        <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-base-300">
-                            <div className="flex flex-wrap items-center gap-4">
-                                <div>
-                                    <div className="text-sm text-base-content/60">Order ID</div>
-                                    <div className="font-bold text-base-content">#{order.orderId}</div>
-                                </div>
-                                <div className="h-8 w-px bg-base-300"></div>
-                                <div>
-                                    <div className="text-sm text-base-content/60">Date</div>
-                                    <div className="font-semibold text-base-content flex items-center gap-2">
-                                        <Calendar className="w-4 h-4" />
-                                        {new Date(order.createdAt).toLocaleDateString()}
-                                    </div>
-                                </div>
-                                <div className="h-8 w-px bg-base-300"></div>
-                                <div>
-                                    <div className="text-sm text-base-content/60">Total</div>
-                                    <div className="font-bold text-primary text-lg">
-                                        ${order.total.toFixed(2)}
-                                    </div>
-                                </div>
-                            </div>
-                            <span className={`px-4 py-2 rounded-lg font-semibold border-2 flex items-center gap-2 ${getStatusColor(order.status)}`}>
-                                {getStatusIcon(order.status)}
-                                {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                            </span>
-                        </div>
-
-                        <div className="space-y-4 py-4">
-                            {order.items.map((item) => (
-                                <div key={item.id} className="flex gap-4 items-center">
-                                    <div className="relative w-20 h-20 rounded-lg overflow-hidden bg-base-300 shrink-0">
-                                        {item.image ? (
-                                            <Image
-                                                src={item.image}
-                                                alt={item.name}
-                                                fill
-                                                className="object-cover"
-                                            />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center">
-                                                <Package className="w-8 h-8 text-base-content/30" />
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <h3 className="font-semibold text-base-content truncate">
-                                            {item.name}
-                                        </h3>
-                                        <p className="text-sm text-base-content/60">
-                                            Qty: {item.quantity} × ${item.price.toFixed(2)}
-                                        </p>
-                                    </div>
-                                    <div className="font-bold text-base-content">
-                                        ${(item.price * item.quantity).toFixed(2)}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-
-                        <div className="pt-4 border-t border-base-300">
-                            <div className="flex items-start gap-3">
-                                <MapPin className="w-5 h-5 text-primary mt-1 shrink-0" />
-                                <div>
-                                    <div className="font-semibold text-base-content mb-1">Shipping Address</div>
-                                    <div className="text-sm text-base-content/70">
-                                        {order.shippingAddress.street}<br />
-                                        {order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.zipCode}<br />
-                                        {order.shippingAddress.country}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="flex gap-3 pt-4 border-t border-base-300">
-                            <Link
-                                href={`/orders/${order.orderId}`}
-                                className="btn btn-primary btn-sm"
-                            >
-                                <Eye className="w-4 h-4" />
-                                View Details
-                            </Link>
-                            {order.status === 'delivered' && (
-                                <button className="btn btn-outline btn-sm">
-                                    Reorder
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                ))}
-            </div>
-
-            {filteredOrders.length === 0 && (
-                <div className="text-center py-12">
+            {/* DataTable */}
+            {filteredOrders.length > 0 ? (
+                <DataTable
+                    columns={columns}
+                    data={filteredOrders}
+                    itemsPerPage={10}
+                    emptyMessage="No orders found"
+                    EmptyIcon={Package}
+                />
+            ) : (
+                <div className="text-center py-12 bg-base-200 rounded-xl">
                     <Package className="w-16 h-16 mx-auto mb-4 opacity-30" />
-                    <p className="text-base-content/70">
+                    <p className="text-base-content/70 font-semibold">
                         {statusFilter !== 'all'
                             ? `No ${statusFilter} orders found`
                             : 'No orders yet'}

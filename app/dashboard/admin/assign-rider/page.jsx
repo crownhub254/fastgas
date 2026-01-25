@@ -3,9 +3,8 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Bike, Package, MapPin, Phone, Star, CheckCircle, X, Search, Filter } from 'lucide-react'
-import DataTable from '@/app/dashboard/components/DataTable'
+import DataTable from '../../components/DataTable'
 import useFirebaseAuth from '@/lib/hooks/useFirebaseAuth'
-import { getDivisions, getDistricts, getCities } from '@/utils/bdLocations'
 import toast from 'react-hot-toast'
 
 export default function AssignRiderPage() {
@@ -17,16 +16,6 @@ export default function AssignRiderPage() {
     const [isLoading, setIsLoading] = useState(true)
     const [showRiderModal, setShowRiderModal] = useState(false)
     const [searchRider, setSearchRider] = useState('')
-    const [locationFilter, setLocationFilter] = useState({
-        division: '',
-        district: '',
-        city: ''
-    })
-    const [showLocationFilter, setShowLocationFilter] = useState(false)
-
-    const divisions = getDivisions()
-    const [districts, setDistricts] = useState([])
-    const [cities, setCities] = useState([])
 
     useEffect(() => {
         if (user && userData) {
@@ -36,22 +25,8 @@ export default function AssignRiderPage() {
     }, [user, userData])
 
     useEffect(() => {
-        if (locationFilter.division) {
-            setDistricts(getDistricts(locationFilter.division))
-            setLocationFilter(prev => ({ ...prev, district: '', city: '' }))
-        }
-    }, [locationFilter.division])
-
-    useEffect(() => {
-        if (locationFilter.division && locationFilter.district) {
-            setCities(getCities(locationFilter.division, locationFilter.district))
-            setLocationFilter(prev => ({ ...prev, city: '' }))
-        }
-    }, [locationFilter.district])
-
-    useEffect(() => {
         filterRiders()
-    }, [riders, searchRider, locationFilter, selectedOrder])
+    }, [riders, searchRider])
 
     const fetchOrders = async () => {
         try {
@@ -73,11 +48,11 @@ export default function AssignRiderPage() {
 
     const fetchRiders = async () => {
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/riders`)
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/riders/available`)
             const data = await response.json()
 
             if (data.success) {
-                setRiders(data.users || [])
+                setRiders(data.riders || [])
             }
         } catch (error) {
             console.error('Error fetching riders:', error)
@@ -99,40 +74,6 @@ export default function AssignRiderPage() {
             )
         }
 
-        // Location-based filter
-        if (selectedOrder && showLocationFilter) {
-            const orderDivision = selectedOrder.shippingAddress?.division
-            const orderDistrict = selectedOrder.shippingAddress?.district
-            const orderCity = selectedOrder.shippingAddress?.city
-
-            // Priority 1: Exact city match
-            if (locationFilter.city) {
-                filtered = filtered.filter(rider => {
-                    // Assuming riders have a preferredLocation field
-                    // If not available, we'll show all riders
-                    return true // You can add rider location check here
-                })
-            }
-            // Priority 2: Same district
-            else if (locationFilter.district) {
-                filtered = filtered.filter(rider => {
-                    return true // You can add rider location check here
-                })
-            }
-            // Priority 3: Same division
-            else if (locationFilter.division) {
-                filtered = filtered.filter(rider => {
-                    return true // You can add rider location check here
-                })
-            }
-            // Auto-suggest based on order location
-            else if (orderDivision || orderDistrict || orderCity) {
-                // Show all riders but sort by proximity (if location data available)
-                // For now, we'll just show all riders
-                filtered = filtered
-            }
-        }
-
         // Sort by rating
         filtered.sort((a, b) => (b.riderInfo?.rating || 0) - (a.riderInfo?.rating || 0))
 
@@ -144,25 +85,15 @@ export default function AssignRiderPage() {
 
         try {
             const response = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/orders/${selectedOrder.orderId}/assign-rider`,
+                `${process.env.NEXT_PUBLIC_API_URL}/riders/assign`,
                 {
-                    method: 'PATCH',
+                    method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        riderId: rider.uid,
-                        riderInfo: {
-                            name: rider.displayName,
-                            phoneNumber: rider.phoneNumber,
-                            vehicleType: rider.riderInfo?.vehicleType,
-                            vehicleNumber: rider.riderInfo?.vehicleNumber
-                        },
-                        assignedBy: {
-                            userId: user.uid,
-                            userName: user.displayName,
-                            role: userData.role
-                        }
+                        orderId: selectedOrder.orderId,
+                        riderId: rider.uid
                     })
                 }
             )
@@ -173,7 +104,6 @@ export default function AssignRiderPage() {
                 toast.success(`Rider ${rider.displayName} assigned successfully!`)
                 setShowRiderModal(false)
                 setSelectedOrder(null)
-                setLocationFilter({ division: '', district: '', city: '' })
                 setSearchRider('')
                 fetchOrders()
             } else {
@@ -255,12 +185,6 @@ export default function AssignRiderPage() {
                     onClick={() => {
                         setSelectedOrder(row)
                         setShowRiderModal(true)
-                        setShowLocationFilter(false)
-                        setLocationFilter({
-                            division: row.shippingAddress?.division || '',
-                            district: row.shippingAddress?.district || '',
-                            city: row.shippingAddress?.city || ''
-                        })
                     }}
                     className="btn btn-sm btn-primary"
                 >
@@ -332,7 +256,6 @@ export default function AssignRiderPage() {
                                 onClick={() => {
                                     setShowRiderModal(false)
                                     setSelectedOrder(null)
-                                    setLocationFilter({ division: '', district: '', city: '' })
                                     setSearchRider('')
                                 }}
                                 className="btn btn-ghost btn-sm btn-circle"
@@ -365,9 +288,8 @@ export default function AssignRiderPage() {
                             </div>
                         </div>
 
-                        {/* Search and Filters */}
+                        {/* Search Bar */}
                         <div className="space-y-4 mb-4">
-                            {/* Search Bar */}
                             <div className="relative">
                                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-base-content/40" />
                                 <input
@@ -378,75 +300,9 @@ export default function AssignRiderPage() {
                                     className="w-full pl-12 pr-4 py-3 bg-base-200 border border-base-300 rounded-lg focus:outline-none focus:border-primary"
                                 />
                             </div>
-
-                            {/* Location Filter Toggle */}
-                            <div className="flex items-center justify-between">
-                                <button
-                                    onClick={() => setShowLocationFilter(!showLocationFilter)}
-                                    className="btn btn-sm btn-ghost gap-2"
-                                >
-                                    <Filter className="w-4 h-4" />
-                                    {showLocationFilter ? 'Hide' : 'Show'} Location Filter
-                                </button>
-                                <div className="text-sm text-base-content/60">
-                                    {filteredRiders.length} rider(s) found
-                                </div>
+                            <div className="text-sm text-base-content/60 text-right">
+                                {filteredRiders.length} rider(s) found
                             </div>
-
-                            {/* Location Filters */}
-                            {showLocationFilter && (
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-base-200 rounded-lg">
-                                    <div>
-                                        <label className="label">
-                                            <span className="label-text">Division</span>
-                                        </label>
-                                        <select
-                                            value={locationFilter.division}
-                                            onChange={(e) => setLocationFilter(prev => ({ ...prev, division: e.target.value }))}
-                                            className="select select-bordered w-full"
-                                        >
-                                            <option value="">All Divisions</option>
-                                            {divisions.map(div => (
-                                                <option key={div} value={div}>{div}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-
-                                    <div>
-                                        <label className="label">
-                                            <span className="label-text">District</span>
-                                        </label>
-                                        <select
-                                            value={locationFilter.district}
-                                            onChange={(e) => setLocationFilter(prev => ({ ...prev, district: e.target.value }))}
-                                            disabled={!locationFilter.division}
-                                            className="select select-bordered w-full"
-                                        >
-                                            <option value="">All Districts</option>
-                                            {districts.map(dist => (
-                                                <option key={dist} value={dist}>{dist}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-
-                                    <div>
-                                        <label className="label">
-                                            <span className="label-text">City</span>
-                                        </label>
-                                        <select
-                                            value={locationFilter.city}
-                                            onChange={(e) => setLocationFilter(prev => ({ ...prev, city: e.target.value }))}
-                                            disabled={!locationFilter.district}
-                                            className="select select-bordered w-full"
-                                        >
-                                            <option value="">All Cities</option>
-                                            {cities.map(city => (
-                                                <option key={city} value={city}>{city}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                </div>
-                            )}
                         </div>
 
                         {/* Riders List */}
@@ -455,16 +311,12 @@ export default function AssignRiderPage() {
                                 <div className="text-center py-8">
                                     <Bike className="w-12 h-12 text-base-content/30 mx-auto mb-3" />
                                     <p className="text-base-content/70">No available riders found</p>
-                                    {(searchRider || showLocationFilter) && (
+                                    {searchRider && (
                                         <button
-                                            onClick={() => {
-                                                setSearchRider('')
-                                                setLocationFilter({ division: '', district: '', city: '' })
-                                                setShowLocationFilter(false)
-                                            }}
+                                            onClick={() => setSearchRider('')}
                                             className="btn btn-sm btn-ghost mt-2"
                                         >
-                                            Clear Filters
+                                            Clear Search
                                         </button>
                                     )}
                                 </div>
@@ -525,7 +377,6 @@ export default function AssignRiderPage() {
                                 onClick={() => {
                                     setShowRiderModal(false)
                                     setSelectedOrder(null)
-                                    setLocationFilter({ division: '', district: '', city: '' })
                                     setSearchRider('')
                                 }}
                                 className="btn"
@@ -537,7 +388,6 @@ export default function AssignRiderPage() {
                     <div className="modal-backdrop" onClick={() => {
                         setShowRiderModal(false)
                         setSelectedOrder(null)
-                        setLocationFilter({ division: '', district: '', city: '' })
                         setSearchRider('')
                     }}></div>
                 </div>

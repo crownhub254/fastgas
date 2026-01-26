@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
-import { Mail, Lock, User, UserCircle, Eye, EyeOff, Upload, ArrowRight, Shield, Phone, Bike } from 'lucide-react'
+import { Mail, Lock, User, UserCircle, Eye, EyeOff, Upload, ArrowRight, Shield, Phone } from 'lucide-react'
 import { registerWithEmail, loginWithGoogle } from '@/lib/firebase/auth'
 import { uploadImageToImgBB, validateImage } from '@/utils/imageUpload'
 import toast from 'react-hot-toast'
@@ -18,10 +18,7 @@ export default function RegisterPage() {
         phoneNumber: '',
         password: '',
         confirmPassword: '',
-        role: 'user',
-        vehicleType: '',
-        vehicleNumber: '',
-        licenseNumber: ''
+        role: 'user'
     })
     const [photoFile, setPhotoFile] = useState(null)
     const [photoPreview, setPhotoPreview] = useState('')
@@ -75,14 +72,6 @@ export default function RegisterPage() {
             return
         }
 
-        // Validate rider fields
-        if (formData.role === 'rider') {
-            if (!formData.vehicleType || !formData.vehicleNumber || !formData.licenseNumber) {
-                toast.error('Please fill in all rider information')
-                return
-            }
-        }
-
         setIsLoading(true)
 
         try {
@@ -122,32 +111,34 @@ export default function RegisterPage() {
                 return
             }
 
-            // Prepare user data with explicit phone number
+            // If rider role, redirect to rider info page
+            if (formData.role === 'rider') {
+                // Store temporary data in sessionStorage
+                sessionStorage.setItem('riderRegistration', JSON.stringify({
+                    uid: user.uid,
+                    email: user.email,
+                    displayName: formData.displayName.trim(),
+                    phoneNumber: cleanPhone,
+                    photoURL: photoURL || user.photoURL || '',
+                    role: 'rider',
+                    provider: 'email'
+                }))
+
+                toast.success('Account created! Please complete your rider information.')
+                router.push('../../rider-info')
+                return
+            }
+
+            // For non-rider users, save to database directly
             const userData = {
                 uid: user.uid,
                 email: user.email,
                 displayName: formData.displayName.trim(),
-                phoneNumber: cleanPhone, // Use the cleaned phone number
+                phoneNumber: cleanPhone,
                 photoURL: photoURL || user.photoURL || '',
                 role: formData.role,
                 provider: 'email'
             }
-
-            // Add rider info if applicable
-            if (formData.role === 'rider') {
-                userData.riderInfo = {
-                    vehicleType: formData.vehicleType,
-                    vehicleNumber: formData.vehicleNumber.trim(),
-                    licenseNumber: formData.licenseNumber.trim(),
-                    isAvailable: true,
-                    completedDeliveries: 0,
-                    rating: 5.0
-                }
-            }
-
-            // Debug: Log the data being sent
-            console.log('📤 Sending user data to backend:', userData)
-            console.log('📞 Phone number being sent:', userData.phoneNumber)
 
             // Save to MongoDB
             const saveToast = toast.loading('Saving your information...')
@@ -170,14 +161,11 @@ export default function RegisterPage() {
             }
 
             const data = await response.json()
-            console.log('✅ Backend response:', data)
 
             if (data.success) {
                 toast.success('🎉 Account created successfully!')
                 setTimeout(() => {
-                    if (formData.role === 'rider') {
-                        router.push('/dashboard/rider')
-                    } else if (formData.role === 'seller') {
+                    if (formData.role === 'seller') {
                         router.push('/dashboard/seller')
                     } else {
                         router.push('/products')
@@ -236,14 +224,11 @@ export default function RegisterPage() {
                 uid: user.uid,
                 email: user.email,
                 displayName: user.displayName || user.email.split('@')[0],
-                phoneNumber: cleanPhone, // Cleaned phone number
+                phoneNumber: cleanPhone,
                 photoURL: user.photoURL || '',
                 role: 'user',
                 provider: 'google'
             }
-
-            console.log('📤 Sending Google user data to backend:', userData)
-            console.log('📞 Phone number being sent:', userData.phoneNumber)
 
             const saveToast = toast.loading('Saving your information...')
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, {
@@ -258,14 +243,12 @@ export default function RegisterPage() {
 
             if (!response.ok) {
                 const errorData = await response.json()
-                console.error('❌ Backend error:', errorData)
                 toast.error(errorData.error || 'Failed to save user data')
                 setIsLoading(false)
                 return
             }
 
             const data = await response.json()
-            console.log('✅ Backend response:', data)
 
             if (data.success) {
                 toast.success('✨ Signed in with Google successfully!')
@@ -415,63 +398,6 @@ export default function RegisterPage() {
                                     </select>
                                 </div>
                             </div>
-
-                            {/* Rider Specific Fields */}
-                            {formData.role === 'rider' && (
-                                <motion.div
-                                    initial={{ opacity: 0, height: 0 }}
-                                    animate={{ opacity: 1, height: 'auto' }}
-                                    className="space-y-4 p-4 bg-info/5 border-2 border-info/20 rounded-lg"
-                                >
-                                    <div className="flex items-center gap-2 text-info mb-2">
-                                        <Bike className="w-5 h-5" />
-                                        <span className="font-semibold">Rider Information</span>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-semibold text-base-content mb-2">Vehicle Type</label>
-                                        <select
-                                            name="vehicleType"
-                                            value={formData.vehicleType}
-                                            onChange={handleChange}
-                                            required={formData.role === 'rider'}
-                                            className="w-full px-4 py-3 rounded-lg bg-base-200 border-2 border-base-300 focus:border-primary outline-none"
-                                        >
-                                            <option value="">Select Vehicle Type</option>
-                                            <option value="bike">Motorcycle</option>
-                                            <option value="bicycle">Bicycle</option>
-                                            <option value="car">Car</option>
-                                            <option value="van">Van</option>
-                                        </select>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-semibold text-base-content mb-2">Vehicle Number</label>
-                                        <input
-                                            type="text"
-                                            name="vehicleNumber"
-                                            value={formData.vehicleNumber}
-                                            onChange={handleChange}
-                                            required={formData.role === 'rider'}
-                                            className="w-full px-4 py-3 rounded-lg bg-base-200 border-2 border-base-300 focus:border-primary outline-none"
-                                            placeholder="Dhaka Metro Ka-12-3456"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-semibold text-base-content mb-2">Driving License Number</label>
-                                        <input
-                                            type="text"
-                                            name="licenseNumber"
-                                            value={formData.licenseNumber}
-                                            onChange={handleChange}
-                                            required={formData.role === 'rider'}
-                                            className="w-full px-4 py-3 rounded-lg bg-base-200 border-2 border-base-300 focus:border-primary outline-none"
-                                            placeholder="License Number"
-                                        />
-                                    </div>
-                                </motion.div>
-                            )}
 
                             {/* Password */}
                             <div>

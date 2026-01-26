@@ -119,9 +119,9 @@ export default function ProductsPage() {
     const gridClass = 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6'
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-base-100 via-base-100 to-base-200">
+        <div className="min-h-screen bg-linear-to-b from-base-100 via-base-100 to-base-200">
             {/* Header Section */}
-            <div className="relative overflow-hidden pt-12 pb-16 px-4 md:px-8">
+            <div className="relative overflow-hidden pt-12 px-4 md:px-8">
                 {/* Background Elements */}
                 <div className="absolute inset-0 opacity-5">
                     <div className="absolute top-20 left-10 w-72 h-72 bg-primary rounded-full mix-blend-multiply filter blur-3xl"></div>
@@ -142,7 +142,7 @@ export default function ProductsPage() {
 
                         <h1 className="text-4xl md:text-6xl font-bold text-base-content mb-4 leading-tight">
                             Discover Premium
-                            <span className="block bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+                            <span className="block bg-linear-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
                                 Products
                             </span>
                         </h1>
@@ -200,7 +200,7 @@ export default function ProductsPage() {
                                             {selectedCategory === 'all' ? 'All Categories' : selectedCategory}
                                         </span>
                                     </div>
-                                    <ChevronDown className={`w-4 h-4 transition-transform flex-shrink-0 ${dropdownOpen ? 'rotate-180' : ''}`} />
+                                    <ChevronDown className={`w-4 h-4 transition-transform shrink-0 ${dropdownOpen ? 'rotate-180' : ''}`} />
                                 </button>
 
                                 {/* Dropdown Menu */}
@@ -261,7 +261,7 @@ export default function ProductsPage() {
                                                 <div className="group cursor-pointer h-full">
                                                     <div className="bg-base-100 rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500 h-full flex flex-col border border-base-300/50 hover:border-primary/30">
                                                         {/* Product Image Container */}
-                                                        <div className="relative h-40 md:h-48 lg:h-56 overflow-hidden bg-gradient-to-br from-base-200 to-base-300">
+                                                        <div className="relative h-40 md:h-48 lg:h-56 overflow-hidden bg-linear-to-br from-base-200 to-base-300">
                                                             <Image
                                                                 src={product.image}
                                                                 alt={product.name}
@@ -270,7 +270,7 @@ export default function ProductsPage() {
                                                             />
 
                                                             {/* Overlay on Hover */}
-                                                            <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                                            <div className="absolute inset-0 bg-linear-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
                                                             {/* Stock Badge */}
                                                             <div className="absolute top-2 right-2 md:top-3 md:right-3">
@@ -333,7 +333,7 @@ export default function ProductsPage() {
                                                             <div className="flex items-end justify-between gap-2 pt-3 border-t border-base-300/50 mb-4">
                                                                 <div>
                                                                     <p className="text-xs text-base-content/50 mb-1">Price</p>
-                                                                    <p className="text-lg md:text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                                                                    <p className="text-lg md:text-xl font-bold bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent">
                                                                         ${product.price.toFixed(2)}
                                                                     </p>
                                                                 </div>
@@ -347,7 +347,7 @@ export default function ProductsPage() {
                                                             </div>
 
                                                             {/* View Button */}
-                                                            <button className="w-full py-2.5 md:py-3 bg-gradient-to-r from-primary to-secondary text-primary-content font-semibold rounded-lg hover:shadow-lg hover:shadow-primary/30 transition-all duration-300 text-xs md:text-sm hover:scale-105 transform">
+                                                            <button className="w-full py-2.5 md:py-3 bg-linear-to-r from-primary to-secondary text-primary-content font-semibold rounded-lg hover:shadow-lg hover:shadow-primary/30 transition-all duration-300 text-xs md:text-sm hover:scale-105 transform">
                                                                 View Details →
                                                             </button>
                                                         </div>
@@ -386,7 +386,7 @@ export default function ProductsPage() {
                                                 onClick={() => typeof page === 'number' && handlePageChange(page)}
                                                 disabled={page === '...'}
                                                 className={`px-3 md:px-4 py-2 md:py-3 rounded-lg font-semibold transition-all text-sm md:text-base ${page === currentPage
-                                                        ? 'bg-gradient-to-r from-primary to-secondary text-primary-content shadow-lg shadow-primary/30'
+                                                        ? 'bg-linear-to-r from-primary to-secondary text-primary-content shadow-lg shadow-primary/30'
                                                         : page === '...'
                                                             ? 'bg-transparent text-base-content/50 cursor-default'
                                                             : 'bg-base-200 text-base-content hover:bg-primary hover:text-primary-content'
@@ -449,7 +449,7 @@ export default function ProductsPage() {
                                         setSearchQuery('')
                                         setSelectedCategory('all')
                                     }}
-                                    className="px-6 py-3 bg-gradient-to-r from-primary to-secondary text-primary-content font-semibold rounded-lg hover:shadow-lg hover:shadow-primary/30 transition-all duration-300 inline-block text-sm md:text-base"
+                                    className="px-6 py-3 bg-linear-to-r from-primary to-secondary text-primary-content font-semibold rounded-lg hover:shadow-lg hover:shadow-primary/30 transition-all duration-300 inline-block text-sm md:text-base"
                                 >
                                     View All Products
                                 </motion.button>

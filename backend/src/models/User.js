@@ -34,39 +34,6 @@ const userSchema = new mongoose.Schema({
         enum: ['google', 'email'],
         required: true
     },
-    // Rider-specific information
-    riderInfo: {
-        vehicleType: {
-            type: String,
-            enum: ['bike', 'bicycle', 'car', 'van']
-        },
-        vehicleNumber: String,
-        licenseNumber: String,
-        isAvailable: {
-            type: Boolean,
-            default: true
-        },
-        completedDeliveries: {
-            type: Number,
-            default: 0
-        },
-        rating: {
-            type: Number,
-            default: 5.0,
-            min: 0,
-            max: 5
-        },
-        earnings: {
-            type: Number,
-            default: 0
-        },
-        address: {
-            division: String,
-            district: String,
-            area: String,
-            street: String
-        }
-    }
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);

@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Bike, Package, MapPin, Phone, Star, CheckCircle, X, Search, Filter } from 'lucide-react'
+import { Bike, Package, MapPin, Phone, Star, CheckCircle, X, Search } from 'lucide-react'
 import DataTable from '../../components/DataTable'
 import useFirebaseAuth from '@/lib/hooks/useFirebaseAuth'
 import toast from 'react-hot-toast'
+import Image from 'next/image'
 
 export default function AssignRiderPage() {
     const { user, userData } = useFirebaseAuth()
@@ -14,13 +15,13 @@ export default function AssignRiderPage() {
     const [filteredRiders, setFilteredRiders] = useState([])
     const [selectedOrder, setSelectedOrder] = useState(null)
     const [isLoading, setIsLoading] = useState(true)
+    const [isLoadingRiders, setIsLoadingRiders] = useState(false)
     const [showRiderModal, setShowRiderModal] = useState(false)
     const [searchRider, setSearchRider] = useState('')
 
     useEffect(() => {
         if (user && userData) {
             fetchOrders()
-            fetchRiders()
         }
     }, [user, userData])
 
@@ -30,6 +31,7 @@ export default function AssignRiderPage() {
 
     const fetchOrders = async () => {
         try {
+            setIsLoading(true)
             const response = await fetch(
                 `${process.env.NEXT_PUBLIC_API_URL}/orders/pending-assignment`
             )
@@ -37,45 +39,163 @@ export default function AssignRiderPage() {
 
             if (data.success) {
                 setOrders(data.orders || [])
+                console.log('✅ Orders loaded:', data.orders?.length || 0)
+            } else {
+                toast.error(data.error || 'Failed to load orders')
             }
         } catch (error) {
-            console.error('Error fetching orders:', error)
+            console.error('❌ Error fetching orders:', error)
             toast.error('Failed to load orders')
         } finally {
             setIsLoading(false)
         }
     }
 
-    const fetchRiders = async () => {
+    const fetchRiders = async (order) => {
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/riders/available`)
+            setIsLoadingRiders(true)
+
+            const division = order.shippingAddress?.division
+            const district = order.shippingAddress?.district
+
+            console.log('🔍 Fetching riders for order:', {
+                orderId: order.orderId,
+                division,
+                district,
+                fullAddress: order.shippingAddress
+            })
+
+            let url = `${process.env.NEXT_PUBLIC_API_URL}/riders/available`
+            const params = new URLSearchParams()
+
+            if (division && district) {
+                params.append('division', division)
+                params.append('district', district)
+            } else if (division) {
+                params.append('division', division)
+            }
+
+            if (params.toString()) {
+                url += `?${params.toString()}`
+            }
+
+            console.log('📡 Fetching riders from URL:', url)
+
+            const response = await fetch(url)
             const data = await response.json()
 
+            console.log('📦 API Response:', {
+                success: data.success,
+                count: data.riders?.length || 0,
+                riders: data.riders
+            })
+
             if (data.success) {
-                setRiders(data.riders || [])
+                const availableRiders = data.riders || []
+                console.log(`✅ Found ${availableRiders.length} riders`)
+
+                if (availableRiders.length > 0) {
+                    setRiders(availableRiders)
+
+                    if (division && district) {
+                        toast.success(`Found ${availableRiders.length} rider(s) in ${district}, ${division}`)
+                    } else if (division) {
+                        toast.success(`Found ${availableRiders.length} rider(s) in ${division} division`)
+                    }
+                } else {
+                    console.log('⚠️ No riders found with current filters')
+
+                    if (division && district) {
+                        console.log('🔄 Trying with division only...')
+                        toast('No riders in specific district. Searching in the division...', {
+                            icon: '🔍',
+                        })
+
+                        const divisionResponse = await fetch(
+                            `${process.env.NEXT_PUBLIC_API_URL}/riders/available?division=${division}`
+                        )
+                        const divisionData = await divisionResponse.json()
+
+                        if (divisionData.success && divisionData.riders?.length > 0) {
+                            setRiders(divisionData.riders)
+                            toast.success(`Found ${divisionData.riders.length} rider(s) in ${division} division`)
+                            console.log(`✅ Found ${divisionData.riders.length} riders in division`)
+                        } else {
+                            console.log('🔄 No riders in division, fetching all available riders...')
+                            await fetchAllAvailableRiders()
+                        }
+                    } else if (division) {
+                        console.log('🔄 No riders in division, fetching all available riders...')
+                        await fetchAllAvailableRiders()
+                    } else {
+                        setRiders([])
+                        toast.error('No available riders found')
+                    }
+                }
+            } else {
+                console.error('❌ API error:', data.error)
+                toast.error(data.error || 'Failed to load riders')
+                setRiders([])
             }
         } catch (error) {
-            console.error('Error fetching riders:', error)
+            console.error('❌ Error fetching riders:', error)
+            toast.error('Failed to load riders. Please try again.')
+            setRiders([])
+        } finally {
+            setIsLoadingRiders(false)
+        }
+    }
+
+    const fetchAllAvailableRiders = async () => {
+        try {
+            toast('No riders in delivery location. Showing all available riders...', {
+                icon: 'ℹ️',
+            })
+
+            const allResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/riders/available`)
+            const allData = await allResponse.json()
+
+            if (allData.success) {
+                setRiders(allData.riders || [])
+                console.log(`✅ Loaded ${allData.riders?.length || 0} total available riders`)
+
+                if (allData.riders?.length > 0) {
+                    toast.success(`Showing ${allData.riders.length} available rider(s) from all locations`)
+                } else {
+                    toast.error('No verified riders available in the system')
+                }
+            } else {
+                setRiders([])
+                toast.error('No riders available')
+            }
+        } catch (fallbackError) {
+            console.error('❌ Error fetching all riders:', fallbackError)
+            setRiders([])
             toast.error('Failed to load riders')
         }
     }
 
     const filterRiders = () => {
-        let filtered = riders.filter(rider => rider.riderInfo?.isAvailable)
+        let filtered = [...riders]
 
-        // Text search filter
         if (searchRider) {
             const query = searchRider.toLowerCase()
             filtered = filtered.filter(rider =>
                 rider.displayName?.toLowerCase().includes(query) ||
                 rider.phoneNumber?.includes(query) ||
-                rider.riderInfo?.vehicleType?.toLowerCase().includes(query) ||
-                rider.riderInfo?.vehicleNumber?.toLowerCase().includes(query)
+                rider.vehicleType?.toLowerCase().includes(query) ||
+                rider.vehicleNumber?.toLowerCase().includes(query) ||
+                rider.address?.division?.toLowerCase().includes(query) ||
+                rider.address?.district?.toLowerCase().includes(query)
             )
         }
 
-        // Sort by rating
-        filtered.sort((a, b) => (b.riderInfo?.rating || 0) - (a.riderInfo?.rating || 0))
+        filtered.sort((a, b) => {
+            if (b.rating !== a.rating) {
+                return b.rating - a.rating
+            }
+            return (b.completedDeliveries || 0) - (a.completedDeliveries || 0)
+        })
 
         setFilteredRiders(filtered)
     }
@@ -84,6 +204,8 @@ export default function AssignRiderPage() {
         if (!selectedOrder) return
 
         try {
+            const loadingToast = toast.loading('Assigning rider...')
+
             const response = await fetch(
                 `${process.env.NEXT_PUBLIC_API_URL}/riders/assign`,
                 {
@@ -99,20 +221,36 @@ export default function AssignRiderPage() {
             )
 
             const data = await response.json()
+            toast.dismiss(loadingToast)
 
             if (data.success) {
-                toast.success(`Rider ${rider.displayName} assigned successfully!`)
+                toast.success(`✅ Rider ${rider.displayName} assigned successfully!`)
                 setShowRiderModal(false)
                 setSelectedOrder(null)
                 setSearchRider('')
+                setRiders([])
                 fetchOrders()
             } else {
                 toast.error(data.error || 'Failed to assign rider')
             }
         } catch (error) {
-            console.error('Error assigning rider:', error)
+            console.error('❌ Error assigning rider:', error)
             toast.error('Failed to assign rider')
         }
+    }
+
+    const handleOpenRiderModal = (order) => {
+        setSelectedOrder(order)
+        setShowRiderModal(true)
+        setSearchRider('')
+        fetchRiders(order)
+    }
+
+    const handleCloseRiderModal = () => {
+        setShowRiderModal(false)
+        setSelectedOrder(null)
+        setSearchRider('')
+        setRiders([])
     }
 
     const orderColumns = [
@@ -130,7 +268,7 @@ export default function AssignRiderPage() {
             accessor: 'trackingId',
             render: (row) => (
                 <div className="font-mono text-xs">
-                    {row.trackingId}
+                    {row.trackingId || 'N/A'}
                 </div>
             )
         },
@@ -151,10 +289,10 @@ export default function AssignRiderPage() {
                 <div className="text-sm">
                     <div className="flex items-center gap-1">
                         <MapPin className="w-3 h-3 text-primary" />
-                        {row.shippingAddress?.city}, {row.shippingAddress?.district}
+                        {row.shippingAddress?.city || 'N/A'}, {row.shippingAddress?.district || 'N/A'}
                     </div>
                     <div className="text-xs text-base-content/60">
-                        {row.shippingAddress?.division}
+                        {row.shippingAddress?.division || 'N/A'}
                     </div>
                 </div>
             )
@@ -164,7 +302,7 @@ export default function AssignRiderPage() {
             accessor: 'total',
             render: (row) => (
                 <div className="font-bold text-success">
-                    ${row.total?.toFixed(2)}
+                    ${row.total?.toFixed(2) || '0.00'}
                 </div>
             )
         },
@@ -182,14 +320,115 @@ export default function AssignRiderPage() {
             accessor: 'actions',
             render: (row) => (
                 <button
-                    onClick={() => {
-                        setSelectedOrder(row)
-                        setShowRiderModal(true)
-                    }}
+                    onClick={() => handleOpenRiderModal(row)}
                     className="btn btn-sm btn-primary"
                 >
                     <Bike className="w-4 h-4" />
-                    Assign Rider
+                    Assign
+                </button>
+            )
+        }
+    ]
+
+    const riderColumns = [
+        {
+            header: 'Rider',
+            accessor: 'displayName',
+            render: (row) => (
+                <div className="flex items-center gap-2">
+                    <div className="avatar placeholder">
+                        <div className="w-10 h-10 rounded-full bg-primary/20">
+                            {row.photoURL ? (
+                                <Image
+                                    src={row.photoURL}
+                                    alt={row.displayName}
+                                    width={40}
+                                    height={40}
+                                    className="object-cover"
+                                />
+                            ) : (
+                                <span className="text-lg text-primary">
+                                    {row.displayName?.charAt(0) || '?'}
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                    <div>
+                        <div className="font-bold text-sm">{row.displayName}</div>
+                        <div className="text-xs text-base-content/60 flex items-center gap-1">
+                            <Phone className="w-3 h-3" />
+                            {row.phoneNumber}
+                        </div>
+                    </div>
+                </div>
+            )
+        },
+        {
+            header: 'Vehicle',
+            accessor: 'vehicleType',
+            render: (row) => (
+                <div className="text-sm">
+                    <div className="flex items-center gap-1 capitalize">
+                        <Bike className="w-3 h-3 text-primary" />
+                        <span className="font-semibold">{row.vehicleType}</span>
+                    </div>
+                    <div className="text-xs text-base-content/60">{row.vehicleNumber}</div>
+                </div>
+            )
+        },
+        {
+            header: 'Location',
+            accessor: 'address',
+            render: (row) => (
+                <div className="text-sm">
+                    <div className="flex items-center gap-1">
+                        <MapPin className="w-3 h-3 text-base-content/50" />
+                        <span>{row.address?.district}</span>
+                    </div>
+                    <div className="text-xs text-base-content/60">{row.address?.division}</div>
+                </div>
+            )
+        },
+        {
+            header: 'Stats',
+            accessor: 'stats',
+            render: (row) => (
+                <div className="space-y-1">
+                    <div className="flex items-center gap-1">
+                        <Star className="w-3 h-3 text-warning fill-warning" />
+                        <span className="font-semibold text-sm">{row.rating?.toFixed(1) || '5.0'}</span>
+                    </div>
+                    <div className="text-xs text-base-content/60">
+                        {row.completedDeliveries || 0} deliveries
+                    </div>
+                </div>
+            )
+        },
+        {
+            header: 'Status',
+            accessor: 'status',
+            render: (row) => (
+                <div className="flex flex-col gap-1">
+                    {row.isAvailable && (
+                        <div className="badge badge-xs badge-success">Available</div>
+                    )}
+                    {row.isVerified && (
+                        <div className="badge badge-xs badge-info">Verified</div>
+                    )}
+                </div>
+            )
+        },
+        {
+            header: 'Actions',
+            accessor: 'actions',
+            render: (row) => (
+                <button
+                    onClick={() => handleAssignRider(row)}
+                    className="btn btn-sm btn-primary"
+                    disabled={!row.isAvailable}
+                >
+                    <CheckCircle className="w-4 h-4" />
+                    Assign
                 </button>
             )
         }
@@ -212,12 +451,6 @@ export default function AssignRiderPage() {
                     <div className="stat">
                         <div className="stat-title">Pending Assignment</div>
                         <div className="stat-value text-primary">{orders.length}</div>
-                    </div>
-                    <div className="stat">
-                        <div className="stat-title">Available Riders</div>
-                        <div className="stat-value text-success">
-                            {riders.filter(r => r.riderInfo?.isAvailable).length}
-                        </div>
                     </div>
                 </div>
             </div>
@@ -246,150 +479,94 @@ export default function AssignRiderPage() {
                 )}
             </motion.div>
 
-            {/* Rider Selection Modal */}
+            {/* Compact Rider Selection Modal */}
             {showRiderModal && selectedOrder && (
                 <div className="modal modal-open">
-                    <div className="modal-box max-w-5xl max-h-[90vh] overflow-y-auto">
-                        <div className="flex items-center justify-between mb-6 sticky top-0 bg-base-100 z-10 pb-4 border-b">
-                            <h3 className="font-bold text-2xl">Select Rider</h3>
+                    <div className="modal-box w-11/12 max-w-4xl h-[85vh] flex flex-col p-0">
+                        {/* Fixed Header */}
+                        <div className="flex items-center justify-between p-6 border-b border-base-300 bg-base-100 sticky top-0 z-10">
+                            <div>
+                                <h3 className="font-bold text-xl">Select Rider for Order</h3>
+                                <p className="text-sm text-base-content/60 mt-1">
+                                    Order #{selectedOrder.orderId} • {selectedOrder.shippingAddress?.district}, {selectedOrder.shippingAddress?.division}
+                                </p>
+                            </div>
                             <button
-                                onClick={() => {
-                                    setShowRiderModal(false)
-                                    setSelectedOrder(null)
-                                    setSearchRider('')
-                                }}
+                                onClick={handleCloseRiderModal}
                                 className="btn btn-ghost btn-sm btn-circle"
                             >
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
 
-                        {/* Order Info */}
-                        <div className="p-4 bg-base-200 rounded-lg mb-6">
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {/* Scrollable Content */}
+                        <div className="flex-1 overflow-y-auto p-6">
+                            {/* Compact Order Summary */}
+                            <div className="grid grid-cols-3 gap-3 p-3 bg-base-200 rounded-lg mb-4 text-sm">
                                 <div>
-                                    <div className="text-sm text-base-content/60">Order ID</div>
-                                    <div className="font-bold">#{selectedOrder.orderId}</div>
+                                    <div className="text-xs text-base-content/60">Customer</div>
+                                    <div className="font-semibold">{selectedOrder.buyerInfo?.name}</div>
                                 </div>
                                 <div>
-                                    <div className="text-sm text-base-content/60">Customer</div>
-                                    <div className="font-bold">{selectedOrder.buyerInfo?.name}</div>
+                                    <div className="text-xs text-base-content/60">Amount</div>
+                                    <div className="font-semibold text-success">${selectedOrder.total?.toFixed(2)}</div>
                                 </div>
                                 <div>
-                                    <div className="text-sm text-base-content/60">Delivery Location</div>
-                                    <div className="font-bold">
-                                        {selectedOrder.shippingAddress?.city}, {selectedOrder.shippingAddress?.district}
-                                    </div>
-                                </div>
-                                <div>
-                                    <div className="text-sm text-base-content/60">Amount</div>
-                                    <div className="font-bold text-success">${selectedOrder.total?.toFixed(2)}</div>
+                                    <div className="text-xs text-base-content/60">Items</div>
+                                    <div className="font-semibold">{selectedOrder.items?.length || 0} items</div>
                                 </div>
                             </div>
-                        </div>
 
-                        {/* Search Bar */}
-                        <div className="space-y-4 mb-4">
-                            <div className="relative">
-                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-base-content/40" />
+                            {/* Search Bar */}
+                            <div className="relative mb-4">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/40" />
                                 <input
                                     type="text"
                                     value={searchRider}
                                     onChange={(e) => setSearchRider(e.target.value)}
-                                    placeholder="Search riders by name, phone, or vehicle..."
-                                    className="w-full pl-12 pr-4 py-3 bg-base-200 border border-base-300 rounded-lg focus:outline-none focus:border-primary"
+                                    placeholder="Search riders..."
+                                    className="w-full pl-10 pr-4 py-2 text-sm bg-base-200 border border-base-300 rounded-lg focus:outline-none focus:border-primary"
                                 />
                             </div>
-                            <div className="text-sm text-base-content/60 text-right">
-                                {filteredRiders.length} rider(s) found
-                            </div>
-                        </div>
 
-                        {/* Riders List */}
-                        <div className="space-y-3 max-h-96 overflow-y-auto">
-                            {filteredRiders.length === 0 ? (
-                                <div className="text-center py-8">
-                                    <Bike className="w-12 h-12 text-base-content/30 mx-auto mb-3" />
-                                    <p className="text-base-content/70">No available riders found</p>
-                                    {searchRider && (
-                                        <button
-                                            onClick={() => setSearchRider('')}
-                                            className="btn btn-sm btn-ghost mt-2"
-                                        >
-                                            Clear Search
-                                        </button>
-                                    )}
+                            {/* Results Info */}
+                            <div className="flex items-center justify-between mb-3 text-xs text-base-content/60">
+                                <span>
+                                    {filteredRiders.length} rider(s) available
+                                </span>
+                                {isLoadingRiders && (
+                                    <span className="loading loading-spinner loading-xs"></span>
+                                )}
+                            </div>
+
+                            {/* Riders DataTable */}
+                            {isLoadingRiders ? (
+                                <div className="text-center py-12">
+                                    <div className="loading loading-spinner loading-lg text-primary mx-auto mb-3"></div>
+                                    <p className="text-base-content/70">Loading riders...</p>
                                 </div>
                             ) : (
-                                filteredRiders.map((rider) => (
-                                    <div
-                                        key={rider.uid}
-                                        className="flex items-center gap-4 p-4 bg-base-200 rounded-lg hover:bg-base-300 transition-colors cursor-pointer"
-                                        onClick={() => handleAssignRider(rider)}
-                                    >
-                                        <div className="avatar placeholder">
-                                            <div className="w-16 h-16 rounded-full bg-primary/20">
-                                                {rider.photoURL ? (
-                                                    <img src={rider.photoURL} alt={rider.displayName} />
-                                                ) : (
-                                                    <span className="text-2xl text-primary">
-                                                        {rider.displayName?.charAt(0)}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </div>
-                                        <div className="flex-1">
-                                            <div className="font-bold text-lg">{rider.displayName}</div>
-                                            <div className="flex items-center gap-4 text-sm text-base-content/60 mt-1">
-                                                <span className="flex items-center gap-1">
-                                                    <Phone className="w-3 h-3" />
-                                                    {rider.phoneNumber}
-                                                </span>
-                                                <span className="flex items-center gap-1 capitalize">
-                                                    <Bike className="w-3 h-3" />
-                                                    {rider.riderInfo?.vehicleType} - {rider.riderInfo?.vehicleNumber}
-                                                </span>
-                                            </div>
-                                            <div className="flex items-center gap-2 mt-2">
-                                                <div className="flex items-center gap-1">
-                                                    <Star className="w-4 h-4 text-warning fill-warning" />
-                                                    <span className="font-semibold">{rider.riderInfo?.rating?.toFixed(1)}</span>
-                                                </div>
-                                                <div className="badge badge-sm badge-success">
-                                                    {rider.riderInfo?.completedDeliveries || 0} deliveries
-                                                </div>
-                                                {rider.riderInfo?.isAvailable && (
-                                                    <div className="badge badge-sm badge-primary">Available</div>
-                                                )}
-                                            </div>
-                                        </div>
-                                        <button className="btn btn-primary btn-sm">
-                                            <CheckCircle className="w-4 h-4" />
-                                            Assign
-                                        </button>
-                                    </div>
-                                ))
+                                <DataTable
+                                    data={filteredRiders}
+                                    columns={riderColumns}
+                                    itemsPerPage={5}
+                                    emptyMessage="No available riders found"
+                                    EmptyIcon={Bike}
+                                />
                             )}
                         </div>
 
-                        <div className="modal-action sticky bottom-0 bg-base-100 pt-4 border-t">
+                        {/* Fixed Footer */}
+                        <div className="p-4 border-t border-base-300 bg-base-100 sticky bottom-0">
                             <button
-                                onClick={() => {
-                                    setShowRiderModal(false)
-                                    setSelectedOrder(null)
-                                    setSearchRider('')
-                                }}
-                                className="btn"
+                                onClick={handleCloseRiderModal}
+                                className="btn btn-outline btn-error w-full btn-sm"
                             >
                                 Cancel
                             </button>
                         </div>
                     </div>
-                    <div className="modal-backdrop" onClick={() => {
-                        setShowRiderModal(false)
-                        setSelectedOrder(null)
-                        setSearchRider('')
-                    }}></div>
+                    <div className="modal-backdrop" onClick={handleCloseRiderModal}></div>
                 </div>
             )}
         </div>

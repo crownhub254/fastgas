@@ -9,7 +9,7 @@ import DataTable from '../../components/DataTable'
 import Loading from '../../loading'
 
 export default function RiderMyTasksPage() {
-    const { user } = useFirebaseAuth()
+    const { user, userData } = useFirebaseAuth() // Also get userData to check role
     const [orders, setOrders] = useState([])
     const [filter, setFilter] = useState('pending')
     const [isLoading, setIsLoading] = useState(true)
@@ -18,19 +18,34 @@ export default function RiderMyTasksPage() {
 
     useEffect(() => {
         if (user) {
+            console.log('🔍 Current user:', {
+                uid: user.uid,
+                email: user.email,
+                role: userData?.role
+            })
             fetchOrders()
         }
-    }, [user, filter])
+    }, [user, userData, filter])
 
     const fetchOrders = async () => {
         setIsLoading(true)
         try {
             console.log('🔍 Fetching orders for rider:', user.uid)
             const response = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/riders/${user.uid}/orders`
+                `${process.env.NEXT_PUBLIC_API_URL}/riders/${user.uid}/orders`,
+                {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }
             )
-            const data = await response.json()
 
+            if (!response.ok) {
+                console.error('❌ HTTP Error:', response.status, response.statusText)
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+            }
+
+            const data = await response.json()
             console.log('📦 API Response:', data)
 
             if (data.success) {
@@ -49,7 +64,7 @@ export default function RiderMyTasksPage() {
             }
         } catch (error) {
             console.error('❌ Error fetching orders:', error)
-            toast.error('Failed to load orders')
+            toast.error('Failed to load orders: ' + error.message)
             setOrders([])
         } finally {
             setIsLoading(false)
@@ -62,9 +77,18 @@ export default function RiderMyTasksPage() {
             return
         }
 
+        if (!user?.uid) {
+            toast.error('User not authenticated')
+            return
+        }
+
         setActionLoading(true)
         try {
             console.log('✅ Accepting delivery for order:', orderId)
+            console.log('📤 Sending request with:', {
+                orderId,
+                riderId: user.uid
+            })
 
             const response = await fetch(
                 `${process.env.NEXT_PUBLIC_API_URL}/riders/accept-delivery`,
@@ -80,12 +104,21 @@ export default function RiderMyTasksPage() {
                 }
             )
 
+            console.log('📥 Response status:', response.status, response.statusText)
+
+            if (!response.ok) {
+                const errorText = await response.text()
+                console.error('❌ HTTP Error Response:', errorText)
+                throw new Error(`HTTP ${response.status}: ${errorText}`)
+            }
+
             const data = await response.json()
             console.log('📊 Accept delivery response:', data)
 
             if (data.success) {
                 toast.success('✅ Delivery accepted!')
                 setSelectedOrder(null)
+                // Reload orders after a short delay
                 setTimeout(() => fetchOrders(), 500)
             } else {
                 console.error('❌ Failed to accept:', data.error)
@@ -105,28 +138,53 @@ export default function RiderMyTasksPage() {
             return
         }
 
+        if (!user?.uid) {
+            toast.error('User not authenticated')
+            return
+        }
+
         setActionLoading(true)
         try {
             console.log(`🔄 Updating order ${orderId} to status: ${newStatus}`)
 
+            // Map the status to the correct Order.status and riderStatus
+            let orderStatus = 'shipped' // default
+            let riderStatus = newStatus
+
+            // Define status mappings
+            const statusMappings = {
+                'picked_up': { orderStatus: 'shipped', riderStatus: 'picked_up' },
+                'in_transit': { orderStatus: 'shipped', riderStatus: 'in_transit' },
+                'delivered': { orderStatus: 'delivered', riderStatus: 'delivered' }
+            }
+
+            if (statusMappings[newStatus]) {
+                orderStatus = statusMappings[newStatus].orderStatus
+                riderStatus = statusMappings[newStatus].riderStatus
+            }
+
             const response = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/orders/${orderId}/update-delivery-status`,
+                `${process.env.NEXT_PUBLIC_API_URL}/riders/update-status`,
                 {
                     method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        status: newStatus,
-                        timeline: {
-                            status: newStatus,
-                            timestamp: new Date().toISOString(),
-                            location: 'Updated by rider',
-                            note: `Order marked as ${statusLabel}`
-                        }
+                        orderId,
+                        riderId: user.uid,
+                        orderStatus,
+                        riderStatus,
+                        statusLabel
                     })
                 }
             )
+
+            if (!response.ok) {
+                const errorText = await response.text()
+                console.error('❌ HTTP Error Response:', errorText)
+                throw new Error(`HTTP ${response.status}: ${errorText}`)
+            }
 
             const data = await response.json()
             console.log('📊 Update status response:', data)
@@ -150,6 +208,11 @@ export default function RiderMyTasksPage() {
     const handleCancelDelivery = async (orderId) => {
         if (!orderId) {
             toast.error('Invalid order ID')
+            return
+        }
+
+        if (!user?.uid) {
+            toast.error('User not authenticated')
             return
         }
 
@@ -181,6 +244,12 @@ export default function RiderMyTasksPage() {
                     })
                 }
             )
+
+            if (!response.ok) {
+                const errorText = await response.text()
+                console.error('❌ HTTP Error Response:', errorText)
+                throw new Error(`HTTP ${response.status}: ${errorText}`)
+            }
 
             const data = await response.json()
             console.log('📊 Cancel delivery response:', data)
@@ -471,8 +540,8 @@ export default function RiderMyTasksPage() {
                         key={tab.value}
                         onClick={() => setFilter(tab.value)}
                         className={`px-4 py-2 rounded-lg font-semibold whitespace-nowrap transition-all ${filter === tab.value
-                                ? 'bg-gradient-to-r from-primary to-secondary text-primary-content shadow-lg'
-                                : 'bg-base-200 text-base-content hover:bg-base-300'
+                            ? 'bg-gradient-to-r from-primary to-secondary text-primary-content shadow-lg'
+                            : 'bg-base-200 text-base-content hover:bg-base-300'
                             }`}
                     >
                         {tab.label}

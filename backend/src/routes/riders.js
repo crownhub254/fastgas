@@ -3,7 +3,178 @@ const router = express.Router();
 const Rider = require('../models/Rider');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
+const User = require('../models/User');
 const { createNotification } = require('../utils/notificationService');
+
+// Helper function to send notifications to all relevant parties
+async function sendOrderStatusNotifications(order, status, riderId, riderName) {
+    const NotificationService = require('../utils/notificationService');
+
+    const statusConfig = {
+        accepted: {
+            customer: {
+                title: '📦 Your Order is On the Way!',
+                message: `${riderName} has accepted your delivery. Track your order with ID: ${order.trackingId}`,
+                icon: 'Truck',
+                type: 'order_shipped'
+            },
+            admin: {
+                title: '🚚 Delivery Accepted by Rider',
+                message: `Rider ${riderName} has accepted delivery for order ${order.orderId}`,
+                icon: 'CheckCircle',
+                type: 'general'
+            },
+            seller: {
+                title: '📦 Your Product is Out for Delivery',
+                message: `Rider ${riderName} has accepted delivery for order ${order.orderId} containing your product(s)`,
+                icon: 'Package',
+                type: 'general'
+            }
+        },
+        picked_up: {
+            customer: {
+                title: '📦 Package Picked Up',
+                message: `Your order #${order.orderId} has been picked up by the delivery rider.`,
+                icon: 'Package',
+                type: 'general'
+            },
+            admin: {
+                title: '📦 Package Picked Up',
+                message: `Rider ${riderName} has picked up order ${order.orderId}`,
+                icon: 'Package',
+                type: 'general'
+            },
+            seller: {
+                title: '📦 Your Product Has Been Picked Up',
+                message: `Order ${order.orderId} has been picked up and is on its way to the customer`,
+                icon: 'Package',
+                type: 'general'
+            }
+        },
+        in_transit: {
+            customer: {
+                title: '🚚 Order In Transit',
+                message: `Your order #${order.orderId} is on its way to you!`,
+                icon: 'Truck',
+                type: 'general'
+            },
+            admin: {
+                title: '🚚 Order In Transit',
+                message: `Order ${order.orderId} is in transit with rider ${riderName}`,
+                icon: 'Truck',
+                type: 'general'
+            },
+            seller: {
+                title: '🚚 Your Product is In Transit',
+                message: `Order ${order.orderId} is on its way to the customer`,
+                icon: 'Truck',
+                type: 'general'
+            }
+        },
+        delivered: {
+            customer: {
+                title: '🎉 Order Delivered Successfully!',
+                message: `Your order #${order.orderId} has been delivered. Enjoy your purchase!`,
+                icon: 'CheckCircle',
+                type: 'order_delivered'
+            },
+            admin: {
+                title: '✅ Order Delivered',
+                message: `Order ${order.orderId} has been successfully delivered by ${riderName}`,
+                icon: 'CheckCircle',
+                type: 'general'
+            },
+            seller: {
+                title: '✅ Your Product Has Been Delivered',
+                message: `Order ${order.orderId} has been successfully delivered to the customer`,
+                icon: 'CheckCircle',
+                type: 'general'
+            }
+        }
+    };
+
+    const config = statusConfig[status];
+    if (!config) {
+        console.log(`No notification config for status: ${status}`);
+        return;
+    }
+
+    try {
+        // 1. Notify customer
+        await NotificationService.createNotification({
+            userId: order.userId,
+            type: config.customer.type,
+            title: config.customer.title,
+            message: config.customer.message,
+            data: {
+                orderId: order.orderId,
+                trackingId: order.trackingId,
+                riderId: riderId,
+                riderName: riderName
+            },
+            link: `/orders/${order.orderId}`,
+            icon: config.customer.icon,
+            priority: 'high'
+        });
+        console.log('✅ Customer notification sent');
+
+        // 2. Notify all admins
+        const admins = await User.find({ role: 'admin' });
+        for (const admin of admins) {
+            await NotificationService.createNotification({
+                userId: admin.uid,
+                type: config.admin.type,
+                title: config.admin.title,
+                message: config.admin.message,
+                data: {
+                    orderId: order.orderId,
+                    trackingId: order.trackingId,
+                    riderId: riderId,
+                    riderName: riderName
+                },
+                link: `/dashboard/admin/orders`,
+                icon: config.admin.icon,
+                priority: 'medium'
+            });
+        }
+        console.log(`✅ Admin notifications sent to ${admins.length} admin(s)`);
+
+        // 3. Notify sellers of products in this order
+        const sellerIds = new Set();
+        for (const item of order.items) {
+            try {
+                const product = await Product.findOne({ id: item.productId });
+                if (product && product.userId) {
+                    sellerIds.add(product.userId);
+                }
+            } catch (productError) {
+                console.error(`Failed to find product ${item.productId}:`, productError);
+            }
+        }
+
+        for (const sellerId of sellerIds) {
+            await NotificationService.createNotification({
+                userId: sellerId,
+                type: config.seller.type,
+                title: config.seller.title,
+                message: config.seller.message,
+                data: {
+                    orderId: order.orderId,
+                    trackingId: order.trackingId,
+                    riderId: riderId,
+                    riderName: riderName
+                },
+                link: `/dashboard/seller/orders`,
+                icon: config.seller.icon,
+                priority: 'medium'
+            });
+        }
+        console.log(`✅ Seller notifications sent to ${sellerIds.size} seller(s)`);
+
+    } catch (notifError) {
+        console.error('❌ Error sending notifications:', notifError);
+    }
+}
 
 // Get all available riders (optionally filter by location)
 router.get('/available', async (req, res) => {
@@ -318,6 +489,8 @@ router.post('/accept-delivery', async (req, res) => {
     try {
         const { orderId, riderId } = req.body;
 
+        console.log('🔄 Accept delivery request:', { orderId, riderId });
+
         if (!orderId || !riderId) {
             return res.status(400).json({
                 success: false,
@@ -325,50 +498,71 @@ router.post('/accept-delivery', async (req, res) => {
             });
         }
 
+        // Find the order - should already be assigned to this rider
         const order = await Order.findOne({ orderId, riderId });
         if (!order) {
+            console.error('❌ Order not found or not assigned to rider:', { orderId, riderId });
             return res.status(404).json({
                 success: false,
                 error: 'Order not found or not assigned to you'
             });
         }
 
-        const rider = await Rider.findOne({ uid: riderId });
-        if (!rider) {
-            return res.status(404).json({
+        console.log('✅ Order found:', {
+            orderId: order.orderId,
+            currentStatus: order.riderStatus,
+            riderId: order.riderId
+        });
+
+        // Check current status - can only accept if pending
+        if (order.riderStatus !== 'pending') {
+            console.error('❌ Cannot accept order with status:', order.riderStatus);
+            return res.status(400).json({
                 success: false,
-                error: 'Rider not found'
+                error: `Cannot accept order with status: ${order.riderStatus}. Only orders with 'pending' status can be accepted.`
             });
         }
 
-        if (order.riderStatus !== 'pending') {
-            return res.status(400).json({
-                success: false,
-                error: `Cannot accept order with status: ${order.riderStatus}`
-            });
+        // Try to find rider in Rider collection first
+        let rider = await Rider.findOne({ uid: riderId });
+
+        // If not found in Rider collection, check User collection with role='rider'
+        if (!rider) {
+            console.log('⚠️ Rider not found in Rider collection, checking User collection...');
+            const userRider = await User.findOne({ uid: riderId, role: 'rider' });
+
+            if (!userRider) {
+                console.error('❌ Rider not found in either collection:', riderId);
+                return res.status(404).json({
+                    success: false,
+                    error: 'Rider not found. Please ensure your rider account is properly registered.'
+                });
+            }
+
+            // Create a temporary rider object from User data
+            rider = {
+                uid: userRider.uid,
+                displayName: userRider.displayName,
+                phoneNumber: userRider.phoneNumber,
+                email: userRider.email
+            };
+
+            console.log('✅ Found rider in User collection:', rider.displayName);
+        } else {
+            console.log('✅ Found rider in Rider collection:', rider.displayName);
         }
 
         // Update order status
         order.riderStatus = 'accepted';
         order.riderAcceptedAt = new Date();
-        order.status = 'shipped';
+        order.status = 'shipped'; // Overall order status
         await order.save();
 
-        // Notify customer
-        await createNotification({
-            userId: order.userId,
-            type: 'order_shipped',
-            title: '📦 Your Order is On the Way!',
-            message: `${rider.displayName} has accepted your delivery. Track your order with ID: ${order.trackingId}`,
-            data: {
-                orderId: order.orderId,
-                trackingId: order.trackingId,
-                riderName: rider.displayName,
-                riderPhone: rider.phoneNumber
-            },
-            link: `/orders/${order.orderId}`,
-            icon: 'Truck',
-            priority: 'high'
+        console.log('✅ Order status updated to accepted');
+
+        // Send notifications to all parties (non-blocking)
+        setImmediate(async () => {
+            await sendOrderStatusNotifications(order, 'accepted', riderId, rider.displayName);
         });
 
         res.status(200).json({
@@ -377,7 +571,7 @@ router.post('/accept-delivery', async (req, res) => {
             order
         });
     } catch (error) {
-        console.error('Accept delivery error:', error);
+        console.error('❌ Accept delivery error:', error);
         res.status(500).json({
             success: false,
             error: error.message || 'Failed to accept delivery'
@@ -449,6 +643,185 @@ router.post('/reject-delivery', async (req, res) => {
         res.status(500).json({
             success: false,
             error: error.message || 'Failed to reject delivery'
+        });
+    }
+});
+
+// ============================================================================
+// UPDATE DELIVERY STATUS - Main endpoint for all status transitions
+// ============================================================================
+router.patch('/update-status', async (req, res) => {
+    try {
+        const { orderId, riderId, orderStatus, riderStatus, statusLabel } = req.body;
+
+        console.log('🔄 Status update request:', {
+            orderId,
+            riderId,
+            orderStatus,
+            riderStatus,
+            statusLabel
+        });
+
+        // Validate required fields
+        if (!orderId || !riderId || !riderStatus) {
+            return res.status(400).json({
+                success: false,
+                error: 'Order ID, Rider ID, and rider status are required'
+            });
+        }
+
+        // Find the order
+        const order = await Order.findOne({ orderId, riderId });
+
+        if (!order) {
+            return res.status(404).json({
+                success: false,
+                error: 'Order not found or not assigned to you'
+            });
+        }
+
+        // Validate the status transition
+        const validTransitions = {
+            'pending': ['accepted', 'cancelled'],
+            'accepted': ['picked_up', 'cancelled'],
+            'picked_up': ['in_transit', 'cancelled'],
+            'in_transit': ['delivered', 'cancelled'],
+            'delivered': [],
+            'cancelled': []
+        };
+
+        const currentStatus = order.riderStatus;
+        const allowedStatuses = validTransitions[currentStatus] || [];
+
+        if (!allowedStatuses.includes(riderStatus)) {
+            return res.status(400).json({
+                success: false,
+                error: `Cannot transition from ${currentStatus} to ${riderStatus}. Allowed transitions: ${allowedStatuses.join(', ')}`
+            });
+        }
+
+        // Get rider info
+        let rider = await Rider.findOne({ uid: riderId });
+        if (!rider) {
+            const userRider = await User.findOne({ uid: riderId, role: 'rider' });
+            if (userRider) {
+                rider = {
+                    displayName: userRider.displayName,
+                    phoneNumber: userRider.phoneNumber
+                };
+            }
+        }
+
+        // Update order statuses
+        order.riderStatus = riderStatus;
+        order.status = orderStatus || order.status;
+
+        // Update timestamps based on status
+        if (riderStatus === 'picked_up') {
+            order.pickedUpAt = new Date();
+            console.log(`📦 Order ${orderId} picked up at ${order.pickedUpAt}`);
+        } else if (riderStatus === 'delivered') {
+            order.deliveredAt = new Date();
+            order.status = 'delivered';
+            console.log(`✅ Order ${orderId} delivered at ${order.deliveredAt}`);
+
+            // Update rider stats if delivered
+            try {
+                const riderDoc = await Rider.findOne({ uid: riderId });
+                if (riderDoc) {
+                    // Calculate if delivery was on time
+                    const assignedTime = new Date(order.riderAssignedAt);
+                    const deliveredTime = new Date(order.deliveredAt);
+                    const timeDiff = (deliveredTime - assignedTime) / (1000 * 60 * 60); // hours
+                    const onTime = timeDiff <= 48; // 2 days
+
+                    // Update rider stats and earnings
+                    const deliveryFee = order.deliveryFee || 50;
+                    await riderDoc.completeDelivery(orderId, deliveryFee, onTime);
+
+                    console.log(`✅ Rider stats updated for ${riderDoc.displayName}. Earnings: $${riderDoc.earnings}`);
+                }
+            } catch (riderError) {
+                console.error('❌ Failed to update rider stats:', riderError);
+                // Continue even if rider update fails
+            }
+
+            // Update product stock when delivered
+            for (const item of order.items) {
+                try {
+                    const product = await Product.findOne({ id: item.productId });
+                    if (product) {
+                        product.stock = Math.max(0, product.stock - item.quantity);
+                        await product.save();
+                        console.log(`✅ Updated stock for product ${item.productId}: ${product.stock}`);
+                    }
+                } catch (productError) {
+                    console.error(`❌ Failed to update stock for product ${item.productId}:`, productError);
+                    // Continue even if stock update fails
+                }
+            }
+        }
+
+        // Add timeline entry
+        if (!order.timeline) {
+            order.timeline = [];
+        }
+
+        order.timeline.push({
+            status: riderStatus,
+            timestamp: new Date(),
+            location: 'Updated by rider',
+            note: `Order marked as ${statusLabel || riderStatus}`
+        });
+
+        // Save the order
+        await order.save();
+
+        console.log(`✅ Order ${orderId} status updated: ${currentStatus} → ${riderStatus}`);
+
+        // Send notifications to all parties (non-blocking)
+        setImmediate(async () => {
+            const riderName = rider ? rider.displayName : 'Delivery Rider';
+            await sendOrderStatusNotifications(order, riderStatus, riderId, riderName);
+
+            // If delivered, also notify rider of earnings
+            if (riderStatus === 'delivered') {
+                try {
+                    const deliveryFee = order.deliveryFee || 50;
+                    const riderDoc = await Rider.findOne({ uid: riderId });
+
+                    await createNotification({
+                        userId: riderId,
+                        type: 'general',
+                        title: '💰 Delivery Completed!',
+                        message: `You earned $${deliveryFee} for completing order #${orderId}. Total earnings: $${riderDoc?.earnings || 0}`,
+                        data: {
+                            orderId: order.orderId,
+                            earnings: deliveryFee,
+                            totalEarnings: riderDoc?.earnings || 0
+                        },
+                        link: `/dashboard/rider/income`,
+                        icon: 'DollarSign',
+                        priority: 'medium'
+                    });
+                    console.log('✅ Rider earnings notification sent');
+                } catch (notifError) {
+                    console.error('❌ Rider notification error:', notifError);
+                }
+            }
+        });
+
+        res.status(200).json({
+            success: true,
+            message: `Order status updated to ${statusLabel || riderStatus}`,
+            order
+        });
+
+    } catch (error) {
+        console.error('❌ Update status error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Failed to update status'
         });
     }
 });
@@ -561,8 +934,6 @@ router.post('/register', async (req, res) => {
 
         // Create a corresponding user record with role 'rider'
         try {
-            const User = require('../models/User');
-
             // Check if user already exists
             const existingUser = await User.findOne({ uid });
 
@@ -633,6 +1004,8 @@ router.post('/register', async (req, res) => {
         });
     }
 });
+
+// Complete delivery (legacy endpoint - kept for backward compatibility)
 router.post('/complete-delivery', async (req, res) => {
     try {
         const { orderId, riderId } = req.body;
@@ -690,35 +1063,25 @@ router.post('/complete-delivery', async (req, res) => {
             }
         }
 
-        // Notify customer
-        await createNotification({
-            userId: order.userId,
-            type: 'order_delivered',
-            title: '🎉 Order Delivered Successfully!',
-            message: `Your order #${orderId} has been delivered. Enjoy your purchase!`,
-            data: {
-                orderId: order.orderId,
-                trackingId: order.trackingId
-            },
-            link: `/orders/${order.orderId}`,
-            icon: 'CheckCircle',
-            priority: 'high'
-        });
+        // Send notifications (non-blocking)
+        setImmediate(async () => {
+            await sendOrderStatusNotifications(order, 'delivered', riderId, rider.displayName);
 
-        // Notify rider of earnings
-        await createNotification({
-            userId: riderId,
-            type: 'general',
-            title: '💰 Delivery Completed!',
-            message: `You earned ৳${deliveryFee} for completing order #${orderId}. Total earnings: ৳${rider.earnings}`,
-            data: {
-                orderId: order.orderId,
-                earnings: deliveryFee,
-                totalEarnings: rider.earnings
-            },
-            link: `/dashboard/rider/income`,
-            icon: 'DollarSign',
-            priority: 'medium'
+            // Notify rider of earnings
+            await createNotification({
+                userId: riderId,
+                type: 'general',
+                title: '💰 Delivery Completed!',
+                message: `You earned $${deliveryFee} for completing order #${orderId}. Total earnings: $${rider.earnings}`,
+                data: {
+                    orderId: order.orderId,
+                    earnings: deliveryFee,
+                    totalEarnings: rider.earnings
+                },
+                link: `/dashboard/rider/income`,
+                icon: 'DollarSign',
+                priority: 'medium'
+            });
         });
 
         res.status(200).json({

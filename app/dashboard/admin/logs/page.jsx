@@ -679,14 +679,14 @@ export default function AdminSystemLogs() {
             {/* Search Bar */}
             <div className="card bg-base-200 p-6">
                 <div className="form-control">
-                    <div className="input-group">
-                        <span className="bg-base-300 px-4">
+                    <div className="input">
+                        <span className="">
                             <Search className="w-5 h-5" />
                         </span>
                         <input
                             type="text"
                             placeholder="Search logs by details, user name, email, or action..."
-                            className="input input-bordered flex-1"
+                            className="flex-1"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
@@ -699,7 +699,7 @@ export default function AdminSystemLogs() {
                 <DataTable
                     columns={columns}
                     data={filteredLogs}
-                    itemsPerPage={10}
+                    itemsPerPage={5}
                     emptyMessage="No logs found"
                     EmptyIcon={Activity}
                 />

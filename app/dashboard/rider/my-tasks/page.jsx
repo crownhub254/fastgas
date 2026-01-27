@@ -401,12 +401,12 @@ export default function RiderMyTasksPage() {
                 )
 
             case 'delivered':
-                return (
-                    <div className="badge badge-success gap-1">
-                        <CheckCircle className="w-3 h-3" />
-                        Completed
-                    </div>
-                )
+            // return (
+            //     <div className="badge badge-success gap-1">
+            //         <CheckCircle className="w-3 h-3" />
+            //         Completed
+            //     </div>
+            // )
 
             default:
                 return null
@@ -529,18 +529,18 @@ export default function RiderMyTasksPage() {
                 className="flex gap-2 overflow-x-auto pb-2"
             >
                 {[
+                    { value: 'all', label: 'All Tasks' },
                     { value: 'pending', label: 'Pending' },
                     { value: 'accepted', label: 'Accepted' },
                     { value: 'picked_up', label: 'Picked Up' },
                     { value: 'in_transit', label: 'In Transit' },
                     { value: 'delivered', label: 'Delivered' },
-                    { value: 'all', label: 'All Tasks' }
                 ].map((tab) => (
                     <button
                         key={tab.value}
                         onClick={() => setFilter(tab.value)}
                         className={`px-4 py-2 rounded-lg font-semibold whitespace-nowrap transition-all ${filter === tab.value
-                            ? 'bg-gradient-to-r from-primary to-secondary text-primary-content shadow-lg'
+                            ? 'bg-linear-to-r from-primary to-secondary text-primary-content shadow-lg'
                             : 'bg-base-200 text-base-content hover:bg-base-300'
                             }`}
                     >
@@ -594,7 +594,7 @@ export default function RiderMyTasksPage() {
                             className="bg-base-100 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
                         >
                             {/* Modal Header */}
-                            <div className="sticky top-0 bg-gradient-to-r from-primary to-secondary p-6 flex justify-between items-center z-10">
+                            <div className="sticky top-0 bg-linear-to-r from-primary to-secondary p-6 flex justify-between items-center z-10">
                                 <div>
                                     <h2 className="text-2xl font-bold text-primary-content">
                                         Order Details

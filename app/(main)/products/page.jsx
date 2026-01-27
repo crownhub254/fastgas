@@ -115,11 +115,10 @@ export default function ProductsPage() {
         }
     }
 
-    // Grid: 2 cols on mobile, 3 on tablet, 4 on desktop
-    const gridClass = 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6'
+    const gridClass = 'grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6'
 
     return (
-        <div className="min-h-screen bg-linear-to-b from-base-100 via-base-100 to-base-200">
+        <div className="min-h-screen ">
             {/* Header Section */}
             <div className="relative overflow-hidden pt-12 px-4 md:px-8">
                 {/* Background Elements */}

@@ -29,6 +29,11 @@ const riderSchema = new mongoose.Schema({
         enum: ['google', 'email'],
         required: true
     },
+    // NID Number
+    // nidNumber: {
+    //     type: String,
+    //     required: true
+    // },
     // Rider-specific information
     vehicleType: {
         type: String,

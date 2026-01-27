@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Search, Edit, Trash2, UserCog, X, Check, AlertCircle } from 'lucide-react'
+import { Search, Edit, Trash2, UserCog, X, Check, AlertCircle, Bike, Store, CheckCircle, XCircle, Phone, MapPin, CreditCard } from 'lucide-react'
 import Image from 'next/image'
 import toast from 'react-hot-toast'
 import DataTable from '../../components/DataTable'
@@ -10,6 +10,9 @@ import Loading from '../../loading'
 export default function UserManagement() {
     const [users, setUsers] = useState([])
     const [filteredUsers, setFilteredUsers] = useState([])
+    const [unverifiedRiders, setUnverifiedRiders] = useState([])
+    const [verifiedRiders, setVerifiedRiders] = useState([])
+    const [allRiders, setAllRiders] = useState([])
     const [loading, setLoading] = useState(true)
     const [searchQuery, setSearchQuery] = useState('')
     const [roleFilter, setRoleFilter] = useState('all')
@@ -17,18 +20,37 @@ export default function UserManagement() {
     const [showEditModal, setShowEditModal] = useState(false)
     const [showConfirmModal, setShowConfirmModal] = useState(false)
     const [pendingRole, setPendingRole] = useState(null)
+    const [activeTab, setActiveTab] = useState('users') // 'users', 'verify-riders', 'verify-sellers'
+    const [riderVerificationTab, setRiderVerificationTab] = useState('unverified') // 'unverified', 'verified', 'all'
 
     useEffect(() => {
-        fetchUsers()
-    }, [])
+        fetchData()
+    }, [activeTab])
 
     useEffect(() => {
-        filterUsers()
+        if (activeTab === 'users') {
+            filterUsers()
+        }
     }, [searchQuery, roleFilter, users])
+
+    const fetchData = async () => {
+        setLoading(true)
+        try {
+            if (activeTab === 'users') {
+                await fetchUsers()
+            } else if (activeTab === 'verify-riders') {
+                await fetchRiders()
+            }
+        } catch (error) {
+            console.error('Failed to fetch data:', error)
+            toast.error('Failed to load data')
+        } finally {
+            setLoading(false)
+        }
+    }
 
     const fetchUsers = async () => {
         try {
-            setLoading(true)
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/users`)
             const data = await response.json()
 
@@ -39,8 +61,47 @@ export default function UserManagement() {
         } catch (error) {
             console.error('Failed to fetch users:', error)
             toast.error('Failed to load users')
-        } finally {
-            setLoading(false)
+        }
+    }
+
+    const fetchRiders = async () => {
+        try {
+            console.log('🔄 Fetching riders...')
+
+            // Fetch ALL riders first
+            const allRidersRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/riders`)
+            const allRidersData = await allRidersRes.json()
+
+            console.log('📊 All Riders Response:', allRidersData)
+
+            if (allRidersData.success && allRidersData.riders) {
+                const riders = allRidersData.riders
+                setAllRiders(riders)
+
+                // Filter unverified and verified locally
+                const unverified = riders.filter(r => !r.isVerified)
+                const verified = riders.filter(r => r.isVerified)
+
+                setUnverifiedRiders(unverified)
+                setVerifiedRiders(verified)
+
+                console.log('✅ Riders loaded:', {
+                    total: riders.length,
+                    unverified: unverified.length,
+                    verified: verified.length
+                })
+            } else {
+                console.warn('⚠️ No riders found or failed to fetch')
+                setAllRiders([])
+                setUnverifiedRiders([])
+                setVerifiedRiders([])
+            }
+        } catch (error) {
+            console.error('❌ Error fetching riders:', error)
+            toast.error('Failed to load riders')
+            setAllRiders([])
+            setUnverifiedRiders([])
+            setVerifiedRiders([])
         }
     }
 
@@ -122,6 +183,73 @@ export default function UserManagement() {
         }
     }
 
+    const handleVerifyRider = async (uid, isVerified) => {
+        const action = isVerified ? 'verify' : 'unverify'
+
+        try {
+            console.log(`🔄 ${action}ing rider: ${uid}`)
+
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/riders/${uid}/verify`,
+                {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ isVerified })
+                }
+            )
+
+            const data = await response.json()
+            console.log('📊 Verification response:', data)
+
+            if (data.success) {
+                toast.success(data.message || `Rider ${action}ed successfully`)
+
+                // Refresh the rider list
+                await fetchRiders()
+            } else {
+                toast.error(data.error || `Failed to ${action} rider`)
+            }
+        } catch (error) {
+            console.error(`❌ Error ${action}ing rider:`, error)
+            toast.error(`Failed to ${action} rider`)
+        }
+    }
+
+    const handleVerifyAllRiders = async () => {
+        if (!confirm(`Are you sure you want to verify all ${unverifiedRiders.length} pending riders?`)) {
+            return
+        }
+
+        try {
+            console.log('🔄 Verifying all riders...')
+
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/riders/verify-all`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                }
+            )
+
+            const data = await response.json()
+            console.log('📊 Verify all response:', data)
+
+            if (data.success) {
+                toast.success(data.message || 'All riders verified successfully')
+                await fetchRiders()
+            } else {
+                toast.error(data.error || 'Failed to verify riders')
+            }
+        } catch (error) {
+            console.error('❌ Error verifying all riders:', error)
+            toast.error('Failed to verify riders')
+        }
+    }
+
     const getRoleBadgeColor = (role) => {
         switch (role) {
             case 'admin':
@@ -142,11 +270,7 @@ export default function UserManagement() {
         toast.success(`${label} copied to clipboard!`)
     }
 
-    if (loading) {
-        return <Loading />
-    }
-
-    const columns = [
+    const userColumns = [
         {
             header: 'User',
             accessor: 'displayName',
@@ -231,12 +355,163 @@ export default function UserManagement() {
         }
     ]
 
-    const editRole = [
-        { role: "admin", class: 'badge-info' },
-        { role: "seller", class: 'badge-success' },
-        { role: "rider", class: 'badge-accent' },
-        { role: "user", class: 'badge-nutral' },
+    const riderColumns = [
+        {
+            header: 'Rider',
+            accessor: 'displayName',
+            render: (row) => (
+                <div className="flex items-center gap-3">
+                    <div className="avatar">
+                        <div className="w-10 h-10 rounded-full ring ring-primary ring-offset-2 ring-offset-base-100">
+                            {row.photoURL ? (
+                                <Image
+                                    src={row.photoURL}
+                                    alt={row.displayName}
+                                    width={40}
+                                    height={40}
+                                    className="object-cover"
+                                />
+                            ) : (
+                                <div className="bg-primary/10 flex items-center justify-center w-full h-full text-primary font-bold">
+                                    {row.displayName?.charAt(0) || 'R'}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                    <div>
+                        <div className="font-bold">{row.displayName}</div>
+                        <div className="text-xs opacity-50">{row.email}</div>
+                    </div>
+                </div>
+            )
+        },
+        {
+            header: 'Phone',
+            accessor: 'phoneNumber',
+            render: (row) => (
+                <div className="flex items-center gap-2">
+                    <Phone className="w-4 h-4 text-base-content/50" />
+                    <span>{row.phoneNumber}</span>
+                </div>
+            )
+        },
+        {
+            header: 'Vehicle',
+            accessor: 'vehicleType',
+            render: (row) => (
+                <div>
+                    <div className="flex items-center gap-2 mb-1">
+                        <Bike className="w-4 h-4 text-primary" />
+                        <span className="font-semibold capitalize">{row.vehicleType}</span>
+                    </div>
+                    <div className="text-xs text-base-content/60">{row.vehicleNumber}</div>
+                </div>
+            )
+        },
+        {
+            header: 'Location',
+            accessor: 'address',
+            render: (row) => (
+                <div className="space-y-1">
+                    <div className="flex items-center gap-1 text-sm">
+                        <MapPin className="w-3 h-3 text-base-content/50" />
+                        <span>{row.address?.area}, {row.address?.district}</span>
+                    </div>
+                    <div className="text-xs text-base-content/60">{row.address?.division}</div>
+                </div>
+            )
+        },
+        {
+            header: 'License',
+            accessor: 'licenseNumber',
+            render: (row) => (
+                <div className="text-sm">
+                    <div className="font-mono">{row.licenseNumber}</div>
+                    <div className="text-xs text-base-content/60">NID: {row.nidNumber || 'N/A'}</div>
+                </div>
+            )
+        },
+        {
+            header: 'Stats',
+            accessor: 'stats',
+            render: (row) => (
+                <div className="space-y-1 text-xs">
+                    <div className="flex items-center gap-1">
+                        <span className="text-base-content/60">Deliveries:</span>
+                        <span className="font-semibold">{row.completedDeliveries || 0}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                        <span className="text-base-content/60">Rating:</span>
+                        <span className="font-semibold text-warning">⭐ {row.rating?.toFixed(1) || '5.0'}</span>
+                    </div>
+                </div>
+            )
+        },
+        {
+            header: 'Status',
+            accessor: 'isVerified',
+            render: (row) => (
+                <span className={`badge badge-sm ${row.isVerified ? 'badge-success' : 'badge-warning'}`}>
+                    {row.isVerified ? (
+                        <>
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            Verified
+                        </>
+                    ) : (
+                        <>
+                            <AlertCircle className="w-3 h-3 mr-1" />
+                            Pending
+                        </>
+                    )}
+                </span>
+            )
+        },
+        {
+            header: 'Actions',
+            accessor: 'actions',
+            render: (row) => (
+                <div className="flex gap-2">
+                    {!row.isVerified ? (
+                        <button
+                            onClick={() => handleVerifyRider(row.uid, true)}
+                            className="btn btn-sm btn-success"
+                            title="Verify Rider"
+                        >
+                            <CheckCircle className="w-4 h-4" />
+                            Verify
+                        </button>
+                    ) : (
+                        <button
+                            onClick={() => handleVerifyRider(row.uid, false)}
+                            className="btn btn-sm btn-error btn-outline"
+                            title="Unverify Rider"
+                        >
+                            <XCircle className="w-4 h-4" />
+                            Unverify
+                        </button>
+                    )}
+                </div>
+            )
+        }
     ]
+
+    // Get current riders based on tab
+    const getCurrentRiders = () => {
+        switch (riderVerificationTab) {
+            case 'unverified':
+                return unverifiedRiders
+            case 'verified':
+                return verifiedRiders
+            case 'all':
+                return allRiders
+            default:
+                return []
+        }
+    }
+
+    if (loading) {
+        return <Loading />
+    }
 
     return (
         <div className="space-y-6">
@@ -244,55 +519,171 @@ export default function UserManagement() {
             <div className="flex items-center justify-between flex-wrap gap-4">
                 <div>
                     <h1 className="text-3xl font-bold mb-2">User Management</h1>
-                    <p className="text-base-content/70">Manage all users, roles, and permissions</p>
+                    <p className="text-base-content/70">
+                        {activeTab === 'users' && 'Manage all users, roles, and permissions'}
+                        {activeTab === 'verify-riders' && 'Review and verify rider accounts'}
+                        {activeTab === 'verify-sellers' && 'Review and verify seller accounts'}
+                    </p>
                 </div>
-                <div className="badge badge-lg badge-primary">
-                    {filteredUsers.length} Users
+                <div className="stats bg-base-100 shadow-xl">
+                    {activeTab === 'users' && (
+                        <div className="stat">
+                            <div className="stat-title">Total Users</div>
+                            <div className="stat-value text-primary">{filteredUsers.length}</div>
+                        </div>
+                    )}
+                    {activeTab === 'verify-riders' && (
+                        <>
+                            <div className="stat">
+                                <div className="stat-title">Total</div>
+                                <div className="stat-value text-info">{allRiders.length}</div>
+                            </div>
+                            <div className="stat">
+                                <div className="stat-title">Pending</div>
+                                <div className="stat-value text-warning">{unverifiedRiders.length}</div>
+                            </div>
+                            <div className="stat">
+                                <div className="stat-title">Verified</div>
+                                <div className="stat-value text-success">{verifiedRiders.length}</div>
+                            </div>
+                        </>
+                    )}
                 </div>
             </div>
 
-            {/* Filters */}
-            <div className="card bg-base-100 p-6 border border-base-300">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="form-control">
-                        <div className="input input-bordered flex items-center gap-2">
-                            <Search className="w-5 h-5" />
-                            <input
-                                type="text"
-                                placeholder="Search by name, email, or ID..."
-                                className="flex-1 outline-none bg-transparent"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                            />
+            {/* Main Tabs */}
+            <div className="tabs tabs-boxed bg-base-100 p-1 shadow-lg">
+                <button
+                    className={`tab gap-2 ${activeTab === 'users' ? 'tab-active' : ''}`}
+                    onClick={() => setActiveTab('users')}
+                >
+                    <UserCog className="w-4 h-4" />
+                    All Users
+                </button>
+                <button
+                    className={`tab gap-2 ${activeTab === 'verify-riders' ? 'tab-active' : ''}`}
+                    onClick={() => setActiveTab('verify-riders')}
+                >
+                    <Bike className="w-4 h-4" />
+                    Verify Riders
+                    {unverifiedRiders.length > 0 && (
+                        <span className="badge badge-warning badge-sm">{unverifiedRiders.length}</span>
+                    )}
+                </button>
+                <button
+                    className={`tab gap-2 ${activeTab === 'verify-sellers' ? 'tab-active' : ''}`}
+                    onClick={() => setActiveTab('verify-sellers')}
+                    disabled
+                >
+                    <Store className="w-4 h-4" />
+                    Verify Sellers
+                    <span className="badge badge-sm">Coming Soon</span>
+                </button>
+            </div>
+
+            {/* Users Tab Content */}
+            {activeTab === 'users' && (
+                <>
+                    {/* Filters */}
+                    <div className="card bg-base-100 p-6 border border-base-300">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="form-control">
+                                <div className="input input-bordered flex items-center gap-2">
+                                    <Search className="w-5 h-5" />
+                                    <input
+                                        type="text"
+                                        placeholder="Search by name, email, or ID..."
+                                        className="flex-1 outline-none bg-transparent"
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="form-control">
+                                <select
+                                    className="select select-bordered"
+                                    value={roleFilter}
+                                    onChange={(e) => setRoleFilter(e.target.value)}
+                                >
+                                    <option value="all">All Roles</option>
+                                    <option value="admin">Admin</option>
+                                    <option value="seller">Seller</option>
+                                    <option value="rider">Rider</option>
+                                    <option value="user">User</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
 
-                    <div className="form-control">
-                        <select
-                            className="select select-bordered"
-                            value={roleFilter}
-                            onChange={(e) => setRoleFilter(e.target.value)}
-                        >
-                            <option value="all">All Roles</option>
-                            <option value="admin">Admin</option>
-                            <option value="seller">Seller</option>
-                            <option value="rider">Rider</option>
-                            <option value="user">User</option>
-                        </select>
+                    {/* Users Table */}
+                    <div className="card bg-base-100 p-6 border border-base-300">
+                        <DataTable
+                            columns={userColumns}
+                            data={filteredUsers}
+                            itemsPerPage={10}
+                            emptyMessage="No users found"
+                            EmptyIcon={UserCog}
+                        />
                     </div>
-                </div>
-            </div>
+                </>
+            )}
 
-            {/* Users Table */}
-            <div className="card bg-base-100 p-6 border border-base-300">
-                <DataTable
-                    columns={columns}
-                    data={filteredUsers}
-                    itemsPerPage={5}
-                    emptyMessage="No users found"
-                    EmptyIcon={UserCog}
-                />
-            </div>
+            {/* Verify Riders Tab Content */}
+            {activeTab === 'verify-riders' && (
+                <>
+                    {/* Rider Verification Tabs */}
+                    <div className="flex items-center justify-between flex-wrap gap-4">
+                        <div className="tabs tabs-boxed">
+                            <button
+                                className={`tab ${riderVerificationTab === 'all' ? 'tab-active' : ''}`}
+                                onClick={() => setRiderVerificationTab('all')}
+                            >
+                                All Riders ({allRiders.length})
+                            </button>
+                            <button
+                                className={`tab ${riderVerificationTab === 'unverified' ? 'tab-active' : ''}`}
+                                onClick={() => setRiderVerificationTab('unverified')}
+                            >
+                                Pending ({unverifiedRiders.length})
+                            </button>
+                            <button
+                                className={`tab ${riderVerificationTab === 'verified' ? 'tab-active' : ''}`}
+                                onClick={() => setRiderVerificationTab('verified')}
+                            >
+                                Verified ({verifiedRiders.length})
+                            </button>
+                        </div>
+
+                        {unverifiedRiders.length > 0 && riderVerificationTab === 'unverified' && (
+                            <button
+                                onClick={handleVerifyAllRiders}
+                                className="btn btn-success"
+                            >
+                                <CheckCircle className="w-4 h-4" />
+                                Verify All ({unverifiedRiders.length})
+                            </button>
+                        )}
+                    </div>
+
+                    {/* Riders Table */}
+                    <div className="card bg-base-100 p-6 border border-base-300">
+                        <DataTable
+                            columns={riderColumns}
+                            data={getCurrentRiders()}
+                            itemsPerPage={10}
+                            emptyMessage={
+                                riderVerificationTab === 'unverified'
+                                    ? 'No pending verifications'
+                                    : riderVerificationTab === 'verified'
+                                        ? 'No verified riders yet'
+                                        : 'No riders found'
+                            }
+                            EmptyIcon={Bike}
+                        />
+                    </div>
+                </>
+            )}
 
             {/* Edit User Modal */}
             {showEditModal && editingUser && (

@@ -298,7 +298,7 @@ export default function AdminDashboard() {
                     />
                     <StatsCard
                         title="Total Revenue"
-                        value={`$${stats.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                        value={`$${stats.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`}
                         change={stats.revenueGrowth}
                         icon={DollarSign}
                         trend="up"

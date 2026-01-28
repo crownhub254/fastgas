@@ -623,7 +623,7 @@ export default function AdminReports() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <StatsCard
                         title="Total Revenue"
-                        value={`$${stats.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                        value={`$${stats.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`}
                         icon={DollarSign}
                         color="from-blue-500 to-cyan-500"
                     />

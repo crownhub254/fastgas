@@ -1,8 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Download, FileText, Users, Package, DollarSign, CreditCard, TrendingUp, Calendar, Filter } from 'lucide-react'
+import { Download, FileText, Users, Package, DollarSign, CreditCard, TrendingUp, Calendar, Filter, Bell, Bike } from 'lucide-react'
 import toast from 'react-hot-toast'
+import DataTable from '../../components/DataTable'
+import { StatsCard } from '../../components/charts/Index'
 
 export default function AdminReports() {
     const [loading, setLoading] = useState(false)
@@ -11,12 +13,16 @@ export default function AdminReports() {
         totalUsers: 0,
         totalProducts: 0,
         totalRevenue: 0,
-        totalTransactions: 0
+        totalTransactions: 0,
+        totalRiders: 0,
+        totalNotifications: 0
     })
     const [dateRange, setDateRange] = useState({
         start: '',
         end: ''
     })
+    const [previewData, setPreviewData] = useState([])
+    const [selectedReport, setSelectedReport] = useState(null)
 
     useEffect(() => {
         fetchStats()
@@ -24,22 +30,28 @@ export default function AdminReports() {
 
     const fetchStats = async () => {
         try {
-            const [ordersRes, usersRes, productsRes, paymentsRes] = await Promise.all([
+            const [ordersRes, usersRes, productsRes, paymentsRes, ridersRes, notificationsRes] = await Promise.all([
                 fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders`),
                 fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/users`),
                 fetch(`${process.env.NEXT_PUBLIC_API_URL}/products`),
-                fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments`)
+                fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments`),
+                fetch(`${process.env.NEXT_PUBLIC_API_URL}/riders`),
+                fetch(`${process.env.NEXT_PUBLIC_API_URL}/notifications`)
             ])
 
             const ordersData = await ordersRes.json()
             const usersData = await usersRes.json()
             const productsData = await productsRes.json()
             const paymentsData = await paymentsRes.json()
+            const ridersData = await ridersRes.json()
+            const notificationsData = await notificationsRes.json()
 
             const orders = ordersData.orders || []
             const users = usersData.users || []
             const products = productsData.products || []
             const payments = paymentsData.payments || []
+            const riders = ridersData.riders || []
+            const notifications = notificationsData.notifications || []
 
             const totalRevenue = payments
                 .filter(p => p.status === 'succeeded')
@@ -50,10 +62,13 @@ export default function AdminReports() {
                 totalUsers: users.length,
                 totalProducts: products.length,
                 totalRevenue: totalRevenue,
-                totalTransactions: payments.length
+                totalTransactions: payments.length,
+                totalRiders: riders.length,
+                totalNotifications: notifications.length
             })
         } catch (error) {
             console.error('Error fetching stats:', error)
+            toast.error('Failed to fetch statistics')
         }
     }
 
@@ -222,6 +237,7 @@ export default function AdminReports() {
 
                         return {
                             orderId: order.orderId,
+                            trackingId: order.trackingId || 'N/A',
                             customerName: user?.displayName || 'N/A',
                             customerEmail: user?.email || 'N/A',
                             customerPhone: user?.phoneNumber || 'N/A',
@@ -235,20 +251,15 @@ export default function AdminReports() {
                             paymentMethod: order.paymentMethod || 'N/A',
                             paymentStatus: order.paymentStatus || 'N/A',
                             orderStatus: order.status || 'N/A',
-                            street: order.shippingAddress?.street || 'N/A',
-                            city: order.shippingAddress?.city || 'N/A',
-                            district: order.shippingAddress?.district || 'N/A',
-                            division: order.shippingAddress?.division || 'N/A',
-                            zipCode: order.shippingAddress?.zipCode || 'N/A',
-                            country: order.shippingAddress?.country || 'N/A',
-                            fullAddress: `${order.shippingAddress?.street || ''}, ${order.shippingAddress?.city || ''}, ${order.shippingAddress?.district || ''}, ${order.shippingAddress?.division || ''} - ${order.shippingAddress?.zipCode || ''}, ${order.shippingAddress?.country || ''}`.trim(),
+                            riderStatus: order.riderStatus || 'N/A',
+                            riderId: order.riderId || 'N/A',
                             orderDate: formatDate(order.createdAt),
                             lastUpdated: formatDate(order.updatedAt)
                         }
                     })
                 )
 
-                const headers = ['orderId', 'customerName', 'customerEmail', 'customerPhone', 'products', 'quantities', 'itemsCount', 'subtotal', 'shipping', 'tax', 'total', 'paymentMethod', 'paymentStatus', 'orderStatus', 'orderDate']
+                const headers = ['orderId', 'trackingId', 'customerName', 'customerEmail', 'customerPhone', 'products', 'quantities', 'itemsCount', 'subtotal', 'shipping', 'tax', 'total', 'paymentMethod', 'paymentStatus', 'orderStatus', 'riderStatus', 'riderId', 'orderDate']
 
                 if (format === 'csv') {
                     const csv = convertToCSV(ordersWithUserData, headers)
@@ -274,21 +285,15 @@ export default function AdminReports() {
 
             if (data.success) {
                 const headers = ['userId', 'displayName', 'email', 'phoneNumber', 'role', 'provider', 'accountCreated']
-                const exportData = data.users.map(user => {
-                    const createdDate = new Date(user.createdAt)
-                    const now = new Date()
-                    const daysSinceCreation = Math.floor((now - createdDate) / (1000 * 60 * 60 * 24))
-
-                    return {
-                        userId: user.uid || 'N/A',
-                        displayName: user.displayName || 'N/A',
-                        email: user.email || 'N/A',
-                        phoneNumber: user.phoneNumber || 'N/A',
-                        role: user.role || 'user',
-                        provider: user.provider || 'N/A',
-                        accountCreated: formatDate(user.createdAt)
-                    }
-                })
+                const exportData = data.users.map(user => ({
+                    userId: user.uid || 'N/A',
+                    displayName: user.displayName || 'N/A',
+                    email: user.email || 'N/A',
+                    phoneNumber: user.phoneNumber || 'N/A',
+                    role: user.role || 'user',
+                    provider: user.provider || 'N/A',
+                    accountCreated: formatDate(user.createdAt)
+                }))
 
                 if (format === 'csv') {
                     const csv = convertToCSV(exportData, headers)
@@ -313,7 +318,7 @@ export default function AdminReports() {
             const data = await response.json()
 
             if (data.success) {
-                const headers = ['productId', 'productName', 'category', 'price', 'stock', 'stockStatus', 'rating', 'reviewsCount']
+                const headers = ['productId', 'productName', 'category', 'price', 'stock', 'stockStatus', 'rating', 'reviewsCount', 'sellerEmail', 'sellerName']
                 const exportData = data.products.map(product => {
                     const stock = product.stock || 0
                     let stockStatus = 'Out of Stock'
@@ -329,7 +334,9 @@ export default function AdminReports() {
                         stock: stock,
                         stockStatus: stockStatus,
                         rating: product.rating?.toFixed(1) || '0.0',
-                        reviewsCount: product.reviews?.length || 0
+                        reviewsCount: product.reviews?.length || 0,
+                        sellerEmail: product.sellerEmail || 'N/A',
+                        sellerName: product.sellerName || 'N/A'
                     }
                 })
 
@@ -370,7 +377,6 @@ export default function AdminReports() {
                     paymentsData.payments.map(async (payment) => {
                         const order = orderMap[payment.orderId]
                         const user = order ? await fetchUserByUid(order.userId) : null
-                        const itemsSummary = order?.items?.map(item => `${item.name} (x${item.quantity})`).join('; ') || 'N/A'
 
                         return {
                             transactionId: payment.transactionId || 'N/A',
@@ -403,55 +409,203 @@ export default function AdminReports() {
         }
     }
 
-    const exportTransactions = async (format) => {
+    const exportRiders = async (format) => {
         setLoading(true)
         try {
-            const [paymentsRes, ordersRes] = await Promise.all([
-                fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments`),
-                fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders`)
-            ])
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/riders`)
+            const data = await response.json()
 
-            const paymentsData = await paymentsRes.json()
-            const ordersData = await ordersRes.json()
-
-            if (paymentsData.success && ordersData.success) {
-                const orderMap = {}
-                ordersData.orders.forEach(order => {
-                    orderMap[order.orderId] = order
-                })
-
-                const transactionsWithDetails = await Promise.all(
-                    paymentsData.payments.map(async (payment) => {
-                        const order = orderMap[payment.orderId]
-                        const user = order ? await fetchUserByUid(order.userId) : null
-
-                        return {
-                            transactionId: payment.transactionId || 'N/A',
-                            orderId: payment.orderId || 'N/A',
-                            customerName: user?.displayName || 'N/A',
-                            itemsCount: order?.items?.length || 0,
-                            totalAmount: `$${payment.amount?.toFixed(2) || '0.00'}`,
-                            paymentMethod: payment.paymentMethod || 'N/A',
-                            transactionStatus: payment.status || 'N/A',
-                            orderStatus: order?.status || 'N/A',
-                            transactionDate: formatDate(payment.createdAt)
-                        }
-                    })
-                )
-
-                const headers = ['transactionId', 'orderId', 'customerName', 'itemsCount', 'totalAmount', 'paymentMethod', 'transactionStatus', 'orderStatus', 'transactionDate']
+            if (data.success) {
+                const headers = ['riderId', 'riderName', 'email', 'phoneNumber', 'vehicleType', 'vehicleNumber', 'licenseNumber', 'isAvailable', 'isVerified', 'completedDeliveries', 'rating', 'totalEarnings', 'joinedDate']
+                const exportData = data.riders.map(rider => ({
+                    riderId: rider.uid || 'N/A',
+                    riderName: rider.displayName || 'N/A',
+                    email: rider.email || 'N/A',
+                    phoneNumber: rider.phoneNumber || 'N/A',
+                    vehicleType: rider.vehicleType || 'N/A',
+                    vehicleNumber: rider.vehicleNumber || 'N/A',
+                    licenseNumber: rider.licenseNumber || 'N/A',
+                    isAvailable: rider.isAvailable ? 'Yes' : 'No',
+                    isVerified: rider.isVerified ? 'Yes' : 'No',
+                    completedDeliveries: rider.completedDeliveries || 0,
+                    rating: rider.rating?.toFixed(1) || '0.0',
+                    totalEarnings: `$${rider.earnings?.toFixed(2) || '0.00'}`,
+                    joinedDate: formatDate(rider.createdAt)
+                }))
 
                 if (format === 'csv') {
-                    const csv = convertToCSV(transactionsWithDetails, headers)
-                    downloadCSV(csv, 'transactions_report')
+                    const csv = convertToCSV(exportData, headers)
+                    downloadCSV(csv, 'riders_report')
                 } else {
-                    await downloadExcel(transactionsWithDetails, headers, 'transactions_report')
+                    await downloadExcel(exportData, headers, 'riders_report')
                 }
-                toast.success(`Transactions exported as ${format.toUpperCase()}!`)
+                toast.success(`Riders exported as ${format.toUpperCase()}!`)
             }
         } catch (error) {
             console.error('Export error:', error)
-            toast.error('Failed to export transactions')
+            toast.error('Failed to export riders')
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const exportNotifications = async (format) => {
+        setLoading(true)
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notifications`)
+            const data = await response.json()
+
+            if (data.success) {
+                const headers = ['notificationId', 'userId', 'type', 'title', 'message', 'read', 'priority', 'createdAt']
+                const exportData = data.notifications.map(notif => ({
+                    notificationId: notif._id || 'N/A',
+                    userId: notif.userId || 'N/A',
+                    type: notif.type || 'N/A',
+                    title: notif.title || 'N/A',
+                    message: notif.message || 'N/A',
+                    read: notif.read ? 'Yes' : 'No',
+                    priority: notif.priority || 'medium',
+                    createdAt: formatDate(notif.createdAt)
+                }))
+
+                if (format === 'csv') {
+                    const csv = convertToCSV(exportData, headers)
+                    downloadCSV(csv, 'notifications_report')
+                } else {
+                    await downloadExcel(exportData, headers, 'notifications_report')
+                }
+                toast.success(`Notifications exported as ${format.toUpperCase()}!`)
+            }
+        } catch (error) {
+            console.error('Export error:', error)
+            toast.error('Failed to export notifications')
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const previewReport = async (reportType) => {
+        setLoading(true)
+        setSelectedReport(reportType)
+        try {
+            let response
+            let columns = []
+            let data = []
+
+            switch (reportType) {
+                case 'orders':
+                    response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders`)
+                    const ordersData = await response.json()
+                    if (ordersData.success) {
+                        columns = [
+                            { header: 'Order ID', accessor: 'orderId' },
+                            { header: 'Customer', accessor: 'customerName' },
+                            { header: 'Total', accessor: 'total' },
+                            { header: 'Status', accessor: 'status' },
+                            { header: 'Date', accessor: 'date' }
+                        ]
+                        data = await Promise.all(ordersData.orders.slice(0, 10).map(async (order) => {
+                            const user = await fetchUserByUid(order.userId)
+                            return {
+                                orderId: order.orderId,
+                                customerName: user?.displayName || 'N/A',
+                                total: `$${order.total?.toFixed(2)}`,
+                                status: order.status,
+                                date: formatDate(order.createdAt)
+                            }
+                        }))
+                    }
+                    break
+
+                case 'riders':
+                    response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/riders`)
+                    const ridersData = await response.json()
+                    if (ridersData.success) {
+                        columns = [
+                            { header: 'Name', accessor: 'name' },
+                            { header: 'Email', accessor: 'email' },
+                            { header: 'Vehicle', accessor: 'vehicle' },
+                            { header: 'Status', accessor: 'status' },
+                            { header: 'Deliveries', accessor: 'deliveries' }
+                        ]
+                        data = ridersData.riders.slice(0, 10).map(rider => ({
+                            name: rider.displayName,
+                            email: rider.email,
+                            vehicle: rider.vehicleType,
+                            status: rider.isVerified ? 'Verified' : 'Pending',
+                            deliveries: rider.completedDeliveries || 0
+                        }))
+                    }
+                    break
+
+                case 'users':
+                    response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/users`)
+                    const usersData = await response.json()
+                    if (usersData.success) {
+                        columns = [
+                            { header: 'Name', accessor: 'name' },
+                            { header: 'Email', accessor: 'email' },
+                            { header: 'Role', accessor: 'role' },
+                            { header: 'Phone', accessor: 'phone' },
+                            { header: 'Joined', accessor: 'joined' }
+                        ]
+                        data = usersData.users.slice(0, 10).map(user => ({
+                            name: user.displayName,
+                            email: user.email,
+                            role: user.role,
+                            phone: user.phoneNumber,
+                            joined: formatDate(user.createdAt)
+                        }))
+                    }
+                    break
+
+                case 'products':
+                    response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products`)
+                    const productsData = await response.json()
+                    if (productsData.success) {
+                        columns = [
+                            { header: 'Name', accessor: 'name' },
+                            { header: 'Category', accessor: 'category' },
+                            { header: 'Price', accessor: 'price' },
+                            { header: 'Stock', accessor: 'stock' },
+                            { header: 'Rating', accessor: 'rating' }
+                        ]
+                        data = productsData.products.slice(0, 10).map(product => ({
+                            name: product.name,
+                            category: product.category,
+                            price: `$${product.price?.toFixed(2)}`,
+                            stock: product.stock,
+                            rating: `${product.rating?.toFixed(1)} ⭐`
+                        }))
+                    }
+                    break
+
+                case 'notifications':
+                    response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notifications`)
+                    const notifsData = await response.json()
+                    if (notifsData.success) {
+                        columns = [
+                            { header: 'Title', accessor: 'title' },
+                            { header: 'Type', accessor: 'type' },
+                            { header: 'Priority', accessor: 'priority' },
+                            { header: 'Read', accessor: 'read' },
+                            { header: 'Date', accessor: 'date' }
+                        ]
+                        data = notifsData.notifications.slice(0, 10).map(notif => ({
+                            title: notif.title,
+                            type: notif.type,
+                            priority: notif.priority,
+                            read: notif.read ? 'Yes' : 'No',
+                            date: formatDate(notif.createdAt)
+                        }))
+                    }
+                    break
+            }
+
+            setPreviewData({ columns, data })
+        } catch (error) {
+            console.error('Preview error:', error)
+            toast.error('Failed to load preview')
         } finally {
             setLoading(false)
         }
@@ -463,49 +617,62 @@ export default function AdminReports() {
             icon: Package,
             count: stats.totalOrders,
             color: 'from-blue-500 to-cyan-500',
-            exportFn: exportOrders
+            exportFn: exportOrders,
+            preview: 'orders'
         },
         {
             title: 'Users',
             icon: Users,
             count: stats.totalUsers,
             color: 'from-purple-500 to-pink-500',
-            exportFn: exportUsers
+            exportFn: exportUsers,
+            preview: 'users'
         },
         {
             title: 'Products',
             icon: Package,
             count: stats.totalProducts,
             color: 'from-green-500 to-emerald-500',
-            exportFn: exportProducts
+            exportFn: exportProducts,
+            preview: 'products'
         },
         {
             title: 'Payments',
             icon: CreditCard,
             count: stats.totalTransactions,
             color: 'from-orange-500 to-red-500',
-            exportFn: exportPayments
+            exportFn: exportPayments,
+            preview: 'payments'
         },
         {
-            title: 'Transactions',
-            icon: DollarSign,
-            count: stats.totalTransactions,
-            color: 'from-yellow-500 to-amber-500',
-            exportFn: exportTransactions
+            title: 'Riders',
+            icon: Bike,
+            count: stats.totalRiders,
+            color: 'from-indigo-500 to-purple-500',
+            exportFn: exportRiders,
+            preview: 'riders'
+        },
+        {
+            title: 'Notifications',
+            icon: Bell,
+            count: stats.totalNotifications,
+            color: 'from-pink-500 to-rose-500',
+            exportFn: exportNotifications,
+            preview: 'notifications'
         }
     ]
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-base-100 via-base-200 to-base-100">
+        <div className="min-h-screen">
             <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
                 {/* Header */}
                 <div className="mb-8">
                     <div className="flex items-center gap-4 mb-4">
-                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg">
+                        <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-primary to-secondary flex items-center justify-center shadow-lg">
                             <FileText className="w-8 h-8 text-white" />
                         </div>
                         <div>
-                            <h1 className="text-5xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+                            <h1 className="text-5xl font-bold bg-linear-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
                                 Reports & Analytics
                             </h1>
                             <p className="text-base-content/70 text-lg mt-2">
@@ -515,55 +682,32 @@ export default function AdminReports() {
                     </div>
                 </div>
 
-                {/* Stats Overview */}
+                {/* Stats Overview - Using StatsCard */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div className="card bg-gradient-to-br from-blue-500 to-cyan-500 text-white shadow-xl">
-                        <div className="card-body">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-white/80 text-sm font-semibold">Total Revenue</p>
-                                    <p className="text-3xl font-bold">${stats.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                                </div>
-                                <DollarSign className="w-12 h-12 text-white/50" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="card bg-gradient-to-br from-purple-500 to-pink-500 text-white shadow-xl">
-                        <div className="card-body">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-white/80 text-sm font-semibold">Total Orders</p>
-                                    <p className="text-3xl font-bold">{stats.totalOrders}</p>
-                                </div>
-                                <Package className="w-12 h-12 text-white/50" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="card bg-gradient-to-br from-green-500 to-emerald-500 text-white shadow-xl">
-                        <div className="card-body">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-white/80 text-sm font-semibold">Total Users</p>
-                                    <p className="text-3xl font-bold">{stats.totalUsers}</p>
-                                </div>
-                                <Users className="w-12 h-12 text-white/50" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="card bg-gradient-to-br from-orange-500 to-red-500 text-white shadow-xl">
-                        <div className="card-body">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-white/80 text-sm font-semibold">Total Products</p>
-                                    <p className="text-3xl font-bold">{stats.totalProducts}</p>
-                                </div>
-                                <Package className="w-12 h-12 text-white/50" />
-                            </div>
-                        </div>
-                    </div>
+                    <StatsCard
+                        title="Total Revenue"
+                        value={`$${stats.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                        icon={DollarSign}
+                        color="from-blue-500 to-cyan-500"
+                    />
+                    <StatsCard
+                        title="Total Orders"
+                        value={stats.totalOrders}
+                        icon={Package}
+                        color="from-purple-500 to-pink-500"
+                    />
+                    <StatsCard
+                        title="Total Users"
+                        value={stats.totalUsers}
+                        icon={Users}
+                        color="from-green-500 to-emerald-500"
+                    />
+                    <StatsCard
+                        title="Total Riders"
+                        value={stats.totalRiders}
+                        icon={Bike}
+                        color="from-indigo-500 to-purple-500"
+                    />
                 </div>
 
                 {/* Date Range Filter */}
@@ -606,79 +750,110 @@ export default function AdminReports() {
                     </div>
                 </div>
 
-                {/* Export Table */}
+                {/* Export Table - Using DataTable */}
                 <div className="card bg-base-100 shadow-xl border border-base-300">
                     <div className="card-body">
                         <h2 className="text-2xl font-bold mb-4">Export Reports</h2>
-                        <div className="overflow-x-auto">
-                            <table className="table w-full">
-                                <thead>
-                                    <tr className="bg-base-200">
-                                        <th className="font-bold">Report Type</th>
-                                        <th className="font-bold">Total Count</th>
-                                        <th className="font-bold">Export CSV</th>
-                                        <th className="font-bold">Export Excel</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {reportTypes.map((report) => {
-                                        const Icon = report.icon
-                                        return (
-                                            <tr key={report.title} className="hover:bg-base-200 transition-colors">
-                                                <td>
-                                                    <div className="flex items-center gap-3">
-                                                        <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${report.color} flex items-center justify-center`}>
-                                                            <Icon className="w-5 h-5 text-white" />
-                                                        </div>
-                                                        <span className="font-semibold text-base-content">{report.title}</span>
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    <span className="font-bold text-lg text-primary">{report.count}</span>
-                                                </td>
-                                                <td>
-                                                    <button
-                                                        onClick={() => report.exportFn('csv')}
-                                                        disabled={loading}
-                                                        className="btn btn-sm btn-outline btn-primary gap-2"
-                                                    >
-                                                        {loading ? (
-                                                            <span className="loading loading-spinner loading-sm"></span>
-                                                        ) : (
-                                                            <>
-                                                                <Download className="w-4 h-4" />
-                                                                CSV
-                                                            </>
-                                                        )}
-                                                    </button>
-                                                </td>
-                                                <td>
-                                                    <button
-                                                        onClick={() => report.exportFn('excel')}
-                                                        disabled={loading}
-                                                        className="btn btn-sm btn-outline btn-success gap-2"
-                                                    >
-                                                        {loading ? (
-                                                            <span className="loading loading-spinner loading-sm"></span>
-                                                        ) : (
-                                                            <>
-                                                                <Download className="w-4 h-4" />
-                                                                Excel
-                                                            </>
-                                                        )}
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        )
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
+                        <DataTable
+                            columns={[
+                                {
+                                    header: 'Report Type',
+                                    accessor: 'type',
+                                    render: (row) => (
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-10 h-10 rounded-lg bg-linear-to-br ${row.color} flex items-center justify-center`}>
+                                                <row.icon className="w-5 h-5 text-white" />
+                                            </div>
+                                            <span className="font-semibold text-base-content">{row.title}</span>
+                                        </div>
+                                    )
+                                },
+                                {
+                                    header: 'Total Count',
+                                    accessor: 'count',
+                                    render: (row) => (
+                                        <span className="font-bold text-lg text-primary">{row.count}</span>
+                                    )
+                                },
+                                {
+                                    header: 'Actions',
+                                    accessor: 'actions',
+                                    render: (row) => (
+                                        <div className="flex gap-2 flex-wrap">
+                                            <button
+                                                onClick={() => previewReport(row.preview)}
+                                                className="btn btn-sm btn-outline btn-info gap-2"
+                                                disabled={loading}
+                                            >
+                                                Preview
+                                            </button>
+                                            <button
+                                                onClick={() => row.exportFn('csv')}
+                                                disabled={loading}
+                                                className="btn btn-sm btn-outline btn-primary gap-2"
+                                            >
+                                                {loading ? (
+                                                    <span className="loading loading-spinner loading-sm"></span>
+                                                ) : (
+                                                    <>
+                                                        <Download className="w-4 h-4" />
+                                                        CSV
+                                                    </>
+                                                )}
+                                            </button>
+                                            <button
+                                                onClick={() => row.exportFn('excel')}
+                                                disabled={loading}
+                                                className="btn btn-sm btn-outline btn-success gap-2"
+                                            >
+                                                {loading ? (
+                                                    <span className="loading loading-spinner loading-sm"></span>
+                                                ) : (
+                                                    <>
+                                                        <Download className="w-4 h-4" />
+                                                        Excel
+                                                    </>
+                                                )}
+                                            </button>
+                                        </div>
+                                    )
+                                }
+                            ]}
+                            data={reportTypes}
+                            itemsPerPage={10}
+                            emptyMessage="No reports available"
+                            EmptyIcon={FileText}
+                        />
                     </div>
                 </div>
 
+                {/* Preview Section */}
+                {selectedReport && previewData.data && previewData.data.length > 0 && (
+                    <div className="card bg-base-100 shadow-xl border border-base-300">
+                        <div className="card-body">
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-2xl font-bold">
+                                    {selectedReport.charAt(0).toUpperCase() + selectedReport.slice(1)} Preview (First 10 entries)
+                                </h2>
+                                <button
+                                    onClick={() => { setSelectedReport(null); setPreviewData([]) }}
+                                    className="btn btn-sm btn-ghost"
+                                >
+                                    Close
+                                </button>
+                            </div>
+                            <DataTable
+                                columns={previewData.columns}
+                                data={previewData.data}
+                                itemsPerPage={5}
+                                emptyMessage="No preview data available"
+                            />
+                        </div>
+                    </div>
+                )}
+
                 {/* Export All */}
-                <div className="card bg-gradient-to-br from-primary to-secondary text-white shadow-xl">
+                <div className="card bg-linear-to-br from-primary to-secondary text-white shadow-xl">
                     <div className="card-body">
                         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                             <div className="flex items-center gap-4">
@@ -688,9 +863,24 @@ export default function AdminReports() {
                                     <p className="text-white/80">Download complete dataset in one click</p>
                                 </div>
                             </div>
-                            <button className="btn btn-lg bg-white text-primary hover:bg-white/90 gap-2">
-                                <Download className="w-5 h-5" />
-                                Export All (CSV)
+                            <button
+                                onClick={async () => {
+                                    for (const report of reportTypes) {
+                                        await report.exportFn('csv')
+                                        await new Promise(resolve => setTimeout(resolve, 1000))
+                                    }
+                                }}
+                                className="btn btn-lg bg-white text-primary hover:bg-white/90 gap-2"
+                                disabled={loading}
+                            >
+                                {loading ? (
+                                    <span className="loading loading-spinner"></span>
+                                ) : (
+                                    <>
+                                        <Download className="w-5 h-5" />
+                                        Export All (CSV)
+                                    </>
+                                )}
                             </button>
                         </div>
                     </div>

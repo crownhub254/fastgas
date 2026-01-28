@@ -11,6 +11,7 @@ import Loading from '../loading'
 import Image from 'next/image'
 import Link from 'next/link'
 import NotificationDropdown from '@/components/NotificationDropdown'
+import ThemeToggle from '@/components/Themetoggle'
 
 
 function useTheme() {
@@ -41,7 +42,6 @@ export default function DashboardNavbar({ notifications = [], isCollapsed, setIs
     const router = useRouter()
     const notifRef = useRef(null)
     const profileRef = useRef(null)
-    const { theme, toggleTheme, mounted } = useTheme()
 
     // Use the Firebase Auth hook to get user data
     const { user, userData, loading } = useFirebaseAuth()
@@ -101,19 +101,7 @@ export default function DashboardNavbar({ notifications = [], isCollapsed, setIs
                     <NotificationDropdown />
 
                     {/* theme toggle btn */}
-                    <button
-                        onClick={toggleTheme}
-                        className="p-2.5 rounded-lg bg-base-300 hover:bg-base-200 transition-all duration-200 group"
-                        aria-label="Toggle theme"
-                    >
-                        {mounted && (
-                            theme === 'light' ? (
-                                <Moon className="w-5 h-5 text-base-content group-hover:rotate-12 transition-transform" />
-                            ) : (
-                                <Sun className="w-5 h-5 text-base-content group-hover:rotate-45 transition-transform" />
-                            )
-                        )}
-                    </button>
+                    <ThemeToggle />
 
                     {/* User Profile Dropdown */}
                     <div className="relative" ref={profileRef}>

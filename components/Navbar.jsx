@@ -11,35 +11,14 @@ import toast from 'react-hot-toast'
 import Image from 'next/image'
 import useFirebaseAuth from '@/lib/hooks/useFirebaseAuth'
 import NotificationDropdown from './NotificationDropdown'
-
-// Theme Hook
-function useTheme() {
-    const [theme, setTheme] = useState('light')
-    const [mounted, setMounted] = useState(false)
-
-    useEffect(() => {
-        setMounted(true)
-        const savedTheme = localStorage.getItem('theme') || 'light'
-        setTheme(savedTheme)
-        document.documentElement.setAttribute('data-theme', savedTheme)
-    }, [])
-
-    const toggleTheme = () => {
-        const newTheme = theme === 'light' ? 'dark' : 'light'
-        setTheme(newTheme)
-        localStorage.setItem('theme', newTheme)
-        document.documentElement.setAttribute('data-theme', newTheme)
-    }
-
-    return { theme, toggleTheme, mounted }
-}
+import ThemeToggle from './Themetoggle'
 
 export default function Navbar() {
     const router = useRouter()
     const [isOpen, setIsOpen] = useState(false)
     const [isScrolled, setIsScrolled] = useState(false)
     const [isProfileOpen, setIsProfileOpen] = useState(false)
-    const { theme, toggleTheme, mounted } = useTheme()
+    // const { theme, toggleTheme, mounted } = useTheme()
     const { cartItems } = useCart()
     const { user: us } = useFirebaseAuth()
 
@@ -211,19 +190,7 @@ export default function Navbar() {
                         <NotificationDropdown />
 
                         {/* Theme Toggle */}
-                        <button
-                            onClick={toggleTheme}
-                            className="p-2.5 rounded-lg bg-base-300 hover:bg-base-200 transition-all duration-200 group"
-                            aria-label="Toggle theme"
-                        >
-                            {mounted && (
-                                theme === 'light' ? (
-                                    <Moon className="w-5 h-5 text-base-content group-hover:rotate-12 transition-transform" />
-                                ) : (
-                                    <Sun className="w-5 h-5 text-base-content group-hover:rotate-45 transition-transform" />
-                                )
-                            )}
-                        </button>
+                        <ThemeToggle />
 
                         {/* User Profile / Login */}
                         {!isLoading && (
@@ -405,19 +372,7 @@ export default function Navbar() {
                         </Link>
 
                         {/* Mobile Theme Toggle */}
-                        <button
-                            onClick={toggleTheme}
-                            className="p-2 rounded-lg bg-base-200 hover:bg-base-300 transition-all duration-200"
-                            aria-label="Toggle theme"
-                        >
-                            {mounted && (
-                                theme === 'light' ? (
-                                    <Moon className="w-5 h-5 text-base-content" />
-                                ) : (
-                                    <Sun className="w-5 h-5 text-base-content" />
-                                )
-                            )}
-                        </button>
+                        <ThemeToggle />
 
                         <button
                             onClick={() => setIsOpen(!isOpen)}

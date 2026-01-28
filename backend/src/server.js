@@ -25,6 +25,8 @@ const orderRoutes = require('./routes/orders');
 const paymentRoutes = require('./routes/payments');
 const notificationRoutes = require('./routes/notifications');
 const riderRoutes = require('./routes/riders');
+const settingsRoutes = require('./routes/settings');
+
 
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
@@ -33,6 +35,7 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/riders', riderRoutes);
 app.use('/api/users', authRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // Health Check
 app.get('/', (req, res) => {

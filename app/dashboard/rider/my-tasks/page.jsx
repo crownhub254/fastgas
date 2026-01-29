@@ -9,7 +9,7 @@ import DataTable from '../../components/DataTable'
 import Loading from '../../loading'
 
 export default function RiderMyTasksPage() {
-    const { user, userData } = useFirebaseAuth() // Also get userData to check role
+    const { user, userData } = useFirebaseAuth()
     const [orders, setOrders] = useState([])
     const [filter, setFilter] = useState('pending')
     const [isLoading, setIsLoading] = useState(true)
@@ -25,20 +25,28 @@ export default function RiderMyTasksPage() {
             })
             fetchOrders()
         }
-    }, [user, userData, filter])
+    }, [user, userData, filter]) // Re-fetch when filter changes
 
     const fetchOrders = async () => {
         setIsLoading(true)
         try {
-            console.log('🔍 Fetching orders for rider:', user.uid)
-            const response = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/riders/${user.uid}/orders`,
-                {
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
+            console.log('🔍 Fetching orders for rider:', user.uid, 'with filter:', filter)
+
+            // Build the URL with status query parameter
+            const url = new URL(`${process.env.NEXT_PUBLIC_API_URL}/riders/${user.uid}/orders`)
+
+            // Only add status parameter if not 'all'
+            if (filter && filter !== 'all') {
+                url.searchParams.append('status', filter)
+            }
+
+            console.log('📤 Request URL:', url.toString())
+
+            const response = await fetch(url.toString(), {
+                headers: {
+                    'Content-Type': 'application/json'
                 }
-            )
+            })
 
             if (!response.ok) {
                 console.error('❌ HTTP Error:', response.status, response.statusText)
@@ -46,17 +54,15 @@ export default function RiderMyTasksPage() {
             }
 
             const data = await response.json()
-            console.log('📦 API Response:', data)
+            console.log('📦 API Response:', {
+                success: data.success,
+                count: data.count,
+                ordersReceived: data.orders?.length || 0
+            })
 
             if (data.success) {
-                let filteredOrders = data.orders || []
-
-                if (filter !== 'all') {
-                    filteredOrders = filteredOrders.filter(order => order.riderStatus === filter)
-                }
-
-                console.log(`✅ Orders fetched (filter: ${filter}):`, filteredOrders.length)
-                setOrders(filteredOrders)
+                console.log(`✅ Orders fetched successfully (filter: ${filter}):`, data.orders?.length || 0)
+                setOrders(data.orders || [])
             } else {
                 console.error('❌ Failed to load orders:', data.error)
                 toast.error(data.error || 'Failed to load orders')
@@ -399,15 +405,6 @@ export default function RiderMyTasksPage() {
                         </button>
                     </>
                 )
-
-            case 'delivered':
-            // return (
-            //     <div className="badge badge-success gap-1">
-            //         <CheckCircle className="w-3 h-3" />
-            //         Completed
-            //     </div>
-            // )
-
             default:
                 return null
         }

@@ -1,15 +1,27 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { User, Mail, Bell, Shield, Eye, EyeOff, Save, Camera, AlertCircle, Check } from 'lucide-react'
+import {
+    User, Mail, Bell, Shield, Eye, EyeOff, Save, Camera, AlertCircle, Check,
+    Upload, Trash2, Lock, LogOut, Smartphone, RefreshCw, Key,
+    Settings as SettingsIcon, Palette, Download, CheckCircle
+} from 'lucide-react'
 import { auth } from '@/lib/firebase/config'
-import { updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth'
+import {
+    updateProfile,
+    updatePassword,
+    EmailAuthProvider,
+    reauthenticateWithCredential,
+    sendPasswordResetEmail,
+    deleteUser
+} from 'firebase/auth'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
 import Loading from '../../loading'
-import LoginPage from '@/app/(auth)/login/page'
+import { uploadImageToImgBB } from '@/utils/imageUpload'
+import Image from 'next/image'
 
-export default function DashboardSettings() {
+export default function SettingsPage() {
     const router = useRouter()
     const [user, setUser] = useState(null)
     const [userData, setUserData] = useState(null)
@@ -17,79 +29,154 @@ export default function DashboardSettings() {
     const [saving, setSaving] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
     const [activeTab, setActiveTab] = useState('profile')
+    const [uploadingImage, setUploadingImage] = useState(false)
+    const [imagePreview, setImagePreview] = useState(null)
 
     const [formData, setFormData] = useState({
         displayName: '',
         email: '',
         photoURL: '',
+        phoneNumber: '',
         role: '',
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
     })
 
-    const [notifications, setNotifications] = useState({
-        emailNotifications: true,
-        orderUpdates: true,
-        productUpdates: false,
-        newsletter: false
+    const [settings, setSettings] = useState({
+        preferences: {
+            theme: 'light',
+            language: 'en',
+            timezone: 'UTC',
+            dateFormat: 'MM/DD/YYYY',
+            currency: 'USD'
+        },
+        notifications: {
+            emailNotifications: true,
+            orderUpdates: true,
+            productUpdates: false,
+            newsletter: false,
+            securityAlerts: true,
+            promotions: false,
+            comments: true,
+            mentions: true
+        },
+        privacy: {
+            profileVisibility: 'public',
+            showEmail: false,
+            showPhone: false,
+            activityStatus: true,
+            dataCollection: true
+        }
     })
 
     const [errors, setErrors] = useState({})
+    const [autoSaveStatus, setAutoSaveStatus] = useState('saved')
 
-    // Load user data from Firebase Auth
+    // Load user data and settings
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
             try {
                 if (firebaseUser) {
                     setUser(firebaseUser)
-
-                    // Fetch additional user data from backend
-                    const response = await fetch(
-                        `${process.env.NEXT_PUBLIC_API_URL}/auth/user/${firebaseUser.uid}`
-                    )
-
-                    if (response.ok) {
-                        const data = await response.json()
-                        if (data.success && data.user) {
-                            setUserData(data.user)
-                            setFormData({
-                                displayName: data.user.displayName || firebaseUser.displayName || '',
-                                email: data.user.email || firebaseUser.email || '',
-                                photoURL: data.user.photoURL || firebaseUser.photoURL || '',
-                                role: data.user.role || 'user',
-                                currentPassword: '',
-                                newPassword: '',
-                                confirmPassword: ''
-                            })
-                        }
-                    } else {
-                        // If user not in database, use Firebase data
-                        setFormData({
-                            displayName: firebaseUser.displayName || '',
-                            email: firebaseUser.email || '',
-                            photoURL: firebaseUser.photoURL || '',
-                            role: 'user',
-                            currentPassword: '',
-                            newPassword: '',
-                            confirmPassword: ''
-                        })
-                    }
+                    await loadUserData(firebaseUser)
+                    await loadUserSettings(firebaseUser.uid)
                 } else {
-                    setUser(null)
-                    setUserData(null)
                     router.push('/login')
                 }
             } catch (err) {
-                console.error('Auth state change error:', err)
+                console.error('Auth error:', err)
                 toast.error('Failed to load user data')
             } finally {
                 setLoading(false)
             }
         })
-
         return () => unsubscribe()
     }, [router])
+
+    const loadUserData = async (firebaseUser) => {
+        try {
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/auth/user/${firebaseUser.uid}`
+            )
+
+            if (response.ok) {
+                const data = await response.json()
+                if (data.success && data.user) {
+                    setUserData(data.user)
+                    setFormData({
+                        displayName: data.user.displayName || firebaseUser.displayName || '',
+                        email: data.user.email || firebaseUser.email || '',
+                        photoURL: data.user.photoURL || firebaseUser.photoURL || '',
+                        phoneNumber: data.user.phoneNumber || '',
+                        role: data.user.role || 'user',
+                        currentPassword: '',
+                        newPassword: '',
+                        confirmPassword: ''
+                    })
+                }
+            }
+        } catch (error) {
+            console.error('Load user data error:', error)
+        }
+    }
+
+    const loadUserSettings = async (userId) => {
+        try {
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/settings/${userId}`
+            )
+
+            if (response.ok) {
+                const data = await response.json()
+                if (data.success && data.settings) {
+                    setSettings({
+                        preferences: data.settings.preferences || settings.preferences,
+                        notifications: data.settings.notifications || settings.notifications,
+                        privacy: data.settings.privacy || settings.privacy
+                    })
+                }
+            }
+        } catch (error) {
+            console.error('Load settings error:', error)
+        }
+    }
+
+    // Auto-save settings to database
+    useEffect(() => {
+        if (!loading && user) {
+            const timer = setTimeout(() => {
+                saveSettingsToDB()
+            }, 1500)
+            return () => clearTimeout(timer)
+        }
+    }, [settings])
+
+    const saveSettingsToDB = async () => {
+        if (!user) return
+
+        try {
+            setAutoSaveStatus('saving')
+
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/settings/${user.uid}`,
+                {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(settings)
+                }
+            )
+
+            if (response.ok) {
+                setAutoSaveStatus('saved')
+            } else {
+                setAutoSaveStatus('error')
+            }
+        } catch (error) {
+            console.error('Auto-save error:', error)
+            setAutoSaveStatus('error')
+        }
+    }
 
     const handleChange = (e) => {
         const { name, value } = e.target
@@ -99,56 +186,71 @@ export default function DashboardSettings() {
         }
     }
 
-    const handleNotificationChange = (key) => {
-        setNotifications(prev => ({ ...prev, [key]: !prev[key] }))
+    const updateSettings = (category, key, value) => {
+        setSettings(prev => ({
+            ...prev,
+            [category]: {
+                ...prev[category],
+                [key]: value
+            }
+        }))
     }
 
-    const validateProfileForm = () => {
-        const newErrors = {}
+    const handleImageSelect = async (e) => {
+        const file = e.target.files[0]
+        if (!file) return
 
-        if (!formData.displayName.trim()) {
-            newErrors.displayName = 'Display name is required'
+        if (!file.type.startsWith('image/')) {
+            toast.error('Please select an image file')
+            return
         }
 
-        setErrors(newErrors)
-        return Object.keys(newErrors).length === 0
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error('Image size should be less than 5MB')
+            return
+        }
+
+        const reader = new FileReader()
+        reader.onloadend = () => setImagePreview(reader.result)
+        reader.readAsDataURL(file)
+
+        setUploadingImage(true)
+        try {
+            const result = await uploadImageToImgBB(file)
+            if (result.success) {
+                setFormData(prev => ({ ...prev, photoURL: result.url }))
+                toast.success('Image uploaded successfully!')
+            } else {
+                throw new Error(result.error || 'Upload failed')
+            }
+        } catch (error) {
+            console.error('Image upload error:', error)
+            toast.error('Failed to upload image')
+            setImagePreview(null)
+        } finally {
+            setUploadingImage(false)
+        }
     }
 
-    const validatePasswordForm = () => {
-        const newErrors = {}
-
-        if (!formData.currentPassword) {
-            newErrors.currentPassword = 'Current password is required'
-        }
-
-        if (!formData.newPassword) {
-            newErrors.newPassword = 'New password is required'
-        } else if (formData.newPassword.length < 6) {
-            newErrors.newPassword = 'Password must be at least 6 characters'
-        }
-
-        if (formData.newPassword !== formData.confirmPassword) {
-            newErrors.confirmPassword = 'Passwords do not match'
-        }
-
-        setErrors(newErrors)
-        return Object.keys(newErrors).length === 0
+    const removeProfileImage = () => {
+        setFormData(prev => ({ ...prev, photoURL: '' }))
+        setImagePreview(null)
+        toast.success('Profile image removed')
     }
 
     const handleUpdateProfile = async () => {
-        if (!validateProfileForm()) return
+        if (!formData.displayName.trim()) {
+            setErrors({ displayName: 'Display name is required' })
+            return
+        }
 
         setSaving(true)
         try {
-            if (!user) throw new Error('No user logged in')
-
-            // Update Firebase Auth profile
             await updateProfile(user, {
                 displayName: formData.displayName,
                 photoURL: formData.photoURL
             })
 
-            // Update backend database
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -157,6 +259,7 @@ export default function DashboardSettings() {
                     email: user.email,
                     displayName: formData.displayName,
                     photoURL: formData.photoURL,
+                    phoneNumber: formData.phoneNumber,
                     role: formData.role
                 })
             })
@@ -165,9 +268,7 @@ export default function DashboardSettings() {
 
             if (data.success) {
                 setUserData(data.user)
-                toast.success('Profile updated successfully!')
-
-                // Reload Firebase user to get updated data
+                toast.success('Profile updated successfully!', { icon: '✅' })
                 await user.reload()
             } else {
                 throw new Error(data.error || 'Failed to update profile')
@@ -181,35 +282,26 @@ export default function DashboardSettings() {
     }
 
     const handleChangePassword = async () => {
-        if (!validatePasswordForm()) return
+        const newErrors = {}
+        if (!formData.currentPassword) newErrors.currentPassword = 'Required'
+        if (!formData.newPassword) newErrors.newPassword = 'Required'
+        else if (formData.newPassword.length < 6) newErrors.newPassword = 'Min 6 characters'
+        if (formData.newPassword !== formData.confirmPassword) {
+            newErrors.confirmPassword = 'Passwords do not match'
+        }
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors)
+            return
+        }
 
         setSaving(true)
         try {
-            if (!user) throw new Error('No user logged in')
-
-            // Check if user is using email/password authentication
-            const isEmailProvider = user.providerData.some(
-                provider => provider.providerId === 'password'
-            )
-
-            if (!isEmailProvider) {
-                throw new Error('Password change is only available for email/password accounts')
-            }
-
-            // Reauthenticate user with current password
-            const credential = EmailAuthProvider.credential(
-                user.email,
-                formData.currentPassword
-            )
-
+            const credential = EmailAuthProvider.credential(user.email, formData.currentPassword)
             await reauthenticateWithCredential(user, credential)
-
-            // Update password
             await updatePassword(user, formData.newPassword)
 
-            toast.success('Password changed successfully!')
-
-            // Clear password fields
+            toast.success('Password changed successfully!', { icon: '🔒' })
             setFormData(prev => ({
                 ...prev,
                 currentPassword: '',
@@ -218,12 +310,9 @@ export default function DashboardSettings() {
             }))
             setErrors({})
         } catch (error) {
-            console.error('Password change error:', error)
             if (error.code === 'auth/wrong-password') {
-                setErrors({ currentPassword: 'Incorrect current password' })
+                setErrors({ currentPassword: 'Incorrect password' })
                 toast.error('Incorrect current password')
-            } else if (error.code === 'auth/too-many-requests') {
-                toast.error('Too many attempts. Please try again later.')
             } else {
                 toast.error(error.message || 'Failed to change password')
             }
@@ -232,258 +321,392 @@ export default function DashboardSettings() {
         }
     }
 
-    const handleSaveNotifications = async () => {
-        setSaving(true)
+    const handleForgotPassword = async () => {
         try {
-            // Save notification preferences to backend
-            await new Promise(resolve => setTimeout(resolve, 500))
-            toast.success('Notification preferences saved!')
+            await sendPasswordResetEmail(auth, user.email)
+            toast.success('Password reset email sent!', { icon: '📧', duration: 5000 })
         } catch (error) {
-            toast.error('Failed to save preferences')
-        } finally {
-            setSaving(false)
+            toast.error('Failed to send reset email')
+        }
+    }
+
+    const handleDeleteAccount = async () => {
+        const confirmed = window.confirm(
+            'Are you absolutely sure? This will permanently delete your account and all associated data. This action cannot be undone!'
+        )
+        if (!confirmed) return
+
+        const doubleCheck = window.prompt('Type "DELETE" to confirm account deletion:')
+        if (doubleCheck !== 'DELETE') {
+            toast.error('Account deletion cancelled')
+            return
+        }
+
+        try {
+            // Delete settings first
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/settings/${user.uid}`, {
+                method: 'DELETE'
+            })
+
+            // Delete user account
+            await deleteUser(user)
+            toast.success('Account deleted successfully')
+            router.push('/')
+        } catch (error) {
+            if (error.code === 'auth/requires-recent-login') {
+                toast.error('Please log in again to delete your account')
+            } else {
+                toast.error('Failed to delete account')
+            }
+        }
+    }
+
+    const handleLogout = async () => {
+        try {
+            await auth.signOut()
+            toast.success('Logged out successfully')
+            router.push('/login')
+        } catch (error) {
+            toast.error('Failed to log out')
+        }
+    }
+
+    const downloadUserData = async () => {
+        try {
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/settings/${user.uid}/export`
+            )
+
+            if (response.ok) {
+                const data = await response.json()
+
+                const fullData = {
+                    profile: {
+                        uid: user.uid,
+                        displayName: formData.displayName,
+                        email: formData.email,
+                        phoneNumber: formData.phoneNumber,
+                        role: formData.role
+                    },
+                    settings: data.data,
+                    account: {
+                        emailVerified: user.emailVerified,
+                        creationTime: user.metadata.creationTime,
+                        lastSignInTime: user.metadata.lastSignInTime
+                    }
+                }
+
+                const blob = new Blob([JSON.stringify(fullData, null, 2)], { type: 'application/json' })
+                const url = URL.createObjectURL(blob)
+                const a = document.createElement('a')
+                a.href = url
+                a.download = `user-data-${user.uid.slice(0, 8)}-${Date.now()}.json`
+                a.click()
+                URL.revokeObjectURL(url)
+                toast.success('User data downloaded!', { icon: '📥' })
+            }
+        } catch (error) {
+            console.error('Download error:', error)
+            toast.error('Failed to download data')
         }
     }
 
     const getProviderName = () => {
-        if (!user || !user.providerData || user.providerData.length === 0) {
-            return 'Unknown'
-        }
-
+        if (!user?.providerData?.length) return 'Unknown'
         const providerId = user.providerData[0].providerId
-
-        switch (providerId) {
-            case 'google.com':
-                return 'Google'
-            case 'password':
-                return 'Email'
-            case 'facebook.com':
-                return 'Facebook'
-            case 'github.com':
-                return 'GitHub'
-            default:
-                return providerId
+        const providers = {
+            'google.com': 'Google',
+            'password': 'Email',
+            'facebook.com': 'Facebook',
+            'github.com': 'GitHub'
         }
+        return providers[providerId] || providerId
     }
 
     const isPasswordProvider = () => {
-        return user && user.providerData.some(provider => provider.providerId === 'password')
+        return user?.providerData.some(provider => provider.providerId === 'password')
     }
 
-    if (loading) {
-        return <Loading />
-    }
-
+    if (loading) return <Loading />
     if (!user) {
-        return <LoginPage />
-    }
-
-    const notificationDetails = {
-        emailNotifications: {
-            icon: Mail,
-            title: 'Email Notifications',
-            description: 'Receive email updates about your account'
-        },
-        orderUpdates: {
-            icon: Bell,
-            title: 'Order Updates',
-            description: 'Get notified when your order status changes'
-        },
-        productUpdates: {
-            icon: Bell,
-            title: 'Product Updates',
-            description: 'Receive updates about new products and features'
-        },
-        newsletter: {
-            icon: Mail,
-            title: 'Newsletter',
-            description: 'Subscribe to our weekly newsletter and tips'
-        }
+        router.push('/login')
+        return null
     }
 
     return (
-        <div className="min-h-screen bg-base-100">
-            <div className="max-w-6xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+        <div className="min-h-screen">
+            <div className="max-w-5xl mx-auto px-4 py-6">
                 {/* Header */}
-                <div className="mb-8">
-                    <h1 className="text-3xl sm:text-4xl font-bold text-base-content mb-2">Account Settings</h1>
-                    <p className="text-base-content/70">Manage your account preferences and security</p>
+                <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h1 className="text-3xl font-bold text-base-content flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+                                <SettingsIcon className="w-5 h-5 text-white" />
+                            </div>
+                            Settings
+                        </h1>
+                        <p className="text-base-content/70 mt-1 text-sm">Manage your account and preferences</p>
+                    </div>
+
+                    {/* Auto-save Indicator */}
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-base-200 text-sm">
+                        {autoSaveStatus === 'saving' && (
+                            <>
+                                <RefreshCw className="w-3.5 h-3.5 animate-spin text-warning" />
+                                <span className="text-warning">Saving...</span>
+                            </>
+                        )}
+                        {autoSaveStatus === 'saved' && (
+                            <>
+                                <CheckCircle className="w-3.5 h-3.5 text-success" />
+                                <span className="text-success">Saved</span>
+                            </>
+                        )}
+                        {autoSaveStatus === 'error' && (
+                            <>
+                                <AlertCircle className="w-3.5 h-3.5 text-error" />
+                                <span className="text-error">Error</span>
+                            </>
+                        )}
+                    </div>
                 </div>
 
-                {/* Tab Navigation */}
-                <div className="flex gap-1 mb-8 border-b border-base-300 overflow-x-auto">
+                {/* DaisyUI Tabs */}
+                <div role="tablist" className="tabs tabs-boxed bg-base-200 mb-6 p-1">
                     <button
+                        role="tab"
+                        className={`tab gap-2 ${activeTab === 'profile' ? 'tab-active' : ''}`}
                         onClick={() => setActiveTab('profile')}
-                        className={`px-4 sm:px-6 py-3 font-semibold transition-all relative whitespace-nowrap ${activeTab === 'profile'
-                            ? 'text-primary'
-                            : 'text-base-content/60 hover:text-base-content'
-                            }`}
                     >
-                        <User className="w-5 h-5 inline-block mr-2" />
+                        <User className="w-4 h-4" />
                         <span className="hidden sm:inline">Profile</span>
-                        {activeTab === 'profile' && (
-                            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-                        )}
                     </button>
                     <button
+                        role="tab"
+                        className={`tab gap-2 ${activeTab === 'security' ? 'tab-active' : ''}`}
                         onClick={() => setActiveTab('security')}
-                        className={`px-4 sm:px-6 py-3 font-semibold transition-all relative whitespace-nowrap ${activeTab === 'security'
-                            ? 'text-primary'
-                            : 'text-base-content/60 hover:text-base-content'
-                            }`}
                     >
-                        <Shield className="w-5 h-5 inline-block mr-2" />
+                        <Shield className="w-4 h-4" />
                         <span className="hidden sm:inline">Security</span>
-                        {activeTab === 'security' && (
-                            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-                        )}
                     </button>
                     <button
+                        role="tab"
+                        className={`tab gap-2 ${activeTab === 'notifications' ? 'tab-active' : ''}`}
                         onClick={() => setActiveTab('notifications')}
-                        className={`px-4 sm:px-6 py-3 font-semibold transition-all relative whitespace-nowrap ${activeTab === 'notifications'
-                            ? 'text-primary'
-                            : 'text-base-content/60 hover:text-base-content'
-                            }`}
                     >
-                        <Bell className="w-5 h-5 inline-block mr-2" />
+                        <Bell className="w-4 h-4" />
                         <span className="hidden sm:inline">Notifications</span>
-                        {activeTab === 'notifications' && (
-                            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-                        )}
+                    </button>
+                    <button
+                        role="tab"
+                        className={`tab gap-2 ${activeTab === 'preferences' ? 'tab-active' : ''}`}
+                        onClick={() => setActiveTab('preferences')}
+                    >
+                        <Palette className="w-4 h-4" />
+                        <span className="hidden sm:inline">Preferences</span>
+                    </button>
+                    <button
+                        role="tab"
+                        className={`tab gap-2 ${activeTab === 'privacy' ? 'tab-active' : ''}`}
+                        onClick={() => setActiveTab('privacy')}
+                    >
+                        <Lock className="w-4 h-4" />
+                        <span className="hidden sm:inline">Privacy</span>
                     </button>
                 </div>
 
                 {/* Profile Tab */}
                 {activeTab === 'profile' && (
-                    <div className="max-w-2xl">
-                        <div className="bg-base-200 rounded-2xl p-6 sm:p-8 shadow-lg">
-                            <h2 className="text-2xl font-bold mb-6">Profile Information</h2>
-
-                            {/* Profile Picture */}
-                            <div className="flex flex-col sm:flex-row items-center gap-6 mb-8 pb-8 border-b border-base-300">
-                                <div className="relative">
-                                    <div className="w-24 h-24 rounded-full overflow-hidden bg-base-300 ring-4 ring-primary/10">
-                                        {formData.photoURL ? (
-                                            <img src={formData.photoURL} alt="Profile" className="w-full h-full object-cover" />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-3xl font-bold text-base-content/30 uppercase">
-                                                {formData.displayName?.charAt(0) || formData.email?.charAt(0) || 'U'}
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-primary text-primary-content flex items-center justify-center shadow-lg">
-                                        <Camera className="w-4 h-4" />
-                                    </div>
-                                </div>
-                                <div className="flex-1 text-center sm:text-left">
-                                    <h3 className="text-lg font-semibold">{formData.displayName || 'User'}</h3>
-                                    <p className="text-sm text-base-content/60">{formData.email}</p>
-                                    <div className="flex flex-wrap gap-2 mt-2 justify-center sm:justify-start">
-                                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium">
-                                            <Check className="w-3 h-3" />
-                                            {getProviderName()} Account
+                    <div className="space-y-4">
+                        {/* Profile Header */}
+                        <div className="card bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5 border border-base-300">
+                            <div className="card-body">
+                                <div className="flex flex-col md:flex-row items-center gap-4">
+                                    {/* Image Upload */}
+                                    <div className="relative group">
+                                        <div className="w-24 h-24 rounded-2xl overflow-hidden bg-base-300 ring-2 ring-primary/30">
+                                            {imagePreview || formData.photoURL ? (
+                                                <Image
+                                                    src={imagePreview || formData.photoURL}
+                                                    alt="Profile"
+                                                    width={96}
+                                                    height={96}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-3xl font-bold text-base-content/30 uppercase bg-gradient-to-br from-primary/20 to-secondary/20">
+                                                    {formData.displayName?.charAt(0) || 'U'}
+                                                </div>
+                                            )}
                                         </div>
-                                        {userData?.role && (
-                                            <div className="inline-flex items-center gap-2 px-3 py-1 bg-secondary/10 text-secondary rounded-full text-xs font-medium capitalize">
-                                                {userData.role}
+
+                                        <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 rounded-2xl">
+                                            <label className="cursor-pointer">
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={handleImageSelect}
+                                                    className="hidden"
+                                                    disabled={uploadingImage}
+                                                />
+                                                <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center hover:scale-110 transition-transform">
+                                                    {uploadingImage ? (
+                                                        <RefreshCw className="w-4 h-4 text-white animate-spin" />
+                                                    ) : (
+                                                        <Upload className="w-4 h-4 text-white" />
+                                                    )}
+                                                </div>
+                                            </label>
+                                            {formData.photoURL && (
+                                                <button
+                                                    onClick={removeProfileImage}
+                                                    className="w-8 h-8 rounded-full bg-error flex items-center justify-center hover:scale-110 transition-transform"
+                                                >
+                                                    <Trash2 className="w-4 h-4 text-white" />
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-success text-white flex items-center justify-center shadow-lg">
+                                            <Camera className="w-4 h-4" />
+                                        </div>
+                                    </div>
+
+                                    {/* User Info */}
+                                    <div className="flex-1 text-center md:text-left">
+                                        <h2 className="text-xl font-bold text-base-content">
+                                            {formData.displayName || 'User'}
+                                        </h2>
+                                        <p className="text-base-content/70 text-sm mb-2">{formData.email}</p>
+                                        <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+                                            <div className="badge badge-primary gap-1">
+                                                <Check className="w-3 h-3" />
+                                                {getProviderName()}
                                             </div>
-                                        )}
+                                            <div className="badge badge-secondary capitalize">
+                                                {formData.role}
+                                            </div>
+                                            {user.emailVerified && (
+                                                <div className="badge badge-success gap-1">
+                                                    <Shield className="w-3 h-3" />
+                                                    Verified
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
+                        </div>
 
-                            {/* Form Fields */}
-                            <div className="space-y-6">
-                                <div>
-                                    <label className="block text-sm font-semibold mb-2 text-base-content">
-                                        Display Name *
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="displayName"
-                                        value={formData.displayName}
-                                        onChange={handleChange}
-                                        className={`w-full px-4 py-3 rounded-xl bg-base-100 border-2 transition-all ${errors.displayName
-                                            ? 'border-error focus:border-error'
-                                            : 'border-base-300 focus:border-primary'
-                                            } focus:outline-none`}
-                                        placeholder="Enter your display name"
-                                    />
-                                    {errors.displayName && (
-                                        <p className="text-error text-sm mt-1 flex items-center gap-1">
-                                            <AlertCircle className="w-4 h-4" />
-                                            {errors.displayName}
-                                        </p>
-                                    )}
-                                </div>
+                        {/* Profile Form */}
+                        <div className="card bg-base-200">
+                            <div className="card-body">
+                                <h3 className="font-bold mb-4 flex items-center gap-2">
+                                    <User className="w-5 h-5 text-primary" />
+                                    Personal Information
+                                </h3>
 
-                                <div>
-                                    <label className="block text-sm font-semibold mb-2 text-base-content">
-                                        Email Address
-                                    </label>
-                                    <input
-                                        type="email"
-                                        value={formData.email}
-                                        className="w-full px-4 py-3 rounded-xl bg-base-300 border-2 border-base-300 cursor-not-allowed opacity-60"
-                                        disabled
-                                    />
-                                    <p className="text-xs text-base-content/50 mt-1 flex items-center gap-1">
-                                        <AlertCircle className="w-3 h-3" />
-                                        Email cannot be changed
-                                    </p>
-                                </div>
+                                <div className="grid md:grid-cols-2 gap-4">
+                                    <div className="form-control">
+                                        <label className="label">
+                                            <span className="label-text font-semibold">Display Name</span>
+                                            <span className="label-text-alt text-error">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            name="displayName"
+                                            value={formData.displayName}
+                                            onChange={handleChange}
+                                            className={`input input-bordered w-full ${errors.displayName ? 'input-error' : ''}`}
+                                            placeholder="Enter your display name"
+                                        />
+                                        {errors.displayName ? (
+                                            <label className="label">
+                                                <span className="label-text-alt text-error">{errors.displayName}</span>
+                                            </label>
+                                        ) : (
+                                            <label className="label">
+                                                <span className="label-text-alt text-base-content/50">This is how others will see you</span>
+                                            </label>
+                                        )}
+                                    </div>
 
-                                <div>
-                                    <label className="block text-sm font-semibold mb-2 text-base-content">
-                                        Photo URL
-                                    </label>
-                                    <input
-                                        type="url"
-                                        name="photoURL"
-                                        value={formData.photoURL}
-                                        onChange={handleChange}
-                                        className="w-full px-4 py-3 rounded-xl bg-base-100 border-2 border-base-300 focus:border-primary focus:outline-none transition-all"
-                                        placeholder="https://example.com/photo.jpg"
-                                    />
-                                    <p className="text-xs text-base-content/50 mt-1">
-                                        Enter a URL to your profile picture
-                                    </p>
-                                </div>
+                                    <div className="form-control">
+                                        <label className="label">
+                                            <span className="label-text font-semibold">Email Address</span>
+                                            <span className="label-text-alt">🔒</span>
+                                        </label>
+                                        <input
+                                            type="email"
+                                            value={formData.email}
+                                            className="input input-bordered w-full bg-base-300/50 cursor-not-allowed"
+                                            disabled
+                                        />
+                                        <label className="label">
+                                            <span className="label-text-alt text-base-content/50">Email cannot be changed</span>
+                                        </label>
+                                    </div>
 
-                                {userData && (
-                                    <div>
-                                        <label className="block text-sm font-semibold mb-2 text-base-content">
-                                            Account Role
+                                    <div className="form-control">
+                                        <label className="label">
+                                            <span className="label-text font-semibold">Phone Number</span>
+                                        </label>
+                                        <input
+                                            type="tel"
+                                            name="phoneNumber"
+                                            value={formData.phoneNumber}
+                                            onChange={handleChange}
+                                            className="input input-bordered w-full"
+                                            placeholder="+1 (555) 123-4567"
+                                        />
+                                        <label className="label">
+                                            <span className="label-text-alt text-base-content/50">Used for order updates</span>
+                                        </label>
+                                    </div>
+
+                                    <div className="form-control">
+                                        <label className="label">
+                                            <span className="label-text font-semibold">Account Role</span>
+                                            <span className="label-text-alt">🔒</span>
                                         </label>
                                         <input
                                             type="text"
                                             value={formData.role}
-                                            className="w-full px-4 py-3 rounded-xl bg-base-300 border-2 border-base-300 cursor-not-allowed opacity-60 capitalize"
+                                            className="input input-bordered w-full bg-base-300/50 cursor-not-allowed capitalize"
                                             disabled
                                         />
-                                        <p className="text-xs text-base-content/50 mt-1">
-                                            Contact admin to change your role
-                                        </p>
+                                        <label className="label">
+                                            <span className="label-text-alt text-base-content/50">Contact admin to change role</span>
+                                        </label>
                                     </div>
-                                )}
+                                </div>
 
-                                <button
-                                    onClick={handleUpdateProfile}
-                                    disabled={saving}
-                                    className="w-full bg-linear-to-r from-primary to-secondary text-primary-content py-3 rounded-xl font-semibold hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg hover:shadow-xl"
-                                >
-                                    {saving ? (
-                                        <>
-                                            <div className="w-5 h-5 border-2 border-primary-content/30 border-t-primary-content rounded-full animate-spin" />
-                                            Saving Changes...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Save className="w-5 h-5" />
-                                            Save Changes
-                                        </>
-                                    )}
-                                </button>
+                                <div className="flex gap-2 mt-4">
+                                    <button
+                                        onClick={handleUpdateProfile}
+                                        disabled={saving}
+                                        className="btn btn-primary gap-2"
+                                    >
+                                        {saving ? (
+                                            <>
+                                                <RefreshCw className="w-4 h-4 animate-spin" />
+                                                Saving...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Save className="w-4 h-4" />
+                                                Save Changes
+                                            </>
+                                        )}
+                                    </button>
+                                    <button
+                                        onClick={downloadUserData}
+                                        className="btn btn-ghost gap-2"
+                                    >
+                                        <Download className="w-4 h-4" />
+                                        Download Data
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -491,161 +714,185 @@ export default function DashboardSettings() {
 
                 {/* Security Tab */}
                 {activeTab === 'security' && (
-                    <div className="max-w-2xl space-y-6">
-                        {/* Change Password Section */}
-                        {isPasswordProvider() ? (
-                            <div className="bg-base-200 rounded-2xl p-6 sm:p-8 shadow-lg">
-                                <div className="flex items-center gap-3 mb-6">
-                                    <div className="w-12 h-12 rounded-xl bg-error/10 flex items-center justify-center">
-                                        <Shield className="w-6 h-6 text-error" />
-                                    </div>
-                                    <div>
-                                        <h2 className="text-2xl font-bold">Change Password</h2>
-                                        <p className="text-sm text-base-content/60">Update your account password</p>
-                                    </div>
-                                </div>
+                    <div className="space-y-4">
+                        {isPasswordProvider() && (
+                            <div className="card bg-base-200">
+                                <div className="card-body">
+                                    <h3 className="font-bold mb-4 flex items-center gap-2">
+                                        <Key className="w-5 h-5 text-primary" />
+                                        Change Password
+                                    </h3>
 
-                                <div className="space-y-6">
-                                    <div>
-                                        <label className="block text-sm font-semibold mb-2 text-base-content">
-                                            Current Password *
-                                        </label>
-                                        <div className="relative">
-                                            <input
-                                                type={showPassword ? 'text' : 'password'}
-                                                name="currentPassword"
-                                                value={formData.currentPassword}
-                                                onChange={handleChange}
-                                                className={`w-full px-4 py-3 rounded-xl bg-base-100 border-2 transition-all pr-12 ${errors.currentPassword
-                                                    ? 'border-error focus:border-error'
-                                                    : 'border-base-300 focus:border-primary'
-                                                    } focus:outline-none`}
-                                                placeholder="Enter current password"
-                                            />
+                                    <div className="space-y-4">
+                                        <div className="form-control">
+                                            <label className="label">
+                                                <span className="label-text font-semibold">Current Password</span>
+                                                <span className="label-text-alt text-error">*</span>
+                                            </label>
+                                            <div className="relative">
+                                                <input
+                                                    type={showPassword ? 'text' : 'password'}
+                                                    name="currentPassword"
+                                                    value={formData.currentPassword}
+                                                    onChange={handleChange}
+                                                    className={`input input-bordered w-full pr-12 ${errors.currentPassword ? 'input-error' : ''}`}
+                                                    placeholder="Enter your current password"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowPassword(!showPassword)}
+                                                    className="absolute right-3 top-1/2 -translate-y-1/2 btn btn-ghost btn-sm btn-circle"
+                                                >
+                                                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                                </button>
+                                            </div>
+                                            {errors.currentPassword ? (
+                                                <label className="label">
+                                                    <span className="label-text-alt text-error">{errors.currentPassword}</span>
+                                                </label>
+                                            ) : (
+                                                <label className="label">
+                                                    <span className="label-text-alt text-base-content/50">Required to verify your identity</span>
+                                                </label>
+                                            )}
+                                        </div>
+
+                                        <div className="grid md:grid-cols-2 gap-4">
+                                            <div className="form-control">
+                                                <label className="label">
+                                                    <span className="label-text font-semibold">New Password</span>
+                                                    <span className="label-text-alt text-error">*</span>
+                                                </label>
+                                                <input
+                                                    type={showPassword ? 'text' : 'password'}
+                                                    name="newPassword"
+                                                    value={formData.newPassword}
+                                                    onChange={handleChange}
+                                                    className={`input input-bordered w-full ${errors.newPassword ? 'input-error' : ''}`}
+                                                    placeholder="Min 6 characters"
+                                                />
+                                                {errors.newPassword ? (
+                                                    <label className="label">
+                                                        <span className="label-text-alt text-error">{errors.newPassword}</span>
+                                                    </label>
+                                                ) : (
+                                                    <label className="label">
+                                                        <span className="label-text-alt text-base-content/50">At least 6 characters</span>
+                                                    </label>
+                                                )}
+                                            </div>
+
+                                            <div className="form-control">
+                                                <label className="label">
+                                                    <span className="label-text font-semibold">Confirm Password</span>
+                                                    <span className="label-text-alt text-error">*</span>
+                                                </label>
+                                                <input
+                                                    type={showPassword ? 'text' : 'password'}
+                                                    name="confirmPassword"
+                                                    value={formData.confirmPassword}
+                                                    onChange={handleChange}
+                                                    className={`input input-bordered w-full ${errors.confirmPassword ? 'input-error' : ''}`}
+                                                    placeholder="Re-enter new password"
+                                                />
+                                                {errors.confirmPassword ? (
+                                                    <label className="label">
+                                                        <span className="label-text-alt text-error">{errors.confirmPassword}</span>
+                                                    </label>
+                                                ) : (
+                                                    <label className="label">
+                                                        <span className="label-text-alt text-base-content/50">Must match new password</span>
+                                                    </label>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="flex flex-wrap gap-2 pt-2">
                                             <button
-                                                type="button"
-                                                onClick={() => setShowPassword(!showPassword)}
-                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/50 hover:text-base-content transition-colors"
+                                                onClick={handleChangePassword}
+                                                disabled={saving}
+                                                className="btn btn-error gap-2"
                                             >
-                                                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                                {saving ? (
+                                                    <>
+                                                        <RefreshCw className="w-4 h-4 animate-spin" />
+                                                        Changing...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Shield className="w-4 h-4" />
+                                                        Change Password
+                                                    </>
+                                                )}
+                                            </button>
+                                            <button
+                                                onClick={handleForgotPassword}
+                                                className="btn btn-ghost gap-2"
+                                            >
+                                                <Mail className="w-4 h-4" />
+                                                Send Reset Email
                                             </button>
                                         </div>
-                                        {errors.currentPassword && (
-                                            <p className="text-error text-sm mt-1 flex items-center gap-1">
-                                                <AlertCircle className="w-4 h-4" />
-                                                {errors.currentPassword}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-semibold mb-2 text-base-content">
-                                            New Password *
-                                        </label>
-                                        <input
-                                            type={showPassword ? 'text' : 'password'}
-                                            name="newPassword"
-                                            value={formData.newPassword}
-                                            onChange={handleChange}
-                                            className={`w-full px-4 py-3 rounded-xl bg-base-100 border-2 transition-all ${errors.newPassword
-                                                ? 'border-error focus:border-error'
-                                                : 'border-base-300 focus:border-primary'
-                                                } focus:outline-none`}
-                                            placeholder="Enter new password"
-                                        />
-                                        {errors.newPassword && (
-                                            <p className="text-error text-sm mt-1 flex items-center gap-1">
-                                                <AlertCircle className="w-4 h-4" />
-                                                {errors.newPassword}
-                                            </p>
-                                        )}
-                                        <p className="text-xs text-base-content/50 mt-1">
-                                            Password must be at least 6 characters
-                                        </p>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-semibold mb-2 text-base-content">
-                                            Confirm New Password *
-                                        </label>
-                                        <input
-                                            type={showPassword ? 'text' : 'password'}
-                                            name="confirmPassword"
-                                            value={formData.confirmPassword}
-                                            onChange={handleChange}
-                                            className={`w-full px-4 py-3 rounded-xl bg-base-100 border-2 transition-all ${errors.confirmPassword
-                                                ? 'border-error focus:border-error'
-                                                : 'border-base-300 focus:border-primary'
-                                                } focus:outline-none`}
-                                            placeholder="Confirm new password"
-                                        />
-                                        {errors.confirmPassword && (
-                                            <p className="text-error text-sm mt-1 flex items-center gap-1">
-                                                <AlertCircle className="w-4 h-4" />
-                                                {errors.confirmPassword}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    <button
-                                        onClick={handleChangePassword}
-                                        disabled={saving}
-                                        className="w-full bg-error text-error-content py-3 rounded-xl font-semibold hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg hover:shadow-xl"
-                                    >
-                                        {saving ? (
-                                            <>
-                                                <div className="w-5 h-5 border-2 border-error-content/30 border-t-error-content rounded-full animate-spin" />
-                                                Changing Password...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Shield className="w-5 h-5" />
-                                                Change Password
-                                            </>
-                                        )}
-                                    </button>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="bg-base-200 rounded-2xl p-6 sm:p-8 shadow-lg">
-                                <div className="flex items-center gap-3 mb-4">
-                                    <div className="w-12 h-12 rounded-xl bg-info/10 flex items-center justify-center">
-                                        <Shield className="w-6 h-6 text-info" />
-                                    </div>
-                                    <div>
-                                        <h2 className="text-2xl font-bold">Password Not Available</h2>
-                                        <p className="text-sm text-base-content/60">Your account uses {getProviderName()} authentication</p>
                                     </div>
                                 </div>
-                                <p className="text-base-content/70">
-                                    Password management is only available for email/password accounts.
-                                    Since you&apos;re using {getProviderName()} to sign in, please manage your password
-                                    through your {getProviderName()} account settings.
-                                </p>
                             </div>
                         )}
 
-                        {/* Account Information */}
-                        <div className="bg-base-200 rounded-2xl p-6 sm:p-8 shadow-lg">
-                            <h2 className="text-xl font-bold mb-4">Account Information</h2>
-                            <div className="space-y-3">
-                                <div className="flex justify-between items-center py-2 border-b border-base-300">
-                                    <span className="text-base-content/70">User ID</span>
-                                    <span className="font-mono text-sm text-right break-all max-w-[60%]">{user.uid}</span>
+                        {/* Account Info */}
+                        <div className="card bg-base-200">
+                            <div className="card-body">
+                                <h3 className="font-bold mb-3 flex items-center gap-2">
+                                    <Smartphone className="w-5 h-5 text-primary" />
+                                    Account Information
+                                </h3>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between items-center p-2 bg-base-100 rounded-lg text-sm">
+                                        <span className="text-base-content/70">User ID</span>
+                                        <code className="text-xs bg-base-300 px-2 py-1 rounded">{user.uid.slice(0, 12)}...</code>
+                                    </div>
+                                    <div className="flex justify-between items-center p-2 bg-base-100 rounded-lg text-sm">
+                                        <span className="text-base-content/70">Email Verified</span>
+                                        <div className={`badge badge-sm ${user.emailVerified ? 'badge-success' : 'badge-warning'}`}>
+                                            {user.emailVerified ? 'Yes' : 'No'}
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-between items-center p-2 bg-base-100 rounded-lg text-sm">
+                                        <span className="text-base-content/70">Created</span>
+                                        <span className="font-semibold text-xs">{new Date(user.metadata.creationTime).toLocaleDateString()}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center p-2 bg-base-100 rounded-lg text-sm">
+                                        <span className="text-base-content/70">Last Sign In</span>
+                                        <span className="font-semibold text-xs">{new Date(user.metadata.lastSignInTime).toLocaleDateString()}</span>
+                                    </div>
                                 </div>
-                                <div className="flex justify-between py-2 border-b border-base-300">
-                                    <span className="text-base-content/70">Email Verified</span>
-                                    <span className={user.emailVerified ? 'text-success font-semibold' : 'text-warning font-semibold'}>
-                                        {user.emailVerified ? 'Yes' : 'No'}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between py-2 border-b border-base-300">
-                                    <span className="text-base-content/70">Account Created</span>
-                                    <span>{new Date(user.metadata.creationTime).toLocaleDateString()}</span>
-                                </div>
-                                <div className="flex justify-between py-2">
-                                    <span className="text-base-content/70">Last Sign In</span>
-                                    <span>{new Date(user.metadata.lastSignInTime).toLocaleDateString()}</span>
+                            </div>
+                        </div>
+
+                        {/* Danger Zone */}
+                        <div className="card bg-error/10 border border-error/30">
+                            <div className="card-body">
+                                <h3 className="font-bold mb-2 flex items-center gap-2 text-error">
+                                    <AlertCircle className="w-5 h-5" />
+                                    Danger Zone
+                                </h3>
+                                <p className="text-sm text-base-content/70 mb-3">
+                                    Delete your account permanently. This action cannot be undone.
+                                </p>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={handleDeleteAccount}
+                                        className="btn btn-error btn-sm gap-2"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                        Delete Account
+                                    </button>
+                                    <button
+                                        onClick={handleLogout}
+                                        className="btn btn-ghost btn-sm gap-2"
+                                    >
+                                        <LogOut className="w-4 h-4" />
+                                        Logout
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -654,64 +901,194 @@ export default function DashboardSettings() {
 
                 {/* Notifications Tab */}
                 {activeTab === 'notifications' && (
-                    <div className="max-w-2xl">
-                        <div className="bg-base-200 rounded-2xl p-6 sm:p-8 shadow-lg">
-                            <h2 className="text-2xl font-bold mb-6">Notification Preferences</h2>
+                    <div className="card bg-base-200">
+                        <div className="card-body">
+                            <h3 className="font-bold mb-4 flex items-center gap-2">
+                                <Bell className="w-5 h-5 text-primary" />
+                                Notification Preferences
+                            </h3>
 
-                            <div className="space-y-4 mb-6">
-                                {Object.entries(notifications).map(([key, value]) => {
-                                    const detail = notificationDetails[key]
-                                    const Icon = detail.icon
+                            <div className="space-y-3">
+                                {Object.entries(settings.notifications).map(([key, value]) => {
+                                    const labels = {
+                                        emailNotifications: { title: 'Email Notifications', desc: 'Receive email updates about your account', icon: '📧' },
+                                        orderUpdates: { title: 'Order Updates', desc: 'Get notified when order status changes', icon: '📦' },
+                                        productUpdates: { title: 'Product Updates', desc: 'New products, features, and announcements', icon: '🆕' },
+                                        newsletter: { title: 'Newsletter', desc: 'Weekly tips, updates, and exclusive content', icon: '📰' },
+                                        securityAlerts: { title: 'Security Alerts', desc: 'Important security and login notifications', icon: '🔒' },
+                                        promotions: { title: 'Promotions & Offers', desc: 'Special offers, discounts, and deals', icon: '🎁' },
+                                        comments: { title: 'Comments', desc: 'When someone comments on your posts', icon: '💬' },
+                                        mentions: { title: 'Mentions', desc: 'When someone mentions or tags you', icon: '🏷️' }
+                                    }
+                                    const label = labels[key]
 
                                     return (
-                                        <div
-                                            key={key}
-                                            className="flex items-center justify-between p-4 bg-base-100 rounded-xl hover:bg-base-100/80 transition-all border border-base-300"
-                                        >
-                                            <div className="flex items-start gap-3 flex-1 min-w-0">
-                                                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                                                    <Icon className="w-5 h-5 text-primary" />
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="font-semibold text-base-content">
-                                                        {detail.title}
-                                                    </p>
-                                                    <p className="text-sm text-base-content/60">
-                                                        {detail.description}
-                                                    </p>
+                                        <div key={key} className="flex items-center justify-between p-4 bg-base-100 rounded-lg border border-base-300 hover:border-primary/50 transition-colors">
+                                            <div className="flex items-start gap-3">
+                                                <span className="text-2xl">{label.icon}</span>
+                                                <div>
+                                                    <p className="font-semibold text-sm">{label.title}</p>
+                                                    <p className="text-xs text-base-content/60 mt-0.5">{label.desc}</p>
                                                 </div>
                                             </div>
-                                            <label className="relative inline-flex items-center cursor-pointer shrink-0 ml-4">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={value}
-                                                    onChange={() => handleNotificationChange(key)}
-                                                    className="sr-only peer"
-                                                />
-                                                <div className="w-11 h-6 bg-base-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                                            </label>
+                                            <input
+                                                type="checkbox"
+                                                checked={value}
+                                                onChange={() => updateSettings('notifications', key, !value)}
+                                                className="toggle toggle-primary toggle-sm"
+                                            />
                                         </div>
                                     )
                                 })}
                             </div>
+                        </div>
+                    </div>
+                )}
 
-                            <button
-                                onClick={handleSaveNotifications}
-                                disabled={saving}
-                                className="w-full bg-success text-success-content py-3 rounded-xl font-semibold hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg hover:shadow-xl"
-                            >
-                                {saving ? (
-                                    <>
-                                        <div className="w-5 h-5 border-2 border-success-content/30 border-t-success-content rounded-full animate-spin" />
-                                        Saving Preferences...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Save className="w-5 h-5" />
-                                        Save Preferences
-                                    </>
-                                )}
-                            </button>
+                {/* Preferences Tab */}
+                {activeTab === 'preferences' && (
+                    <div className="card bg-base-200">
+                        <div className="card-body">
+                            <h3 className="font-bold mb-4 flex items-center gap-2">
+                                <Palette className="w-5 h-5 text-primary" />
+                                Appearance & Display
+                            </h3>
+
+                            <div className="grid md:grid-cols-2 gap-4">
+                                <div className="form-control">
+                                    <label className="label">
+                                        <span className="label-text font-semibold">Theme Preference</span>
+                                    </label>
+                                    <select
+                                        value={settings.preferences.theme}
+                                        onChange={(e) => updateSettings('preferences', 'theme', e.target.value)}
+                                        className="select select-bordered w-full"
+                                    >
+                                        <option value="light">☀️ Light Mode</option>
+                                        <option value="dark">🌙 Dark Mode</option>
+                                        <option value="auto">💻 System Default</option>
+                                    </select>
+                                    <label className="label">
+                                        <span className="label-text-alt text-base-content/50">Choose your display theme</span>
+                                    </label>
+                                </div>
+
+                                <div className="form-control">
+                                    <label className="label">
+                                        <span className="label-text font-semibold">Language</span>
+                                    </label>
+                                    <select
+                                        value={settings.preferences.language}
+                                        onChange={(e) => updateSettings('preferences', 'language', e.target.value)}
+                                        className="select select-bordered w-full"
+                                    >
+                                        <option value="en">🇺🇸 English</option>
+                                        <option value="es">🇪🇸 Español</option>
+                                        <option value="fr">🇫🇷 Français</option>
+                                        <option value="de">🇩🇪 Deutsch</option>
+                                    </select>
+                                    <label className="label">
+                                        <span className="label-text-alt text-base-content/50">Interface language</span>
+                                    </label>
+                                </div>
+
+                                <div className="form-control">
+                                    <label className="label">
+                                        <span className="label-text font-semibold">Timezone</span>
+                                    </label>
+                                    <select
+                                        value={settings.preferences.timezone}
+                                        onChange={(e) => updateSettings('preferences', 'timezone', e.target.value)}
+                                        className="select select-bordered w-full"
+                                    >
+                                        <option value="UTC">🌍 UTC (Coordinated Universal Time)</option>
+                                        <option value="EST">🇺🇸 EST (Eastern Time)</option>
+                                        <option value="PST">🇺🇸 PST (Pacific Time)</option>
+                                        <option value="CST">🇺🇸 CST (Central Time)</option>
+                                    </select>
+                                    <label className="label">
+                                        <span className="label-text-alt text-base-content/50">Used for timestamps</span>
+                                    </label>
+                                </div>
+
+                                <div className="form-control">
+                                    <label className="label">
+                                        <span className="label-text font-semibold">Date Format</span>
+                                    </label>
+                                    <select
+                                        value={settings.preferences.dateFormat}
+                                        onChange={(e) => updateSettings('preferences', 'dateFormat', e.target.value)}
+                                        className="select select-bordered w-full"
+                                    >
+                                        <option value="MM/DD/YYYY">📅 MM/DD/YYYY (01/28/2026)</option>
+                                        <option value="DD/MM/YYYY">📅 DD/MM/YYYY (28/01/2026)</option>
+                                        <option value="YYYY-MM-DD">📅 YYYY-MM-DD (2026-01-28)</option>
+                                    </select>
+                                    <label className="label">
+                                        <span className="label-text-alt text-base-content/50">How dates are displayed</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Privacy Tab */}
+                {activeTab === 'privacy' && (
+                    <div className="card bg-base-200">
+                        <div className="card-body">
+                            <h3 className="font-bold mb-4 flex items-center gap-2">
+                                <Lock className="w-5 h-5 text-primary" />
+                                Privacy Settings
+                            </h3>
+
+                            <div className="space-y-4">
+                                <div className="form-control">
+                                    <label className="label">
+                                        <span className="label-text font-semibold">Profile Visibility</span>
+                                    </label>
+                                    <select
+                                        value={settings.privacy.profileVisibility}
+                                        onChange={(e) => updateSettings('privacy', 'profileVisibility', e.target.value)}
+                                        className="select select-bordered w-full"
+                                    >
+                                        <option value="public">🌍 Public - Anyone can see</option>
+                                        <option value="private">🔒 Private - Only you</option>
+                                        <option value="friends">👥 Friends Only</option>
+                                    </select>
+                                    <label className="label">
+                                        <span className="label-text-alt text-base-content/50">Control who can view your profile</span>
+                                    </label>
+                                </div>
+
+                                {['showEmail', 'showPhone', 'activityStatus', 'dataCollection'].map((key) => {
+                                    const labels = {
+                                        showEmail: { title: 'Show Email', desc: 'Display email address on public profile', icon: '📧' },
+                                        showPhone: { title: 'Show Phone', desc: 'Display phone number on public profile', icon: '📱' },
+                                        activityStatus: { title: 'Activity Status', desc: 'Let others see when you\'re active', icon: '🟢' },
+                                        dataCollection: { title: 'Data Collection', desc: 'Allow analytics and improvement data collection', icon: '📊' }
+                                    }
+                                    const label = labels[key]
+
+                                    return (
+                                        <div key={key} className="flex items-center justify-between p-4 bg-base-100 rounded-lg border border-base-300 hover:border-primary/50 transition-colors">
+                                            <div className="flex items-start gap-3">
+                                                <span className="text-2xl">{label.icon}</span>
+                                                <div>
+                                                    <p className="font-semibold text-sm">{label.title}</p>
+                                                    <p className="text-xs text-base-content/60 mt-0.5">{label.desc}</p>
+                                                </div>
+                                            </div>
+                                            <input
+                                                type="checkbox"
+                                                checked={settings.privacy[key]}
+                                                onChange={(e) => updateSettings('privacy', key, e.target.checked)}
+                                                className="toggle toggle-primary toggle-sm"
+                                            />
+                                        </div>
+                                    )
+                                })}
+                            </div>
                         </div>
                     </div>
                 )}

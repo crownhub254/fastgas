@@ -43,6 +43,7 @@ const CYLINDER_DATA = [
         size: 'Regulator',
         name: 'Pressure Regulator',
         category: 'Accessory',
+        image: 'https://fast-gas.com/wp-content/uploads/2025/03/Pressure-Regulator-transparent.png',
         idealFor: ['All cylinder users', 'Precision control', 'Syphon connection', 'Professional setup'],
         features: [
             'M10X1 valve compatible',

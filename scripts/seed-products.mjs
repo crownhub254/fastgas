@@ -107,8 +107,8 @@ const products = [
         lowStockThreshold: 20,
         weight: 0.3,
         dimensions: { height: 10, diameter: 5 },
-        image: 'https://fast-gas.com/wp-content/uploads/2024/06/fg-new-branding-670-original.png',
-        images: ['https://fast-gas.com/wp-content/uploads/2024/06/fg-new-branding-670-original.png'],
+        image: 'https://fast-gas.com/wp-content/uploads/2025/03/Pressure-Regulator-transparent.png',
+        images: ['https://fast-gas.com/wp-content/uploads/2025/03/Pressure-Regulator-transparent.png'],
         features: [
             'M10X1 valve compatible',
             'Precise pressure control',

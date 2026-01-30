@@ -1,0 +1,28 @@
+# Render Blueprint - FastGas Shop
+# https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: fastgas-shop
+    runtime: node
+    region: oregon
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_FIREBASE_API_KEY
+        value: AIzaSyDvHtqU5RHai9179kAUD2i3vd4ByTJQFzo
+      - key: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+        value: fastgas-74783.firebaseapp.com
+      - key: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+        value: fastgas-74783
+      - key: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+        value: fastgas-74783.firebasestorage.app
+      - key: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+        value: "179545427914"
+      - key: NEXT_PUBLIC_FIREBASE_APP_ID
+        value: 1:179545427914:web:658404d10af252d64d0933
+      - key: NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+        value: G-9L3DYEKW32

@@ -1,10 +1,12 @@
 # FastGasHub - N₂O Cream Charger E-Commerce Implementation Plan
 
 ## 🏢 Business Overview
+
 FastGasHub sells **N₂O (Nitrous Oxide) cream chargers** for professional culinary use:
-- **670g N₂O Cylinder** - KES 7,500 (main product)
-- **Pressure Regulator** - KES 2,500 (accessory)
-- **FastGas Creamer** - KES 15,000 (dispenser equipment)
+
+- **670g N₂O Cylinder** - KES 7,500 (bestselling size worldwide)
+- **Pressure Regulator** - KES 2,500 (M10X1 valve compatible)
+- **FastGas Creamer** - KES 15,000 (Professional all-in-one cream dispenser with integrated stand and cylinder mount)
 
 Target customers: Professional chefs, bakeries, restaurants, catering companies, and culinary resellers.
 

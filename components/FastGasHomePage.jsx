@@ -11,7 +11,7 @@ const CYLINDER_DATA = [
         size: '670g',
         name: 'FastGas Original',
         category: 'Cream Charger',
-        image: 'https://fast-gas.com/wp-content/uploads/2024/06/fg-new-branding-670-original.png',
+        image: 'https://fast-gas.com/wp-content/uploads/2022/07/PRODUCT-PAGE_670_side-view.png',
         caseImage: 'https://fast-gas.com/wp-content/uploads/2022/07/PRODUCT-PAGE_670_box.png',
         palletImage: 'https://fast-gas.com/wp-content/uploads/2022/07/PRODUCT-PAGE_670_pallet.png',
         idealFor: ['Cafés & bakeries', 'Cocktail bars', 'Restaurants', 'Professional kitchens'],
@@ -43,7 +43,6 @@ const CYLINDER_DATA = [
         size: 'Regulator',
         name: 'Pressure Regulator',
         category: 'Accessory',
-        image: 'https://fast-gas.com/wp-content/uploads/2022/07/PRODUCT-PAGE_regulator_solo.png',
         idealFor: ['All cylinder users', 'Precision control', 'Syphon connection', 'Professional setup'],
         features: [
             'M10X1 valve compatible',
@@ -60,7 +59,6 @@ const CYLINDER_DATA = [
         size: 'Creamer',
         name: 'FastGas Creamer',
         category: 'Dispenser',
-        image: 'https://fast-gas.com/wp-content/uploads/2024/04/creamer-combo-free.png',
         idealFor: ['Espumas', 'Whipped cream', 'Sauces', 'Molecular gastronomy'],
         features: [
             'Professional stand mount',

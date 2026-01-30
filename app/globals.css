@@ -171,6 +171,135 @@ html {
     @apply flex gap-2
 }
 
+/* ============================================
+   FASTGAS TYPOGRAPHY SYSTEM
+   Purpose: Trust, Speed, Clarity, Conversion
+   ============================================ */
+
+/* Headlines - Speed & Confidence (Poppins) */
+.font-headline {
+    font-family: var(--font-poppins), 'Poppins', system-ui, sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.font-headline-sm {
+    font-family: var(--font-poppins), 'Poppins', system-ui, sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+/* Body Text - Trust & Readability (Inter) */
+.font-body {
+    font-family: var(--font-inter), 'Inter', system-ui, sans-serif;
+    font-weight: 400;
+    letter-spacing: 0;
+}
+
+.font-body-medium {
+    font-family: var(--font-inter), 'Inter', system-ui, sans-serif;
+    font-weight: 500;
+}
+
+/* Accent - Warmth & Friendliness (DM Sans) - Use Sparingly */
+.font-friendly {
+    font-family: var(--font-accent), 'DM Sans', system-ui, sans-serif;
+    font-weight: 500;
+}
+
+/* CTAs & Buttons - Confidence & Action */
+.font-cta {
+    font-family: var(--font-poppins), 'Poppins', system-ui, sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    text-transform: none;
+}
+
+/* Prices & Technical Info - Maximum Clarity */
+.font-price {
+    font-family: var(--font-inter), 'Inter', system-ui, sans-serif;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+}
+
+.font-specs {
+    font-family: var(--font-inter), 'Inter', system-ui, sans-serif;
+    font-weight: 500;
+    letter-spacing: 0;
+}
+
+/* Safety & Compliance Text */
+.font-safety {
+    font-family: var(--font-inter), 'Inter', system-ui, sans-serif;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+}
+
+/* Section Titles */
+h1, .h1 {
+    font-family: var(--font-poppins), 'Poppins', system-ui, sans-serif;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+}
+
+h2, .h2 {
+    font-family: var(--font-poppins), 'Poppins', system-ui, sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+h3, .h3 {
+    font-family: var(--font-poppins), 'Poppins', system-ui, sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+}
+
+h4, h5, h6, .h4, .h5, .h6 {
+    font-family: var(--font-poppins), 'Poppins', system-ui, sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+/* Button Typography Overrides */
+.btn {
+    font-family: var(--font-poppins), 'Poppins', system-ui, sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+}
+
+/* Input & Form Typography */
+input, select, textarea {
+    font-family: var(--font-inter), 'Inter', system-ui, sans-serif;
+}
+
+/* Badge & Tag Typography */
+.badge {
+    font-family: var(--font-inter), 'Inter', system-ui, sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+/* Table Typography */
+table, th, td {
+    font-family: var(--font-inter), 'Inter', system-ui, sans-serif;
+}
+
+th {
+    font-weight: 600;
+}
+
+/* Card Typography */
+.card-title {
+    font-family: var(--font-poppins), 'Poppins', system-ui, sans-serif;
+    font-weight: 600;
+}
+
+/* Toast/Notification Typography */
+.toast {
+    font-family: var(--font-inter), 'Inter', system-ui, sans-serif;
+}
+
 /* Chrome, Edge, Safari */
 ::-webkit-scrollbar {
   width: 0px;

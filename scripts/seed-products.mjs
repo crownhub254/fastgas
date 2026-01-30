@@ -70,8 +70,12 @@ const products = [
         lowStockThreshold: 30,
         weight: 0.67,
         dimensions: { height: 32, diameter: 8 },
-        image: '/images/fastgas-670g.png',
-        images: ['/images/fastgas-670g.png'],
+        image: 'https://fast-gas.com/wp-content/uploads/2024/06/fg-new-branding-670-original.png',
+        images: [
+            'https://fast-gas.com/wp-content/uploads/2024/06/fg-new-branding-670-original.png',
+            'https://fast-gas.com/wp-content/uploads/2022/07/PRODUCT-PAGE_670_box.png',
+            'https://fast-gas.com/wp-content/uploads/2022/07/PRODUCT-PAGE_670_pallet.png'
+        ],
         features: [
             'Premium food-grade N₂O',
             '670g capacity',
@@ -102,8 +106,8 @@ const products = [
         lowStockThreshold: 20,
         weight: 0.3,
         dimensions: { height: 10, diameter: 5 },
-        image: '/images/fastgas-regulator.png',
-        images: ['/images/fastgas-regulator.png'],
+        image: 'https://fast-gas.com/wp-content/uploads/2022/07/PRODUCT-PAGE_regulator_solo.png',
+        images: ['https://fast-gas.com/wp-content/uploads/2022/07/PRODUCT-PAGE_regulator_solo.png'],
         features: [
             'Precision pressure control',
             'Durable brass construction',
@@ -120,12 +124,12 @@ const products = [
         reviewCount: 32,
     },
     {
-        name: 'FastGas Creamer Dispenser',
+        name: 'FastGas Creamer',
         slug: 'fastgas-creamer',
         sku: 'FG-CREAMER',
         category: 'equipment',
-        description: 'Professional 500ml cream dispenser for restaurants and bakeries. Creates perfectly whipped cream and culinary foams. Stainless steel construction with ergonomic design.',
-        shortDescription: 'Professional cream dispenser - 500ml capacity',
+        description: 'Professional all-in-one cream dispenser with integrated stand and cylinder mount. Perfect for creating whipped cream, mousses, espumas, sauces, and molecular gastronomy. Premium matte black finish.',
+        shortDescription: 'Professional cream dispenser with integrated stand',
         retailPrice: 15000,
         resellerPrice: 12750,
         wholesalePrice: 11250,
@@ -134,8 +138,8 @@ const products = [
         lowStockThreshold: 15,
         weight: 0.5,
         dimensions: { height: 35, diameter: 10 },
-        image: '/images/fastgas-creamer.png',
-        images: ['/images/fastgas-creamer.png'],
+        image: 'https://fast-gas.com/wp-content/uploads/2024/04/creamer-combo-free.png',
+        images: ['https://fast-gas.com/wp-content/uploads/2024/04/creamer-combo-free.png'],
         features: [
             '500ml capacity',
             'Stainless steel construction',

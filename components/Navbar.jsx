@@ -93,11 +93,27 @@ export default function Navbar() {
 
     const navLinks = [
         { href: '/', label: 'Home' },
-        { href: '/#products', label: 'Products' },
+        { href: '/#products', label: 'Products', isAnchor: true },
         { href: '/about', label: 'About' },
         { href: '/contact', label: 'Contact' },
         { href: `${us ? getDashboardRoute() : ''}`, label: us ? 'Dashboard' : '' },
     ]
+
+    // Handle scroll to section
+    const handleScrollToSection = (e, sectionId) => {
+        e.preventDefault()
+        const element = document.getElementById(sectionId)
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth' })
+        } else {
+            // If not on homepage, navigate to homepage then scroll
+            router.push('/')
+            setTimeout(() => {
+                const el = document.getElementById(sectionId)
+                if (el) el.scrollIntoView({ behavior: 'smooth' })
+            }, 500)
+        }
+    }
 
     const handleLogout = async () => {
         try {
@@ -161,13 +177,23 @@ export default function Navbar() {
                     <div className="hidden lg:flex items-center gap-8">
                         <div className="flex items-center gap-1">
                             {navLinks.map((link) => (
-                                <Link
-                                    key={link.href}
-                                    href={link.href}
-                                    className="px-4 py-2 rounded-lg text-base-content font-medium hover:bg-base-200 transition-all duration-200 hover:text-primary"
-                                >
-                                    {link.label}
-                                </Link>
+                                link.isAnchor ? (
+                                    <button
+                                        key={link.href}
+                                        onClick={(e) => handleScrollToSection(e, 'products')}
+                                        className="px-4 py-2 rounded-lg text-base-content font-medium hover:bg-base-200 transition-all duration-200 hover:text-primary"
+                                    >
+                                        {link.label}
+                                    </button>
+                                ) : (
+                                    <Link
+                                        key={link.href}
+                                        href={link.href}
+                                        className="px-4 py-2 rounded-lg text-base-content font-medium hover:bg-base-200 transition-all duration-200 hover:text-primary"
+                                    >
+                                        {link.label}
+                                    </Link>
+                                )
                             ))}
                         </div>
 
@@ -434,14 +460,27 @@ export default function Navbar() {
                         {/* Navigation Links */}
                         <div className="space-y-1">
                             {navLinks.map((link) => (
-                                <Link
-                                    key={link.href}
-                                    href={link.href}
-                                    className="block px-4 py-3 rounded-lg text-base-content font-medium hover:bg-base-200 transition-all duration-200"
-                                    onClick={() => setIsOpen(false)}
-                                >
-                                    {link.label}
-                                </Link>
+                                link.isAnchor ? (
+                                    <button
+                                        key={link.href}
+                                        onClick={(e) => {
+                                            handleScrollToSection(e, 'products')
+                                            setIsOpen(false)
+                                        }}
+                                        className="block w-full text-left px-4 py-3 rounded-lg text-base-content font-medium hover:bg-base-200 transition-all duration-200"
+                                    >
+                                        {link.label}
+                                    </button>
+                                ) : (
+                                    <Link
+                                        key={link.href}
+                                        href={link.href}
+                                        className="block px-4 py-3 rounded-lg text-base-content font-medium hover:bg-base-200 transition-all duration-200"
+                                        onClick={() => setIsOpen(false)}
+                                    >
+                                        {link.label}
+                                    </Link>
+                                )
                             ))}
                         </div>
 

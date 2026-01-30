@@ -906,7 +906,7 @@ export default function FastGasHomePage({ user = null }) {
                             initial={{ scale: 0.5, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             transition={{ delay: 0.4, type: "spring", stiffness: 100 }}
-                            className="text-7xl md:text-9xl font-black mb-6 relative"
+                            className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black mb-6 relative"
                         >
                             <GlitchText text="Fast" className="relative inline-block" />
                             <motion.span 
@@ -957,7 +957,7 @@ export default function FastGasHomePage({ user = null }) {
                             <MagneticButton
                                 href="#products"
                                 onClick={explode}
-                                className="btn btn-lg px-10 bg-gradient-to-r from-cyan-500 to-blue-500 border-none text-white shadow-2xl shadow-cyan-500/30 hover:shadow-cyan-500/50 flex items-center"
+                                className="btn btn-md sm:btn-lg px-6 sm:px-10 bg-gradient-to-r from-cyan-500 to-blue-500 border-none text-white shadow-2xl shadow-cyan-500/30 hover:shadow-cyan-500/50 flex items-center"
                             >
                                 <Package className="w-5 h-5 mr-2" />
                                 Explore Products
@@ -971,7 +971,7 @@ export default function FastGasHomePage({ user = null }) {
                             
                             <MagneticButton
                                 href="/contact"
-                                className="btn btn-lg px-10 bg-white/10 backdrop-blur-sm border border-white/30 text-white hover:bg-white/20 flex items-center"
+                                className="btn btn-md sm:btn-lg px-6 sm:px-10 bg-white/10 backdrop-blur-sm border border-white/30 text-white hover:bg-white/20 flex items-center"
                             >
                                 <Phone className="w-5 h-5 mr-2" />
                                 Contact Us
@@ -1233,14 +1233,14 @@ export default function FastGasHomePage({ user = null }) {
                         >
                             Ready to Elevate Your Creations?
                         </motion.h2>
-                        <p className="text-2xl mb-10 text-white/80">Order premium N₂O cylinders today!</p>
+                        <p className="text-xl sm:text-2xl mb-10 text-white/80">Order premium N₂O cylinders today!</p>
                         
-                        <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
+                        <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center px-4">
                             <motion.a 
                                 href="tel:+254740595680" 
                                 whileHover={{ scale: 1.05, y: -3 }}
                                 whileTap={{ scale: 0.98 }}
-                                className="btn btn-lg px-10 bg-white text-blue-600 hover:bg-gray-100 border-none shadow-2xl"
+                                className="btn btn-md sm:btn-lg px-6 sm:px-10 bg-white text-blue-600 hover:bg-gray-100 border-none shadow-2xl w-full sm:w-auto"
                             >
                                 <Phone className="w-5 h-5 mr-2" />
                                 +254 740 595 680
@@ -1249,7 +1249,7 @@ export default function FastGasHomePage({ user = null }) {
                                 href="https://wa.me/254740595680" 
                                 whileHover={{ scale: 1.05, y: -3 }}
                                 whileTap={{ scale: 0.98 }}
-                                className="btn btn-lg px-10 bg-green-500 text-white hover:bg-green-600 border-none shadow-2xl"
+                                className="btn btn-md sm:btn-lg px-6 sm:px-10 bg-green-500 text-white hover:bg-green-600 border-none shadow-2xl w-full sm:w-auto"
                             >
                                 WhatsApp Us
                             </motion.a>
@@ -1260,7 +1260,7 @@ export default function FastGasHomePage({ user = null }) {
                             whileInView={{ opacity: 1 }}
                             viewport={{ once: true }}
                             transition={{ delay: 0.5 }}
-                            className="flex flex-wrap justify-center gap-8 mt-16 text-white/80"
+                            className="flex flex-wrap justify-center gap-4 sm:gap-8 mt-12 sm:mt-16 text-white/80 px-4"
                         >
                             {[
                                 { icon: <MapPin className="w-5 h-5" />, text: 'Nairobi, Kenya' },
@@ -1282,25 +1282,25 @@ export default function FastGasHomePage({ user = null }) {
             </section>
 
             {/* Quick Dashboard Access - Demo Mode */}
-            <section className="py-16 bg-base-300">
+            <section className="py-12 sm:py-16 bg-base-300">
                 <div className="container mx-auto px-4">
                     <motion.div
                         initial={{ opacity: 0, y: 30 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
-                        className="text-center mb-10"
+                        className="text-center mb-8 sm:mb-10"
                     >
                         <span className="badge badge-warning badge-lg mb-4">Demo Mode</span>
-                        <h2 className="text-3xl font-bold mb-2">Quick Dashboard Access</h2>
-                        <p className="text-base-content/60">Preview all dashboards without signing in</p>
+                        <h2 className="text-2xl sm:text-3xl font-bold mb-2">Quick Dashboard Access</h2>
+                        <p className="text-base-content/60 text-sm sm:text-base">Preview all dashboards without signing in</p>
                     </motion.div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 max-w-4xl mx-auto">
                         {[
-                            { href: '/dashboard/admin', label: 'Admin Dashboard', icon: <LayoutDashboard className="w-8 h-8" />, color: 'from-red-500 to-orange-500', desc: 'Full control panel' },
-                            { href: '/dashboard/seller', label: 'Seller Dashboard', icon: <ShoppingBag className="w-8 h-8" />, color: 'from-blue-500 to-cyan-500', desc: 'Manage products & orders' },
-                            { href: '/dashboard/reseller', label: 'Reseller Dashboard', icon: <Users className="w-8 h-8" />, color: 'from-purple-500 to-pink-500', desc: 'Wholesale operations' },
-                            { href: '/dashboard/user', label: 'User Dashboard', icon: <Users className="w-8 h-8" />, color: 'from-green-500 to-emerald-500', desc: 'Customer account' },
+                            { href: '/dashboard/admin', label: 'Admin Dashboard', icon: <LayoutDashboard className="w-6 h-6 sm:w-8 sm:h-8" />, color: 'from-red-500 to-orange-500', desc: 'Full control panel' },
+                            { href: '/dashboard/distributor', label: 'Distributor Dashboard', icon: <ShoppingBag className="w-6 h-6 sm:w-8 sm:h-8" />, color: 'from-blue-500 to-cyan-500', desc: 'Manage products & orders' },
+                            { href: '/dashboard/reseller', label: 'Reseller Dashboard', icon: <Users className="w-6 h-6 sm:w-8 sm:h-8" />, color: 'from-purple-500 to-pink-500', desc: 'Wholesale operations' },
+                            { href: '/dashboard/user', label: 'User Dashboard', icon: <Users className="w-6 h-6 sm:w-8 sm:h-8" />, color: 'from-green-500 to-emerald-500', desc: 'Customer account' },
                         ].map((dashboard, i) => (
                             <motion.div
                                 key={i}
@@ -1313,10 +1313,10 @@ export default function FastGasHomePage({ user = null }) {
                             >
                                 <Link
                                     href={dashboard.href}
-                                    className="block bg-base-100 rounded-2xl p-6 text-center shadow-lg hover:shadow-xl transition-all border-2 border-base-200 hover:border-primary group"
+                                    className="block bg-base-100 rounded-xl sm:rounded-2xl p-4 sm:p-6 text-center shadow-lg hover:shadow-xl transition-all border-2 border-base-200 hover:border-primary group h-full"
                                 >
                                     <motion.div 
-                                        className={`inline-flex items-center justify-center w-16 h-16 rounded-xl bg-gradient-to-br ${dashboard.color} text-white mb-4 shadow-lg group-hover:scale-110 transition-transform`}
+                                        className={`inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-xl bg-gradient-to-br ${dashboard.color} text-white mb-3 sm:mb-4 shadow-lg group-hover:scale-110 transition-transform`}
                                     >
                                         {dashboard.icon}
                                     </motion.div>

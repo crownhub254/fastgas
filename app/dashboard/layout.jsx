@@ -57,11 +57,19 @@ const DEMO_USERS = {
         role: 'rider',
         photoURL: null
     },
+    distributor: {
+        uid: 'demo-distributor',
+        email: 'distributor@fastgas.co.ke',
+        displayName: 'Demo Distributor',
+        role: 'distributor',
+        photoURL: null
+    },
+    // Keep seller as alias for backward compatibility
     seller: {
-        uid: 'demo-seller',
-        email: 'seller@fastgas.co.ke',
-        displayName: 'Demo Seller',
-        role: 'seller',
+        uid: 'demo-distributor',
+        email: 'distributor@fastgas.co.ke',
+        displayName: 'Demo Distributor',
+        role: 'distributor',
         photoURL: null
     },
     user: {
@@ -78,7 +86,8 @@ function getRoleFromPath(pathname) {
     if (pathname.startsWith('/dashboard/admin')) return 'admin'
     if (pathname.startsWith('/dashboard/reseller')) return 'reseller'
     if (pathname.startsWith('/dashboard/rider')) return 'rider'
-    if (pathname.startsWith('/dashboard/seller')) return 'seller'
+    if (pathname.startsWith('/dashboard/distributor')) return 'distributor'
+    if (pathname.startsWith('/dashboard/seller')) return 'distributor' // Redirect old seller path
     if (pathname.startsWith('/dashboard/user')) return 'user'
     return 'user' // default
 }
@@ -194,9 +203,9 @@ export default function DashboardLayout({ children }) {
             return [
                 ...baseNav,
                 {
-                    name: 'User Management',
-                    href: '/dashboard/admin/users',
-                    icon: Users,
+                    name: 'Distributors',
+                    href: '/dashboard/admin/distributors',
+                    icon: ShoppingBag,
                 },
                 {
                     name: 'Resellers',
@@ -246,32 +255,32 @@ export default function DashboardLayout({ children }) {
             ]
         }
 
-        if (userData.role === 'seller') {
+        if (userData.role === 'seller' || userData.role === 'distributor') {
             return [
                 ...baseNav,
                 {
                     name: 'Add Product',
-                    href: '/dashboard/seller/add-product',
+                    href: '/dashboard/distributor/add-product',
                     icon: Plus,
                 },
                 {
                     name: 'My Products',
-                    href: '/dashboard/seller/products',
+                    href: '/dashboard/distributor/products',
                     icon: Package,
                 },
                 {
                     name: 'Orders',
-                    href: '/dashboard/seller/orders',
+                    href: '/dashboard/distributor/orders',
                     icon: ShoppingCart,
                 },
                 {
                     name: 'Assign Riders',
-                    href: '/dashboard/seller/assign-rider',
+                    href: '/dashboard/distributor/assign-rider',
                     icon: Bike,
                 },
                 {
                     name: 'Settings',
-                    href: '/dashboard/seller/settings',
+                    href: '/dashboard/distributor/settings',
                     icon: Settings,
                 }
             ]

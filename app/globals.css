@@ -104,6 +104,67 @@ html {
   .card {
     @apply bg-base-100 rounded-xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 border border-base-300;
   }
+  
+  /* Mobile-first responsive utilities */
+  .mobile-full {
+    @apply w-full;
+  }
+  
+  .touch-action-manipulation {
+    touch-action: manipulation;
+  }
+}
+
+/* Mobile Performance Optimizations */
+@media (max-width: 768px) {
+  /* Reduce animation complexity on mobile */
+  .reduce-motion * {
+    animation-duration: 0.1ms !important;
+    transition-duration: 0.1ms !important;
+  }
+  
+  /* Improve tap targets for mobile */
+  button, a, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Prevent horizontal scroll */
+  body {
+    overflow-x: hidden;
+  }
+  
+  /* Better text readability on mobile */
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  /* Remove hover effects on touch devices for better performance */
+  .card:hover {
+    transform: none;
+  }
+  
+  /* Larger touch targets */
+  .btn {
+    padding: 12px 24px;
+  }
+}
+
+/* Smooth scrolling with reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 .card-title{

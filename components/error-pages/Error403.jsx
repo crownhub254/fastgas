@@ -76,8 +76,8 @@ export default function Error403() {
                     <h3 className="text-sm font-semibold text-base-content/60 mb-4">NEED HELP?</h3>
                     <p className="text-sm text-base-content/70">
                         Contact our support team at{' '}
-                        <a href="mailto:support@shophub.com" className="link link-primary">
-                            support@shophub.com
+                        <a href="mailto:support@fastgashub.com" className="link link-primary">
+                            support@fastgashub.com
                         </a>
                     </p>
                 </div>

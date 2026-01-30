@@ -76,7 +76,7 @@ export default function Invoice({ order }) {
                 heightLeft -= 297
             }
 
-            pdf.save(`ShopHub-Invoice-${order.orderId}.pdf`)
+            pdf.save(`FastGasHub-Invoice-${order.orderId}.pdf`)
             toast.success('Invoice downloaded successfully!')
         } catch (error) {
             console.error('Error generating PDF:', error)
@@ -95,7 +95,7 @@ export default function Invoice({ order }) {
             <html>
             <head>
                 <meta charset="UTF-8">
-                <title>ShopHub Invoice ${order.orderId}</title>
+                <title>FastGasHub Invoice ${order.orderId}</title>
                 <style>
                     * { margin: 0; padding: 0; box-sizing: border-box; }
                     body { font-family: Arial, sans-serif; padding: 20px; }
@@ -175,7 +175,7 @@ export default function Invoice({ order }) {
                             color: '#7c3aed',
                             marginBottom: '8px',
                             letterSpacing: '-1px'
-                        }}>ShopHub</div>
+                        }}>FastGasHub</div>
                         <div style={{
                             fontSize: '18px',
                             fontWeight: '600',
@@ -301,7 +301,7 @@ export default function Invoice({ order }) {
                                 fontSize: '18px',
                                 color: '#111827',
                                 marginBottom: '8px'
-                            }}>ShopHub</div>
+                            }}>FastGasHub</div>
                             <div style={{
                                 fontSize: '13px',
                                 color: '#666666',
@@ -311,7 +311,7 @@ export default function Invoice({ order }) {
                                 Digital City, DC 12345<br />
                                 Bangladesh<br />
                                 <br />
-                                <span style={{ fontWeight: '600' }}>Email:</span> support@shophub.com<br />
+                                <span style={{ fontWeight: '600' }}>Email:</span> support@FastGasHub.com<br />
                                 <span style={{ fontWeight: '600' }}>Phone:</span> +880 1234-567890
                             </div>
                         </div>
@@ -626,10 +626,10 @@ export default function Invoice({ order }) {
                             color: '#166534',
                             lineHeight: '1.6'
                         }}>
-                            <span style={{ fontWeight: '700', fontSize: '14px' }}>Thank you for shopping with ShopHub!</span>
+                            <span style={{ fontWeight: '700', fontSize: '14px' }}>Thank you for shopping with FastGasHub!</span>
                             <br />
                             Your order will be processed within 24-48 hours. For any inquiries, please contact our support team at{' '}
-                            <span style={{ fontWeight: '600' }}>support@shophub.com</span> or call{' '}
+                            <span style={{ fontWeight: '600' }}>support@FastGasHub.com</span> or call{' '}
                             <span style={{ fontWeight: '600' }}>+880 1234-567890</span>.
                         </div>
                     </div>
@@ -651,7 +651,7 @@ export default function Invoice({ order }) {
                             color: '#9ca3af',
                             fontWeight: '600'
                         }}>
-                            © 2026 ShopHub. All rights reserved. | Powered by innovative e-commerce solutions
+                            © 2026 FastGasHub. All rights reserved. | Powered by innovative e-commerce solutions
                         </div>
                     </div>
                 </div>

@@ -13,7 +13,7 @@
 [![Stripe](https://img.shields.io/badge/Stripe-Payment-008CDD?style=for-the-badge&logo=stripe)](https://stripe.com/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
 
-[Live Demo](https://shophub-demo.vercel.app) · [Report Bug](https://github.com/hossain-shifat/Shop-Hub/issues) · [Request Feature](https://github.com/hossain-shifat/Shop-Hub/issues)
+[Live Demo](https://fastgashub.onrender.com) · [Report Bug](https://github.com/crownhub254/fastgas/issues) · [Request Feature](https://github.com/crownhub254/fastgas/issues)
 
 </div>
 
@@ -676,21 +676,21 @@ Create test accounts with these roles:
 
 **Admin**
 ```
-Email: admin@shophub.com
+Email: admin@fastgashub.com
 Password: admin123
 Role: admin
 ```
 
 **Seller**
 ```
-Email: seller@shophub.com
+Email: seller@fastgashub.com
 Password: seller123
 Role: seller
 ```
 
 **User**
 ```
-Email: user@shophub.com
+Email: user@fastgashub.com
 Password: user123
 Role: user
 ```
@@ -768,10 +768,10 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 For support and questions:
 
-- 📧 Email: support@shophub.com
-- 💬 Discord: [Join our community](https://discord.gg/shophub)
-- 🐛 Issues: [GitHub Issues](https://github.com/hossain-shifat/Shop-Hub/issues)
-- 📖 Docs: [Documentation](https://docs.shophub.com)
+- 📧 Email: support@fastgashub.com
+- 💬 Discord: [Join our community](https://discord.gg/fastgashub)
+- 🐛 Issues: [GitHub Issues](https://github.com/crownhub254/fastgas/issues)
+- 📖 Docs: [Documentation](https://docs.fastgashub.com)
 
 ---
 
@@ -783,6 +783,6 @@ If you found this project helpful, please give it a ⭐️!
 
 **Made with ❤️ by Hossain Shifat**
 
-[⬆ Back to Top](#-shophub---modern-e-commerce-platform)
+[⬆ Back to Top](#-fastgashub---modern-e-commerce-platform)
 
 </div>

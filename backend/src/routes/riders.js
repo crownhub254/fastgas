@@ -963,7 +963,7 @@ router.post('/register', async (req, res) => {
                 await createNotification({
                     userId: uid,
                     type: 'account_created',
-                    title: '🎉 Welcome to ShopHub Delivery!',
+                    title: '🎉 Welcome to FastGasHub Delivery!',
                     message: 'Your rider account has been created. Please wait for admin verification to start accepting deliveries.',
                     data: { riderId: uid },
                     link: '/dashboard/rider',

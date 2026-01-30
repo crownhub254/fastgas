@@ -9,14 +9,14 @@ export default function TermsOfServicePage() {
         {
             icon: ShieldCheck,
             title: 'Acceptance of Terms',
-            content: `By accessing and using ShopHub, you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to abide by the above, please do not use this service.
+            content: `By accessing and using FastGasHub, you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to abide by the above, please do not use this service.
 
       These terms apply to all visitors, users, and others who access or use the service. We reserve the right to update and change these Terms of Service without notice.`
         },
         {
             icon: FileText,
             title: 'Use License',
-            content: `Permission is granted to temporarily access the materials on ShopHub's website for personal, non-commercial use only. This is the grant of a license, not a transfer of title, and under this license you may not:
+            content: `Permission is granted to temporarily access the materials on FastGasHub's website for personal, non-commercial use only. This is the grant of a license, not a transfer of title, and under this license you may not:
 
       • Modify or copy the materials
       • Use the materials for any commercial purpose
@@ -55,7 +55,7 @@ export default function TermsOfServicePage() {
         {
             icon: AlertCircle,
             title: 'Intellectual Property',
-            content: `The service and its original content, features, and functionality are owned by ShopHub and are protected by international copyright, trademark, and other intellectual property laws.
+            content: `The service and its original content, features, and functionality are owned by FastGasHub and are protected by international copyright, trademark, and other intellectual property laws.
 
       Our trademarks and trade dress may not be used without our prior written permission. All other trademarks not owned by us that appear on this site are the property of their respective owners.`
         },
@@ -124,7 +124,7 @@ export default function TermsOfServicePage() {
                     <motion.div {...fadeInUp} className="card bg-base-100">
                         <h2 className="text-3xl font-bold text-base-content mb-4">Agreement to Terms</h2>
                         <p className="text-base-content/70 leading-relaxed mb-4">
-                            These Terms of Service constitute a legally binding agreement made between you, whether personally or on behalf of an entity (&quot;you&ldquo;) and ShopHub (&quot;we&ldquo;, &quot;us&ldquo; or &quot;our&ldquo;), concerning your access to and use of the ShopHub website as well as any other media form, media channel, mobile website or mobile application related, linked, or otherwise connected thereto.
+                            These Terms of Service constitute a legally binding agreement made between you, whether personally or on behalf of an entity (&quot;you&ldquo;) and FastGasHub (&quot;we&ldquo;, &quot;us&ldquo; or &quot;our&ldquo;), concerning your access to and use of the FastGasHub website as well as any other media form, media channel, mobile website or mobile application related, linked, or otherwise connected thereto.
                         </p>
                         <p className="text-base-content/70 leading-relaxed">
                             You agree that by accessing the Site, you have read, understood, and agree to be bound by all of these Terms of Service. IF YOU DO NOT AGREE WITH ALL OF THESE TERMS OF SERVICE, THEN YOU ARE EXPRESSLY PROHIBITED FROM USING THE SITE AND YOU MUST DISCONTINUE USE IMMEDIATELY.
@@ -204,7 +204,7 @@ export default function TermsOfServicePage() {
                     <motion.div {...fadeInUp} className="card bg-base-100">
                         <h2 className="text-3xl font-bold text-base-content mb-4">Governing Law</h2>
                         <p className="text-base-content/70 leading-relaxed">
-                            These Terms shall be governed by and defined following the laws of [Your Country/State]. ShopHub and yourself irrevocably consent that the courts of [Your Country/State] shall have exclusive jurisdiction to resolve any dispute which may arise in connection with these terms.
+                            These Terms shall be governed by and defined following the laws of [Your Country/State]. FastGasHub and yourself irrevocably consent that the courts of [Your Country/State] shall have exclusive jurisdiction to resolve any dispute which may arise in connection with these terms.
                         </p>
                     </motion.div>
                 </div>
@@ -221,8 +221,8 @@ export default function TermsOfServicePage() {
                         <div className="space-y-3 text-base-content/70">
                             <div className="flex items-center gap-3">
                                 <span className="font-semibold">Email:</span>
-                                <a href="mailto:legal@shophub.com" className="text-primary hover:text-primary/80">
-                                    legal@shophub.com
+                                <a href="mailto:legal@FastGasHub.com" className="text-primary hover:text-primary/80">
+                                    legal@FastGasHub.com
                                 </a>
                             </div>
                             <div className="flex items-center gap-3">

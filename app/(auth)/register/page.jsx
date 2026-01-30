@@ -283,7 +283,7 @@ export default function RegisterPage() {
                         <h1 className="text-5xl font-bold text-base-content leading-tight">
                             Start Your Journey with
                             <span className="block text-transparent bg-clip-text bg-linear-to-r from-primary via-secondary to-accent mt-2">
-                                ShopHub
+                                FastGasHub
                             </span>
                         </h1>
                         <p className="text-base-content/70 text-xl leading-relaxed">
@@ -302,7 +302,7 @@ export default function RegisterPage() {
                     <div className="card bg-base-100 shadow-2xl">
                         <div className="text-center mb-6">
                             <h2 className="text-3xl font-bold text-base-content mb-2">Create Account</h2>
-                            <p className="text-base-content/60">Join ShopHub today</p>
+                            <p className="text-base-content/60">Join FastGasHub today</p>
                         </div>
 
                         {/* Profile Photo Upload */}

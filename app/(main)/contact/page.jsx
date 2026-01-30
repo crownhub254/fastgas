@@ -37,8 +37,8 @@ export default function ContactPage() {
         {
             icon: Mail,
             title: 'Email Us',
-            details: 'support@shophub.com',
-            link: 'mailto:support@shophub.com',
+            details: 'support@FastGasHub.com',
+            link: 'mailto:support@FastGasHub.com',
             color: 'from-primary to-secondary'
         },
         {

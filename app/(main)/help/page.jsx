@@ -259,7 +259,7 @@ export default function HelpCenterPage() {
                                 Contact Support
                             </Link>
                             <a
-                                href="mailto:support@shophub.com"
+                                href="mailto:support@FastGasHub.com"
                                 className="btn bg-transparent border-2 border-white text-white hover:bg-white hover:text-primary"
                             >
                                 Email Us

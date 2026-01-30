@@ -429,7 +429,7 @@ export default function DashboardLayout({ children }) {
                                         <ShoppingBag className="w-6 h-6 text-white" />
                                     </div>
                                     <span className="text-xl font-bold bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent">
-                                        ShopHub
+                                        FastGasHub
                                     </span>
                                 </div>
                             ) : (

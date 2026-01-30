@@ -33,7 +33,7 @@ These cookies are used to deliver advertisements that are relevant to you and yo
         {
             icon: Shield,
             title: 'How We Use Cookies',
-            content: `At ShopHub, we use cookies for various purposes to enhance your browsing experience and improve our services:
+            content: `At FastGasHub, we use cookies for various purposes to enhance your browsing experience and improve our services:
 
 Authentication & Security
 • To verify your identity when you log in to your account
@@ -203,7 +203,7 @@ Note that deleting cookies will log you out of websites and may remove your save
                         </h1>
 
                         <p className="text-xl text-base-content/70 mb-4">
-                            Learn how we use cookies to enhance your experience on ShopHub.
+                            Learn how we use cookies to enhance your experience on FastGasHub.
                         </p>
                         <p className="text-sm text-base-content/60">
                             Last Updated: January 14, 2026
@@ -218,7 +218,7 @@ Note that deleting cookies will log you out of websites and may remove your save
                     <motion.div {...fadeInUp} className="card">
                         <h2 className="text-3xl font-bold text-base-content mb-4">Understanding Our Cookie Usage</h2>
                         <p className="text-base-content/70 leading-relaxed mb-4">
-                            This Cookie Policy explains what cookies are, how we use them on the ShopHub website, and how you can manage your cookie preferences. By using our website, you agree to the use of cookies as described in this policy.
+                            This Cookie Policy explains what cookies are, how we use them on the FastGasHub website, and how you can manage your cookie preferences. By using our website, you agree to the use of cookies as described in this policy.
                         </p>
                         <p className="text-base-content/70 leading-relaxed">
                             We are committed to being transparent about how we collect and use data. This policy provides detailed information about the types of cookies we use, their purpose, and your choices regarding cookies.
@@ -385,8 +385,8 @@ Note that deleting cookies will log you out of websites and may remove your save
                         <div className="space-y-3 text-base-content/70">
                             <div className="flex items-center gap-3">
                                 <span className="font-semibold">Email:</span>
-                                <a href="mailto:privacy@shophub.com" className="text-primary hover:text-primary/80 transition-colors">
-                                    privacy@shophub.com
+                                <a href="mailto:privacy@FastGasHub.com" className="text-primary hover:text-primary/80 transition-colors">
+                                    privacy@FastGasHub.com
                                 </a>
                             </div>
                             <div className="flex items-center gap-3">

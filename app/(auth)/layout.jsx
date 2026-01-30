@@ -1,5 +1,5 @@
 export const metadata = {
-    title: 'Authentication | ShopHub',
+    title: 'Authentication | FastGasHub',
 }
 
 export default function AuthLayout({ children }) {

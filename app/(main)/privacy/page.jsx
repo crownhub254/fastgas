@@ -57,7 +57,7 @@ export default function PrivacyPolicyPage() {
       • Withdraw consent for data processing
       • File a complaint with data protection authorities
 
-      To exercise these rights, please contact us at privacy@shophub.com`
+      To exercise these rights, please contact us at privacy@FastGasHub.com`
         },
         {
             icon: Shield,
@@ -131,7 +131,7 @@ export default function PrivacyPolicyPage() {
                     <motion.div {...fadeInUp} className="card bg-base-100">
                         <h2 className="text-3xl font-bold text-base-content mb-4">Introduction</h2>
                         <p className="text-base-content/70 leading-relaxed mb-4">
-                            Welcome to ShopHub. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website or make a purchase from us. Please read this privacy policy carefully. If you do not agree with the terms of this privacy policy, please do not access the site.
+                            Welcome to FastGasHub. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website or make a purchase from us. Please read this privacy policy carefully. If you do not agree with the terms of this privacy policy, please do not access the site.
                         </p>
                         <p className="text-base-content/70 leading-relaxed">
                             We reserve the right to make changes to this Privacy Policy at any time. We will alert you about any changes by updating the &quot;Last Updated&ldquo; date. You are encouraged to periodically review this Privacy Policy to stay informed of updates.
@@ -201,8 +201,8 @@ export default function PrivacyPolicyPage() {
                         <div className="space-y-3 text-base-content/70">
                             <div className="flex items-center gap-3">
                                 <span className="font-semibold">Email:</span>
-                                <a href="mailto:privacy@shophub.com" className="text-primary hover:text-primary/80">
-                                    privacy@shophub.com
+                                <a href="mailto:privacy@FastGasHub.com" className="text-primary hover:text-primary/80">
+                                    privacy@FastGasHub.com
                                 </a>
                             </div>
                             <div className="flex items-center gap-3">

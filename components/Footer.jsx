@@ -119,7 +119,7 @@ export default function Footer() {
                 <div className="border-t border-base-content/10 mt-12 pt-8">
                     <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                         <p className="text-base-content/60 text-sm text-center md:text-left">
-                            &copy; {new Date().getFullYear()} ShopHub. All rights reserved.
+                            &copy; {new Date().getFullYear()} FastGasHub. All rights reserved.
                         </p>
                         <div className="flex items-center gap-6 text-sm text-base-content/60">
                             <Link href="/privacy" className="hover:text-primary transition-colors">Privacy</Link>

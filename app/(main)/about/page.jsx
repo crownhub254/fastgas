@@ -91,7 +91,7 @@ export default function AboutPage() {
             name: 'Sarah Johnson',
             role: 'CEO & Founder',
             image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop',
-            bio: 'Leading ShopHub with 15+ years of e-commerce experience.'
+            bio: 'Leading FastGasHub with 15+ years of e-commerce experience.'
         },
         {
             name: 'Michael Chen',
@@ -129,7 +129,7 @@ export default function AboutPage() {
         {
             year: '2020',
             title: 'Founded',
-            description: 'ShopHub was born with a vision to revolutionize online shopping.',
+            description: 'FastGasHub was born with a vision to revolutionize online shopping.',
             icon: Calendar
         },
         {
@@ -169,7 +169,7 @@ export default function AboutPage() {
             name: 'John Smith',
             role: 'Verified Buyer',
             image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=John',
-            text: 'ShopHub has the best customer service I\'ve ever experienced. Fast shipping and quality products!',
+            text: 'FastGasHub has the best customer service I\'ve ever experienced. Fast shipping and quality products!',
             rating: 5
         },
         {
@@ -226,7 +226,7 @@ export default function AboutPage() {
                         <h1 className="text-5xl md:text-6xl font-bold mb-6 text-base-content">
                             Welcome to{' '}
                             <span className="text-transparent bg-clip-text bg-linear-to-r from-primary via-secondary to-accent">
-                                ShopHub
+                                FastGasHub
                             </span>
                         </h1>
 
@@ -284,11 +284,11 @@ export default function AboutPage() {
                         <motion.div {...fadeInUp}>
                             <span className="badge badge-primary badge-lg mb-4">Our Journey</span>
                             <h2 className="text-4xl font-bold text-base-content mb-6">
-                                The ShopHub Story
+                                The FastGasHub Story
                             </h2>
                             <div className="space-y-4 text-base-content/70 text-lg leading-relaxed">
                                 <p>
-                                    ShopHub was founded in 2020 with a simple mission: to make premium products accessible to everyone. What started as a small online store has grown into a trusted marketplace serving customers worldwide.
+                                    FastGasHub was founded in 2020 with a simple mission: to make premium products accessible to everyone. What started as a small online store has grown into a trusted marketplace serving customers worldwide.
                                 </p>
                                 <p>
                                     We believe that shopping should be more than just a transaction. It should be an experience that brings joy, convenience, and value to your life. That&apos;s why we carefully curate every product in our catalog and work tirelessly to ensure your satisfaction.
@@ -378,7 +378,7 @@ export default function AboutPage() {
                             What Makes Us Different
                         </h2>
                         <p className="text-base-content/70 text-lg max-w-2xl mx-auto">
-                            Experience the ShopHub advantage with our premium features
+                            Experience the FastGasHub advantage with our premium features
                         </p>
                     </motion.div>
 
@@ -465,7 +465,7 @@ export default function AboutPage() {
                     <motion.div {...fadeInUp} className="text-center mb-16">
                         <span className="badge badge-primary badge-lg mb-4">Meet the Team</span>
                         <h2 className="text-4xl md:text-5xl font-bold mb-4 text-base-content">
-                            The Minds Behind ShopHub
+                            The Minds Behind FastGasHub
                         </h2>
                         <p className="text-base-content/70 text-lg max-w-2xl mx-auto">
                             Passionate people dedicated to your shopping experience

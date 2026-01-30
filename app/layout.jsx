@@ -6,8 +6,8 @@ import { CartProvider } from '@/contexts/CartContext'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-    title: 'ShopHub',
-    description: 'A modern product showcase application built with Next.js',
+    title: 'FastGasHub',
+    description: 'Premium N₂O Cream Chargers & Culinary Equipment - FastGas Official Distributor',
     icons: {
         icon: '/icon.png',
     }

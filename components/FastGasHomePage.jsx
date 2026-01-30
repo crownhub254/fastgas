@@ -12,6 +12,8 @@ const CYLINDER_DATA = [
         name: 'FastGas Original',
         category: 'Cream Charger',
         image: 'https://fast-gas.com/wp-content/uploads/2022/07/PRODUCT-PAGE_670_side-view.png',
+        caseImage: 'https://fast-gas.com/wp-content/uploads/2022/07/PRODUCT-PAGE_670_box.png',
+        palletImage: 'https://fast-gas.com/wp-content/uploads/2022/07/PRODUCT-PAGE_670_pallet.png',
         idealFor: ['Cafés & bakeries', 'Cocktail bars', 'Restaurants', 'Professional kitchens'],
         features: [
             'Bestselling size worldwide',

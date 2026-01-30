@@ -13,7 +13,7 @@ const Logo = () => {
                   </div>
               </div>
               <span className="text-2xl font-bold bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent">
-                  ShopHub
+                  FastGasHub
               </span>
           </Link>
     </div>

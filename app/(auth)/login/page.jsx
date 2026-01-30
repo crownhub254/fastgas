@@ -151,7 +151,7 @@ export default function LoginPage() {
                         <h1 className="text-5xl font-bold text-base-content leading-tight">
                             Welcome Back to
                             <span className="block text-transparent bg-clip-text bg-gradient-to-r from-primary via-secondary to-accent mt-2">
-                                ShopHub
+                                FastGasHub
                             </span>
                         </h1>
                         <p className="text-base-content/70 text-xl leading-relaxed">
@@ -180,7 +180,7 @@ export default function LoginPage() {
                                 <div className="flex items-start gap-4">
                                     <div className="text-4xl">🎉</div>
                                     <div>
-                                        <h3 className="font-bold text-base-content mb-2">New to ShopHub?</h3>
+                                        <h3 className="font-bold text-base-content mb-2">New to FastGasHub?</h3>
                                         <p className="text-base-content/60 text-sm mb-3">Create an account and unlock access to exclusive features and deals.</p>
                                         <Link href="/register" className="text-primary font-semibold hover:text-primary/80 transition-colors inline-flex items-center gap-2">
                                             Sign Up Now

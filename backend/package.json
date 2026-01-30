@@ -1,7 +1,7 @@
 {
-  "name": "shophub-backend",
+  "name": "fastgashub-backend",
   "version": "1.0.0",
-  "description": "ShopHub E-Commerce Backend API with Express, MongoDB, and Stripe",
+  "description": "FastGasHub E-Commerce Backend API with Express, MongoDB, and Stripe",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
@@ -16,7 +16,7 @@
     "stripe",
     "nodejs"
   ],
-  "author": "ShopHub Team",
+  "author": "FastGasHub Team",
   "license": "MIT",
   "dependencies": {
     "bcryptjs": "^2.4.3",

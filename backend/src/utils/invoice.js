@@ -1,7 +1,7 @@
 const PDFDocument = require('pdfkit');
 
 /**
- * Generates an invoice PDF buffer matching ShopHub design
+ * Generates an invoice PDF buffer matching FastGasHub design
  * @param {Object} options - Invoice data
  * @param {Object} options.order - Order details
  * @param {Object} options.payment - Payment details
@@ -34,7 +34,7 @@ async function generateInvoice({ order, payment }) {
                 .fontSize(32)
                 .font('Helvetica-Bold')
                 .fillColor('#7c3aed')
-                .text('ShopHub', 50, 50);
+                .text('FastGasHub', 50, 50);
 
             doc
                 .fontSize(14)
@@ -128,7 +128,7 @@ async function generateInvoice({ order, payment }) {
                 .fontSize(14)
                 .font('Helvetica-Bold')
                 .fillColor('#111827')
-                .text('ShopHub', 60, infoY + 25);
+                .text('FastGasHub', 60, infoY + 25);
 
             doc
                 .fontSize(11)
@@ -137,7 +137,7 @@ async function generateInvoice({ order, payment }) {
                 .text('123 E-Commerce Street', 60, infoY + 50)
                 .text('Digital City, DC 12345', 60, infoY + 65)
                 .text('Bangladesh', 60, infoY + 80)
-                .text('Email: support@shophub.com', 60, infoY + 100)
+                .text('Email: support@FastGasHub.com', 60, infoY + 100)
                 .text('Phone: +880 1234-567890', 60, infoY + 115);
 
             // Bill To Section
@@ -338,13 +338,13 @@ async function generateInvoice({ order, payment }) {
                 .fontSize(11)
                 .font('Helvetica-Bold')
                 .fillColor('#166534')
-                .text('Thank you for shopping with ShopHub!', 60, footerY + 25, { width: 475 });
+                .text('Thank you for shopping with FastGasHub!', 60, footerY + 25, { width: 475 });
 
             doc
                 .fontSize(9)
                 .font('Helvetica')
                 .fillColor('#166534')
-                .text('Your order will be processed within 24-48 hours. For inquiries, contact support@shophub.com or call +880 1234-567890.', 60, footerY + 42, { width: 475 });
+                .text('Your order will be processed within 24-48 hours. For inquiries, contact support@FastGasHub.com or call +880 1234-567890.', 60, footerY + 42, { width: 475 });
 
             // Legal footer
             doc
@@ -352,7 +352,7 @@ async function generateInvoice({ order, payment }) {
                 .font('Helvetica')
                 .fillColor('#9ca3af')
                 .text('This is a computer-generated invoice and requires no physical signature.', 50, footerY + 80, { align: 'center', width: 495 })
-                .text('© 2026 ShopHub. All rights reserved.', 50, footerY + 95, { align: 'center', width: 495 });
+                .text('© 2026 FastGasHub. All rights reserved.', 50, footerY + 95, { align: 'center', width: 495 });
 
             // Finalize PDF
             doc.end();

@@ -368,8 +368,8 @@ export default function FastGasHomePage({ user = null }) {
                     >
                         <h2 className="text-4xl font-bold mb-4">Our Product Range</h2>
                         <p className="text-base-content/70 max-w-2xl mx-auto text-lg">
-                            From 8g cream chargers for home use to 2.2kg commercial tanks for restaurants. 
-                            All products are 99.99% pure food-grade N₂O.
+                            Premium FastGas 670g cream chargers and professional accessories.
+                            All products are 99.99% pure food-grade N₂O from Europe.
                         </p>
                     </motion.div>
 

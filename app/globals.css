@@ -2,6 +2,10 @@
 @tailwind utilities;
 @plugin "daisyui";
 
+html {
+  scroll-behavior: smooth;
+}
+
 /* Light Theme */
 @plugin "daisyui/theme" {
   name: "light";

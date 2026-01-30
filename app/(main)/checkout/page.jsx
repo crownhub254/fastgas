@@ -1,20 +1,34 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/contexts/CartContext'
 import { motion } from 'framer-motion'
-import { CreditCard, MapPin, Package, ArrowLeft, Loader, User, Mail, Phone } from 'lucide-react'
+import { CreditCard, MapPin, Package, ArrowLeft, Loader, User, Mail, Phone, Smartphone, CheckCircle, XCircle, Clock } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { getCurrentUser } from '@/lib/firebase/auth'
-import { getDivisions, getDistricts, getCities } from '@/utils/bdLocations'
+import { getCounties, getConstituencies, getAreas, isValidKenyanPhone, formatKenyanPhone } from '@/utils/keLocations'
 import toast from 'react-hot-toast'
+
+// M-Pesa Logo component
+const MpesaLogo = () => (
+    <div className="flex items-center gap-1">
+        <div className="bg-green-600 text-white text-xs font-bold px-1.5 py-0.5 rounded">M</div>
+        <span className="text-green-600 font-bold text-sm">PESA</span>
+    </div>
+)
 
 export default function CheckoutPage() {
     const router = useRouter()
     const { cartItems, getCartTotal, clearCart } = useCart()
     const [user, setUser] = useState(null)
     const [isProcessing, setIsProcessing] = useState(false)
+
+    // M-Pesa payment state
+    const [mpesaStatus, setMpesaStatus] = useState('idle') // idle, pending, polling, success, failed
+    const [checkoutRequestId, setCheckoutRequestId] = useState(null)
+    const [pollCount, setPollCount] = useState(0)
+    const maxPollAttempts = 30 // Poll for up to 60 seconds (30 x 2 seconds)
 
     // Buyer Information
     const [buyerInfo, setBuyerInfo] = useState({
@@ -25,17 +39,17 @@ export default function CheckoutPage() {
 
     const [shippingInfo, setShippingInfo] = useState({
         street: '',
-        division: '',
-        district: '',
-        city: '',
-        zipCode: '',
-        country: 'Bangladesh'
+        county: '',
+        constituency: '',
+        area: '',
+        landmark: '',
+        country: 'Kenya'
     })
 
-    const [divisions] = useState(getDivisions())
-    const [districts, setDistricts] = useState([])
-    const [cities, setCities] = useState([])
-    const [paymentMethod, setPaymentMethod] = useState('card')
+    const [counties] = useState(getCounties())
+    const [constituencies, setConstituencies] = useState([])
+    const [areas, setAreas] = useState([])
+    const [paymentMethod, setPaymentMethod] = useState('mpesa')
 
     useEffect(() => {
         const currentUser = getCurrentUser()
@@ -50,23 +64,61 @@ export default function CheckoutPage() {
         setBuyerInfo({
             name: currentUser.displayName || '',
             email: currentUser.email || '',
-            phoneNumber: '' // Will be filled by user
+            phoneNumber: ''
         })
     }, [router])
 
     useEffect(() => {
-        if (shippingInfo.division) {
-            setDistricts(getDistricts(shippingInfo.division))
-            setShippingInfo(prev => ({ ...prev, district: '', city: '' }))
+        if (shippingInfo.county) {
+            setConstituencies(getConstituencies(shippingInfo.county))
+            setShippingInfo(prev => ({ ...prev, constituency: '', area: '' }))
         }
-    }, [shippingInfo.division])
+    }, [shippingInfo.county])
 
     useEffect(() => {
-        if (shippingInfo.division && shippingInfo.district) {
-            setCities(getCities(shippingInfo.division, shippingInfo.district))
-            setShippingInfo(prev => ({ ...prev, city: '' }))
+        if (shippingInfo.county && shippingInfo.constituency) {
+            setAreas(getAreas(shippingInfo.county, shippingInfo.constituency))
+            setShippingInfo(prev => ({ ...prev, area: '' }))
         }
-    }, [shippingInfo.district])
+    }, [shippingInfo.county, shippingInfo.constituency])
+
+    // Poll for M-Pesa payment status
+    const pollPaymentStatus = useCallback(async (checkoutId, orderId) => {
+        if (pollCount >= maxPollAttempts) {
+            setMpesaStatus('failed')
+            toast.error('Payment timeout. Please try again.')
+            return
+        }
+
+        try {
+            const response = await fetch(`/api/mpesa/status/${checkoutId}`)
+            const result = await response.json()
+
+            if (result.success) {
+                if (result.status === 'completed') {
+                    setMpesaStatus('success')
+                    toast.success('Payment received successfully!')
+                    clearCart()
+                    setTimeout(() => {
+                        router.push(`/order-success?orderId=${orderId}`)
+                    }, 2000)
+                    return
+                } else if (result.status === 'failed') {
+                    setMpesaStatus('failed')
+                    toast.error(result.message || 'Payment failed. Please try again.')
+                    return
+                }
+            }
+
+            // Still pending, continue polling
+            setPollCount(prev => prev + 1)
+            setTimeout(() => pollPaymentStatus(checkoutId, orderId), 2000)
+        } catch (error) {
+            console.error('Error polling payment status:', error)
+            setPollCount(prev => prev + 1)
+            setTimeout(() => pollPaymentStatus(checkoutId, orderId), 2000)
+        }
+    }, [pollCount, clearCart, router])
 
     const handleBuyerInfoChange = (e) => {
         const { name, value } = e.target
@@ -79,9 +131,8 @@ export default function CheckoutPage() {
     }
 
     const subtotal = getCartTotal()
-    const shipping = subtotal > 100 ? 0 : 10
-    const tax = subtotal * 0.1
-    const total = subtotal + shipping + tax
+    const shipping = subtotal > 10000 ? 0 : 500 // Free shipping over KES 10,000
+    const total = subtotal + shipping
 
     const handleSubmit = async (e) => {
         e.preventDefault()
@@ -102,27 +153,29 @@ export default function CheckoutPage() {
             return
         }
 
-        // Validate phone number
-        const phoneRegex = /^01[3-9]\d{8}$/
-        if (!phoneRegex.test(buyerInfo.phoneNumber)) {
-            toast.error('Please enter a valid Bangladesh phone number (01XXXXXXXXX)')
+        // Validate Kenyan phone number
+        if (!isValidKenyanPhone(buyerInfo.phoneNumber)) {
+            toast.error('Please enter a valid Kenyan phone number (07XX XXX XXX)')
             return
         }
 
         // Validate shipping info
-        if (!shippingInfo.street || !shippingInfo.division || !shippingInfo.district ||
-            !shippingInfo.city || !shippingInfo.zipCode) {
-            toast.error('Please fill in all shipping details')
+        if (!shippingInfo.street || !shippingInfo.county) {
+            toast.error('Please fill in at least street address and county')
             return
         }
 
         setIsProcessing(true)
+        setMpesaStatus('idle')
 
         try {
-            // Create order with buyer info
+            // Create order first
             const orderData = {
                 userId: user.uid,
-                buyerInfo: buyerInfo,
+                buyerInfo: {
+                    ...buyerInfo,
+                    phoneNumber: formatKenyanPhone(buyerInfo.phoneNumber)
+                },
                 items: cartItems.map(item => ({
                     productId: item.id,
                     name: item.name,
@@ -131,24 +184,17 @@ export default function CheckoutPage() {
                     image: item.image
                 })),
                 shippingAddress: shippingInfo,
-                paymentMethod: paymentMethod === 'card' ? 'Credit Card' : 'Cash on Delivery',
+                paymentMethod: paymentMethod === 'mpesa' ? 'M-Pesa' : 'Cash on Delivery',
                 subtotal,
                 shipping,
-                tax,
                 total,
-                status: 'processing',
-                paymentStatus: paymentMethod === 'card' ? 'pending' : 'completed',
-                timeline: [{
-                    status: 'processing',
-                    timestamp: new Date(),
-                    location: 'Order Placed',
-                    note: 'Your order has been received and is being processed'
-                }]
+                status: 'pending',
+                paymentStatus: 'pending'
             }
 
             console.log('Creating order with data:', orderData)
 
-            const orderResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders`, {
+            const orderResponse = await fetch('/api/orders', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -159,7 +205,7 @@ export default function CheckoutPage() {
             if (!orderResponse.ok) {
                 const errorText = await orderResponse.text()
                 console.error('Order creation failed:', errorText)
-                throw new Error(`Failed to create order: ${orderResponse.status}`)
+                throw new Error('Failed to create order')
             }
 
             const orderResult = await orderResponse.json()
@@ -170,64 +216,52 @@ export default function CheckoutPage() {
             }
 
             const orderId = orderResult.order.orderId
-            const trackingId = orderResult.order.trackingId
 
-            // If payment method is card, create Stripe Checkout Session
-            if (paymentMethod === 'card') {
-                console.log('Creating Stripe checkout session for order:', orderId)
+            // If payment method is M-Pesa, initiate STK Push
+            if (paymentMethod === 'mpesa') {
+                setMpesaStatus('pending')
+                toast('STK Push sent! Check your phone...', { icon: '📱' })
 
-                try {
-                    const checkoutResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/create-checkout-session`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            orderId: orderId,
-                            items: cartItems.map(item => ({
-                                name: item.name,
-                                price: item.price,
-                                quantity: item.quantity,
-                                image: item.image
-                            })),
-                            shipping: shipping,
-                            tax: tax,
-                            customerEmail: buyerInfo.email
-                        })
+                console.log('Initiating M-Pesa STK Push for order:', orderId)
+
+                const mpesaResponse = await fetch('/api/mpesa/stk-push', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        orderId: orderId,
+                        phoneNumber: buyerInfo.phoneNumber,
+                        amount: total
                     })
+                })
 
-                    if (!checkoutResponse.ok) {
-                        const errorText = await checkoutResponse.text()
-                        console.error('Checkout session creation failed:', errorText)
-                        throw new Error(`Failed to create checkout session: ${checkoutResponse.status}`)
-                    }
+                const mpesaResult = await mpesaResponse.json()
+                console.log('M-Pesa STK Push result:', mpesaResult)
 
-                    const checkoutResult = await checkoutResponse.json()
-                    console.log('Checkout session result:', checkoutResult)
-
-                    if (!checkoutResult.success || !checkoutResult.url) {
-                        throw new Error(checkoutResult.error || 'Failed to create checkout session')
-                    }
-
-                    clearCart()
-                    window.location.href = checkoutResult.url
-
-                } catch (checkoutError) {
-                    console.error('Checkout session error:', checkoutError)
-                    throw new Error('Failed to initiate payment. Please try again.')
+                if (!mpesaResult.success) {
+                    setMpesaStatus('failed')
+                    throw new Error(mpesaResult.error || 'Failed to initiate M-Pesa payment')
                 }
+
+                // Start polling for payment status
+                setCheckoutRequestId(mpesaResult.checkoutRequestId)
+                setMpesaStatus('polling')
+                setPollCount(0)
+                pollPaymentStatus(mpesaResult.checkoutRequestId, orderId)
 
             } else {
                 // Cash on Delivery
                 clearCart()
                 toast.success('Order placed successfully!')
-                router.push(`/order-success?orderId=${orderId}&trackingId=${trackingId}`)
+                router.push(`/order-success?orderId=${orderId}`)
             }
 
         } catch (error) {
             console.error('Checkout error:', error)
             toast.error(error.message || 'Failed to process order. Please try again.')
             setIsProcessing(false)
+            setMpesaStatus('idle')
         }
     }
 
@@ -286,7 +320,8 @@ export default function CheckoutPage() {
                                                 value={buyerInfo.name}
                                                 onChange={handleBuyerInfoChange}
                                                 required
-                                                className="w-full pl-12 pr-4 py-3 bg-base-100 border border-base-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-base-content"
+                                                disabled={mpesaStatus === 'polling'}
+                                                className="w-full pl-12 pr-4 py-3 bg-base-100 border border-base-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-base-content disabled:opacity-50"
                                                 placeholder="Enter your full name"
                                             />
                                         </div>
@@ -304,7 +339,8 @@ export default function CheckoutPage() {
                                                 value={buyerInfo.email}
                                                 onChange={handleBuyerInfoChange}
                                                 required
-                                                className="w-full pl-12 pr-4 py-3 bg-base-100 border border-base-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-base-content"
+                                                disabled={mpesaStatus === 'polling'}
+                                                className="w-full pl-12 pr-4 py-3 bg-base-100 border border-base-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-base-content disabled:opacity-50"
                                                 placeholder="your.email@example.com"
                                             />
                                         </div>
@@ -312,7 +348,7 @@ export default function CheckoutPage() {
 
                                     <div>
                                         <label className="block text-sm font-semibold text-base-content mb-2">
-                                            Phone Number <span className="text-error">*</span>
+                                            M-Pesa Phone Number <span className="text-error">*</span>
                                         </label>
                                         <div className="relative">
                                             <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-base-content/40" />
@@ -322,13 +358,13 @@ export default function CheckoutPage() {
                                                 value={buyerInfo.phoneNumber}
                                                 onChange={handleBuyerInfoChange}
                                                 required
-                                                pattern="01[3-9]\d{8}"
-                                                className="w-full pl-12 pr-4 py-3 bg-base-100 border border-base-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-base-content"
-                                                placeholder="01XXXXXXXXX"
+                                                disabled={mpesaStatus === 'polling'}
+                                                className="w-full pl-12 pr-4 py-3 bg-base-100 border border-base-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-base-content disabled:opacity-50"
+                                                placeholder="07XX XXX XXX"
                                             />
                                         </div>
                                         <p className="text-xs text-base-content/60 mt-1">
-                                            We&apos;ll use this number to contact you about your delivery
+                                            This number will receive the M-Pesa payment prompt
                                         </p>
                                     </div>
                                 </div>
@@ -343,13 +379,13 @@ export default function CheckoutPage() {
                             >
                                 <div className="flex items-center gap-3 mb-6">
                                     <MapPin className="w-6 h-6 text-primary" />
-                                    <h2 className="text-2xl font-bold text-base-content">Shipping Address</h2>
+                                    <h2 className="text-2xl font-bold text-base-content">Delivery Address</h2>
                                 </div>
 
                                 <div className="space-y-4">
                                     <div>
                                         <label className="block text-sm font-semibold text-base-content mb-2">
-                                            Street Address <span className="text-error">*</span>
+                                            Street Address / Building <span className="text-error">*</span>
                                         </label>
                                         <input
                                             type="text"
@@ -357,45 +393,46 @@ export default function CheckoutPage() {
                                             value={shippingInfo.street}
                                             onChange={handleShippingChange}
                                             required
-                                            className="w-full px-4 py-3 bg-base-100 border border-base-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-base-content"
-                                            placeholder="House/Flat no., Street name"
+                                            disabled={mpesaStatus === 'polling'}
+                                            className="w-full px-4 py-3 bg-base-100 border border-base-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-base-content disabled:opacity-50"
+                                            placeholder="Building name, Street, House number"
                                         />
                                     </div>
 
                                     <div className="grid md:grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-sm font-semibold text-base-content mb-2">
-                                                Division <span className="text-error">*</span>
+                                                County <span className="text-error">*</span>
                                             </label>
                                             <select
-                                                name="division"
-                                                value={shippingInfo.division}
+                                                name="county"
+                                                value={shippingInfo.county}
                                                 onChange={handleShippingChange}
                                                 required
-                                                className="w-full px-4 py-3 bg-base-100 border border-base-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-base-content"
+                                                disabled={mpesaStatus === 'polling'}
+                                                className="w-full px-4 py-3 bg-base-100 border border-base-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-base-content disabled:opacity-50"
                                             >
-                                                <option value="">Select Division</option>
-                                                {divisions.map(div => (
-                                                    <option key={div} value={div}>{div}</option>
+                                                <option value="">Select County</option>
+                                                {counties.map(county => (
+                                                    <option key={county} value={county}>{county.replace('_', ' ')}</option>
                                                 ))}
                                             </select>
                                         </div>
 
                                         <div>
                                             <label className="block text-sm font-semibold text-base-content mb-2">
-                                                District <span className="text-error">*</span>
+                                                Constituency
                                             </label>
                                             <select
-                                                name="district"
-                                                value={shippingInfo.district}
+                                                name="constituency"
+                                                value={shippingInfo.constituency}
                                                 onChange={handleShippingChange}
-                                                required
-                                                disabled={!shippingInfo.division}
+                                                disabled={!shippingInfo.county || mpesaStatus === 'polling'}
                                                 className="w-full px-4 py-3 bg-base-100 border border-base-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 text-base-content"
                                             >
-                                                <option value="">Select District</option>
-                                                {districts.map(dist => (
-                                                    <option key={dist} value={dist}>{dist}</option>
+                                                <option value="">Select Constituency</option>
+                                                {constituencies.map(c => (
+                                                    <option key={c} value={c}>{c}</option>
                                                 ))}
                                             </select>
                                         </div>
@@ -404,35 +441,34 @@ export default function CheckoutPage() {
                                     <div className="grid md:grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-sm font-semibold text-base-content mb-2">
-                                                City/Area <span className="text-error">*</span>
+                                                Area/Estate
                                             </label>
                                             <select
-                                                name="city"
-                                                value={shippingInfo.city}
+                                                name="area"
+                                                value={shippingInfo.area}
                                                 onChange={handleShippingChange}
-                                                required
-                                                disabled={!shippingInfo.district}
+                                                disabled={!shippingInfo.constituency || mpesaStatus === 'polling'}
                                                 className="w-full px-4 py-3 bg-base-100 border border-base-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 text-base-content"
                                             >
-                                                <option value="">Select City</option>
-                                                {cities.map(city => (
-                                                    <option key={city} value={city}>{city}</option>
+                                                <option value="">Select Area</option>
+                                                {areas.map(area => (
+                                                    <option key={area} value={area}>{area}</option>
                                                 ))}
                                             </select>
                                         </div>
 
                                         <div>
                                             <label className="block text-sm font-semibold text-base-content mb-2">
-                                                Zip Code <span className="text-error">*</span>
+                                                Landmark (Optional)
                                             </label>
                                             <input
                                                 type="text"
-                                                name="zipCode"
-                                                value={shippingInfo.zipCode}
+                                                name="landmark"
+                                                value={shippingInfo.landmark}
                                                 onChange={handleShippingChange}
-                                                required
-                                                className="w-full px-4 py-3 bg-base-100 border border-base-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-base-content"
-                                                placeholder="1200"
+                                                disabled={mpesaStatus === 'polling'}
+                                                className="w-full px-4 py-3 bg-base-100 border border-base-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-base-content disabled:opacity-50"
+                                                placeholder="Near supermarket, opposite church, etc."
                                             />
                                         </div>
                                     </div>
@@ -452,37 +488,96 @@ export default function CheckoutPage() {
                                 </div>
 
                                 <div className="space-y-3">
-                                    <label className="flex items-center gap-3 p-4 bg-base-100 rounded-lg cursor-pointer hover:bg-base-300/50 transition-colors border-2 border-transparent has-checked:border-primary">
+                                    <label className="flex items-center gap-3 p-4 bg-base-100 rounded-lg cursor-pointer hover:bg-base-300/50 transition-colors border-2 border-transparent has-[:checked]:border-green-500">
                                         <input
                                             type="radio"
                                             name="paymentMethod"
-                                            value="card"
-                                            checked={paymentMethod === 'card'}
+                                            value="mpesa"
+                                            checked={paymentMethod === 'mpesa'}
                                             onChange={(e) => setPaymentMethod(e.target.value)}
-                                            className="radio radio-primary"
+                                            disabled={mpesaStatus === 'polling'}
+                                            className="radio radio-success"
                                         />
                                         <div className="flex-1">
-                                            <div className="font-semibold text-base-content">Credit/Debit Card</div>
-                                            <div className="text-sm text-base-content/60">Pay securely with Stripe</div>
+                                            <div className="font-semibold text-base-content flex items-center gap-2">
+                                                M-Pesa
+                                                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Recommended</span>
+                                            </div>
+                                            <div className="text-sm text-base-content/60">Pay via M-Pesa STK Push</div>
                                         </div>
-                                        <CreditCard className="w-5 h-5 text-primary" />
+                                        <MpesaLogo />
                                     </label>
 
-                                    <label className="flex items-center gap-3 p-4 bg-base-100 rounded-lg cursor-pointer hover:bg-base-300/50 transition-colors border-2 border-transparent has-checked:border-primary">
+                                    <label className="flex items-center gap-3 p-4 bg-base-100 rounded-lg cursor-pointer hover:bg-base-300/50 transition-colors border-2 border-transparent has-[:checked]:border-primary">
                                         <input
                                             type="radio"
                                             name="paymentMethod"
                                             value="cod"
                                             checked={paymentMethod === 'cod'}
                                             onChange={(e) => setPaymentMethod(e.target.value)}
+                                            disabled={mpesaStatus === 'polling'}
                                             className="radio radio-primary"
                                         />
                                         <div className="flex-1">
                                             <div className="font-semibold text-base-content">Cash on Delivery</div>
-                                            <div className="text-sm text-base-content/60">Pay when you receive</div>
+                                            <div className="text-sm text-base-content/60">Pay when you receive your order</div>
                                         </div>
                                     </label>
                                 </div>
+
+                                {/* M-Pesa Payment Status */}
+                                {mpesaStatus !== 'idle' && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="mt-6"
+                                    >
+                                        <div className={`p-4 rounded-lg ${
+                                            mpesaStatus === 'success' ? 'bg-green-100' :
+                                            mpesaStatus === 'failed' ? 'bg-red-100' :
+                                            'bg-yellow-100'
+                                        }`}>
+                                            <div className="flex items-center gap-3">
+                                                {mpesaStatus === 'pending' && (
+                                                    <>
+                                                        <Smartphone className="w-6 h-6 text-yellow-600 animate-pulse" />
+                                                        <div>
+                                                            <p className="font-semibold text-yellow-800">Check your phone</p>
+                                                            <p className="text-sm text-yellow-700">An M-Pesa prompt has been sent to your phone</p>
+                                                        </div>
+                                                    </>
+                                                )}
+                                                {mpesaStatus === 'polling' && (
+                                                    <>
+                                                        <Clock className="w-6 h-6 text-yellow-600 animate-spin" />
+                                                        <div>
+                                                            <p className="font-semibold text-yellow-800">Waiting for payment...</p>
+                                                            <p className="text-sm text-yellow-700">Enter your M-Pesa PIN on your phone to complete payment</p>
+                                                        </div>
+                                                    </>
+                                                )}
+                                                {mpesaStatus === 'success' && (
+                                                    <>
+                                                        <CheckCircle className="w-6 h-6 text-green-600" />
+                                                        <div>
+                                                            <p className="font-semibold text-green-800">Payment Successful!</p>
+                                                            <p className="text-sm text-green-700">Redirecting to order confirmation...</p>
+                                                        </div>
+                                                    </>
+                                                )}
+                                                {mpesaStatus === 'failed' && (
+                                                    <>
+                                                        <XCircle className="w-6 h-6 text-red-600" />
+                                                        <div>
+                                                            <p className="font-semibold text-red-800">Payment Failed</p>
+                                                            <p className="text-sm text-red-700">Please try again or choose a different payment method</p>
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                )}
                             </motion.div>
                         </div>
 
@@ -507,7 +602,7 @@ export default function CheckoutPage() {
                                                 <p className="text-sm text-base-content/60">Qty: {item.quantity}</p>
                                             </div>
                                             <div className="font-bold text-base-content">
-                                                ${(item.price * item.quantity).toFixed(2)}
+                                                KES {(item.price * item.quantity).toLocaleString()}
                                             </div>
                                         </div>
                                     ))}
@@ -516,23 +611,19 @@ export default function CheckoutPage() {
                                 <div className="space-y-3 pt-4 border-t border-base-300">
                                     <div className="flex justify-between text-base-content/70">
                                         <span>Subtotal</span>
-                                        <span className="font-semibold">${subtotal.toFixed(2)}</span>
+                                        <span className="font-semibold">KES {subtotal.toLocaleString()}</span>
                                     </div>
                                     <div className="flex justify-between text-base-content/70">
-                                        <span>Shipping</span>
+                                        <span>Delivery</span>
                                         <span className="font-semibold text-success">
-                                            {shipping === 0 ? 'FREE' : `$${shipping.toFixed(2)}`}
+                                            {shipping === 0 ? 'FREE' : `KES ${shipping.toLocaleString()}`}
                                         </span>
-                                    </div>
-                                    <div className="flex justify-between text-base-content/70">
-                                        <span>Tax</span>
-                                        <span className="font-semibold">${tax.toFixed(2)}</span>
                                     </div>
                                     <div className="pt-3 border-t border-base-300">
                                         <div className="flex justify-between items-baseline">
                                             <span className="font-semibold text-base-content">Total</span>
-                                            <span className="text-2xl font-bold bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent">
-                                                ${total.toFixed(2)}
+                                            <span className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                                                KES {total.toLocaleString()}
                                             </span>
                                         </div>
                                     </div>
@@ -540,21 +631,45 @@ export default function CheckoutPage() {
 
                                 <button
                                     onClick={handleSubmit}
-                                    disabled={isProcessing}
-                                    className="w-full mt-6 bg-linear-to-r from-primary to-secondary text-primary-content py-4 rounded-lg font-semibold hover:opacity-90 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                    disabled={isProcessing || mpesaStatus === 'polling' || mpesaStatus === 'success'}
+                                    className={`w-full mt-6 py-4 rounded-lg font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${
+                                        paymentMethod === 'mpesa' 
+                                            ? 'bg-green-600 hover:bg-green-700 text-white' 
+                                            : 'bg-gradient-to-r from-primary to-secondary text-primary-content hover:opacity-90'
+                                    }`}
                                 >
-                                    {isProcessing ? (
+                                    {isProcessing || mpesaStatus === 'polling' ? (
                                         <>
                                             <Loader className="w-5 h-5 animate-spin" />
-                                            Processing...
+                                            {mpesaStatus === 'polling' ? 'Waiting for M-Pesa...' : 'Processing...'}
+                                        </>
+                                    ) : mpesaStatus === 'success' ? (
+                                        <>
+                                            <CheckCircle className="w-5 h-5" />
+                                            Payment Complete
                                         </>
                                     ) : (
                                         <>
-                                            <CreditCard className="w-5 h-5" />
-                                            Place Order
+                                            {paymentMethod === 'mpesa' ? (
+                                                <>
+                                                    <Smartphone className="w-5 h-5" />
+                                                    Pay with M-Pesa
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <CreditCard className="w-5 h-5" />
+                                                    Place Order
+                                                </>
+                                            )}
                                         </>
                                     )}
                                 </button>
+
+                                {paymentMethod === 'mpesa' && mpesaStatus === 'idle' && (
+                                    <p className="text-xs text-base-content/60 text-center mt-4">
+                                        You will receive an M-Pesa prompt on your phone to complete payment
+                                    </p>
+                                )}
 
                                 <p className="text-xs text-base-content/60 text-center mt-4">
                                     By placing your order, you agree to our terms and conditions

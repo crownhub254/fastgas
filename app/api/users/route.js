@@ -2,8 +2,16 @@
 // API route to manage users
 
 import { NextResponse } from 'next/server'
-import { connectDB } from '@/lib/mongodb/mongodb'
+import { connectDB, isMongoConfigured } from '@/lib/mongodb/mongodb'
 import mongoose from 'mongoose'
+
+// Demo users for when MongoDB is not configured
+const DEMO_USERS = [
+    { id: '1', uid: 'demo-admin', email: 'admin@fastgas.co.ke', displayName: 'Admin User', role: 'admin', isActive: true },
+    { id: '2', uid: 'demo-user', email: 'user@fastgas.co.ke', displayName: 'Demo Customer', role: 'user', isActive: true },
+    { id: '3', uid: 'demo-reseller', email: 'reseller@fastgas.co.ke', displayName: 'Demo Reseller', role: 'reseller', isActive: true },
+    { id: '4', uid: 'demo-rider', email: 'rider@fastgas.co.ke', displayName: 'Demo Rider', role: 'rider', isActive: true }
+]
 
 // Get User model
 const getUserModel = () => {
@@ -59,6 +67,17 @@ const getUserModel = () => {
 // GET /api/users - Get all users or filter by role
 export async function GET(request) {
     try {
+        // Return demo data if MongoDB is not configured
+        if (!isMongoConfigured) {
+            const { searchParams } = new URL(request.url)
+            const role = searchParams.get('role')
+            let users = DEMO_USERS
+            if (role) {
+                users = users.filter(u => u.role === role)
+            }
+            return NextResponse.json({ success: true, demo: true, users })
+        }
+
         await connectDB()
         const User = getUserModel()
 

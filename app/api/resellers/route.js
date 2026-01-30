@@ -2,8 +2,46 @@
 // API route to manage resellers
 
 import { NextResponse } from 'next/server'
-import { connectDB } from '@/lib/mongodb/mongodb'
+import { connectDB, isMongoConfigured } from '@/lib/mongodb/mongodb'
 import mongoose from 'mongoose'
+
+// Demo data for when MongoDB is not configured
+const DEMO_RESELLERS = [
+    {
+        id: 'demo-1',
+        uid: 'demo-reseller-1',
+        email: 'reseller1@fastgas.co.ke',
+        displayName: 'Jane Wanjiku',
+        phoneNumber: '+254712345678',
+        role: 'reseller',
+        isApproved: true,
+        businessName: 'Wanjiku Gas Suppliers',
+        location: 'Nairobi, Westlands',
+        totalSales: 156,
+        totalRevenue: 234000,
+        commissionEarned: 23400,
+        activeClients: 45,
+        currentStock: 25,
+        status: 'active'
+    },
+    {
+        id: 'demo-2',
+        uid: 'demo-reseller-2', 
+        email: 'reseller2@fastgas.co.ke',
+        displayName: 'John Kamau',
+        phoneNumber: '+254723456789',
+        role: 'reseller',
+        isApproved: true,
+        businessName: 'Kamau Gas Distributors',
+        location: 'Mombasa, Nyali',
+        totalSales: 89,
+        totalRevenue: 178000,
+        commissionEarned: 17800,
+        activeClients: 32,
+        currentStock: 18,
+        status: 'active'
+    }
+]
 
 // Get User model
 const getUserModel = () => {
@@ -62,6 +100,23 @@ const getUserModel = () => {
 // GET /api/resellers - Get all resellers with stats
 export async function GET(request) {
     try {
+        // Return demo data if MongoDB is not configured
+        if (!isMongoConfigured) {
+            return NextResponse.json({
+                success: true,
+                demo: true,
+                resellers: DEMO_RESELLERS,
+                stats: {
+                    totalResellers: 2,
+                    approvedResellers: 2,
+                    totalRevenue: 412000,
+                    totalSales: 245,
+                    totalCommission: 41200,
+                    totalClients: 77
+                }
+            })
+        }
+
         await connectDB()
         const User = getUserModel()
 

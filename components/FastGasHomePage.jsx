@@ -59,6 +59,7 @@ const CYLINDER_DATA = [
         size: 'Creamer',
         name: 'FastGas Creamer',
         category: 'Dispenser',
+        image: 'https://fast-gas.com/wp-content/uploads/2024/06/FastGas-Creamer-product-page.png',
         idealFor: ['Espumas', 'Whipped cream', 'Sauces', 'Molecular gastronomy'],
         features: [
             'Professional stand mount',

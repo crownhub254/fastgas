@@ -141,8 +141,8 @@ const products = [
         lowStockThreshold: 15,
         weight: 0.5,
         dimensions: { height: 35, diameter: 10 },
-        image: 'https://fast-gas.com/wp-content/uploads/2024/06/fg-new-branding-670-original.png',
-        images: ['https://fast-gas.com/wp-content/uploads/2024/06/fg-new-branding-670-original.png'],
+        image: 'https://fast-gas.com/wp-content/uploads/2024/06/FastGas-Creamer-product-page.png',
+        images: ['https://fast-gas.com/wp-content/uploads/2024/06/FastGas-Creamer-product-page.png'],
         features: [
             'Professional stand mount',
             'Integrated cylinder holder',

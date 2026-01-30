@@ -11,6 +11,7 @@ const CYLINDER_DATA = [
         size: '670g',
         name: 'FastGas Original',
         category: 'Cream Charger',
+        image: 'https://fast-gas.com/wp-content/uploads/2022/07/PRODUCT-PAGE_670_side-view.png',
         idealFor: ['Cafés & bakeries', 'Cocktail bars', 'Restaurants', 'Professional kitchens'],
         features: [
             'Bestselling size worldwide',
@@ -112,16 +113,26 @@ function CylinderInfoCard({ cylinder }) {
             )}
             
             {/* Cylinder Visual */}
-            <div className={`relative h-56 bg-gradient-to-br ${cylinder.color} flex items-center justify-center overflow-hidden`}>
-                <div className="absolute inset-0 flex items-center justify-center">
-                    <motion.div 
-                        animate={{ scale: [1, 1.05, 1] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                        className="text-8xl drop-shadow-lg"
-                    >
-                        {cylinder.category === 'Chargers' ? '🧁' : cylinder.category === 'Tank' ? '🍽️' : '☁️'}
-                    </motion.div>
-                </div>
+            <div className={`relative h-56 ${cylinder.image ? 'bg-white' : `bg-gradient-to-br ${cylinder.color}`} flex items-center justify-center overflow-hidden`}>
+                {cylinder.image ? (
+                    <div className="absolute inset-0 flex items-center justify-center p-6">
+                        <img 
+                            src={cylinder.image} 
+                            alt={cylinder.name}
+                            className="h-full w-auto object-contain drop-shadow-2xl"
+                        />
+                    </div>
+                ) : (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <motion.div 
+                            animate={{ scale: [1, 1.05, 1] }}
+                            transition={{ duration: 2, repeat: Infinity }}
+                            className="text-8xl drop-shadow-lg"
+                        >
+                            {cylinder.category === 'Chargers' ? '🧁' : cylinder.category === 'Tank' ? '🍽️' : '☁️'}
+                        </motion.div>
+                    </div>
+                )}
                 <div className="absolute top-4 right-4 bg-white text-gray-800 px-4 py-2 rounded-full font-bold text-lg shadow-lg">
                     {cylinder.size}
                 </div>

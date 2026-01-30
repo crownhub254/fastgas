@@ -5,72 +5,72 @@ import { motion } from 'framer-motion'
 import { Sparkles, Truck, Shield, Phone, MapPin, Clock, ChevronRight, Star, Package, Coffee, GlassWater, Cake, ChefHat, Zap, CheckCircle, Award, Beaker, IceCream } from 'lucide-react'
 import Link from 'next/link'
 
-// FastGas N₂O Cylinder Products - Culinary Grade Nitrous Oxide
+// FastGas N₂O Cylinder Products - Official Products from fast-gas.com
 const CYLINDER_DATA = [
     {
-        size: '8g',
-        name: 'Cream Chargers',
-        category: 'Chargers',
-        idealFor: ['Home baking', 'Small cafés', 'Occasional use', 'Whipped cream'],
-        features: [
-            'Standard 8g N₂O chargers',
-            'Universal dispenser fit',
-            'Food-grade 99.99% purity',
-            'Perfect for home use'
-        ],
-        description: 'Classic 8g cream chargers perfect for home bakers and small establishments. Each charger creates approximately 0.5L of fresh whipped cream with your dispenser.',
-        application: 'Makes ~0.5L whipped cream per charger',
-        icon: Cake,
-        color: 'from-pink-400 to-rose-400'
-    },
-    {
-        size: '580g',
-        name: 'Standard Cylinder',
+        size: '670g',
+        name: 'FastGas Original',
         category: 'Cylinder',
-        idealFor: ['Cafés & bakeries', 'Home enthusiasts', 'Regular use', 'Dessert stations'],
+        idealFor: ['Cafés & bakeries', 'Cocktail bars', 'Restaurants', 'Professional kitchens'],
         features: [
-            'Equivalent to ~70 chargers',
-            'Pressure regulator included',
-            'Cost-effective solution',
-            'European certified'
+            'Bestselling size worldwide',
+            'M10X1 standard valve',
+            'Carbon steel cylinder',
+            'European manufactured'
         ],
-        description: 'The 580g FastGas cylinder is perfect for cafés, bakeries, and serious home enthusiasts. One cylinder equals approximately 70 standard cream chargers.',
-        application: 'Equivalent to ~70 cream chargers',
+        description: 'The bestselling FastGas 670g cream charger. European quality N₂O at 99.99% purity. Compact design (8.0 × 8.0 × 25.2 cm) perfect for professional use. QR code verified authenticity.',
+        application: 'Equivalent to ~80 cream chargers',
         icon: Coffee,
         popular: true,
         color: 'from-cyan-400 to-blue-400'
     },
     {
-        size: '640g',
-        name: 'Professional Cylinder',
-        category: 'Cylinder',
-        idealFor: ['Restaurants', 'Cocktail bars', 'Pastry chefs', 'High-volume use'],
+        size: '2000g',
+        name: 'FastGas Max',
+        category: 'Tank',
+        idealFor: ['Hotels', 'Large restaurants', 'Catering companies', 'High-volume bars'],
         features: [
-            'Equivalent to ~80 chargers',
-            'Professional-grade quality',
-            'Consistent pressure output',
-            'Rapid infusion capability'
+            'Maximum capacity (2kg)',
+            'Carrying strap included',
+            'Best value for volume',
+            'Heavy-duty regulator compatible'
         ],
-        description: 'Designed for professional kitchens and cocktail bars. The 640g cylinder offers superior consistency for molecular gastronomy, espumas, and craft cocktails.',
-        application: 'Equivalent to ~80 cream chargers',
-        icon: GlassWater,
+        description: 'The largest FastGas cylinder at 2000g (2kg). Dimensions: 12.3 × 12.3 × 35.5 cm. Includes convenient carrying strap. Ideal for high-volume professional operations.',
+        application: 'Equivalent to ~250 cream chargers',
+        icon: ChefHat,
+        color: 'from-amber-400 to-orange-400'
+    },
+    {
+        size: 'Regulator',
+        name: 'Pressure Regulator',
+        category: 'Accessory',
+        idealFor: ['All cylinder users', 'Precision control', 'Syphon connection', 'Professional setup'],
+        features: [
+            'M10X1 valve compatible',
+            'Precise pressure control',
+            'Easy syphon attachment',
+            'Durable construction'
+        ],
+        description: 'Essential pressure regulator for connecting FastGas cylinders to cream syphons and dispensers. Ensures consistent flow and optimal results for all culinary applications.',
+        application: 'Required for cylinder use',
+        icon: Zap,
         color: 'from-violet-400 to-purple-400'
     },
     {
-        size: '2.2kg',
-        name: 'Commercial Tank',
-        category: 'Tank',
-        idealFor: ['Hotels', 'Large restaurants', 'Catering companies', 'Industrial kitchens'],
+        size: 'Creamer',
+        name: 'FastGas Creamer',
+        category: 'Accessory',
+        idealFor: ['Espumas', 'Whipped cream', 'Sauces', 'Molecular gastronomy'],
         features: [
-            'Maximum capacity',
-            'Equivalent to ~275 chargers',
-            'Heavy-duty regulator',
-            'Best value for volume'
+            'Professional dispenser',
+            'Multiple nozzle tips',
+            'Easy cleaning design',
+            'Restaurant-grade quality'
         ],
-        description: 'The 2.2kg commercial tank is designed for high-volume professional use in hotels, large restaurants, and catering operations. Most economical per gram.',
-        application: 'Equivalent to ~275 cream chargers',
-        icon: ChefHat,
-        color: 'from-amber-400 to-orange-400'
+        description: 'The FastGas Creamer is a professional cream syphon designed for creating perfect whipped cream, espumas, cocktail foams, and culinary sauces with precision.',
+        application: 'Creates perfect creams & foams',
+        icon: IceCream,
+        color: 'from-pink-400 to-rose-400'
     }
 ]
 

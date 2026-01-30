@@ -795,16 +795,18 @@ export default function FastGasHomePage({ user = null }) {
         return () => window.removeEventListener('mousemove', handleMouseMove)
     }, [])
 
-    // Testimonial data for marquee - Kenyan customers
+    // Testimonial data for marquee - Kenyan customers with Sheng vibes
     const testimonials = [
-        { name: "Chef Wanjiku", role: "Executive Chef, Sarova Stanley", text: "The purest N₂O we've ever used!", rating: 5 },
-        { name: "Kamau's Bakery", role: "Westlands, Nairobi", text: "Perfect for our desserts every time", rating: 5 },
-        { name: "Ochieng Mixology", role: "Cocktail Lounge, Kilimani", text: "Game-changer for our foam cocktails", rating: 5 },
-        { name: "Njeri's Pastries", role: "Karen, Nairobi", text: "Consistent quality, fast delivery", rating: 5 },
-        { name: "Chef Otieno", role: "Carnivore Restaurant", text: "Best culinary gas supplier in Kenya", rating: 5 },
-        { name: "Akinyi Desserts", role: "Lavington", text: "Our whipped creams are now perfect!", rating: 5 },
-        { name: "Mwangi Hotels", role: "Mombasa Road", text: "Reliable supply for all our kitchens", rating: 5 },
-        { name: "Chef Kipchoge", role: "Norfolk Hotel", text: "Premium quality, highly recommend!", rating: 5 },
+        { name: "Chef Wanjiku", role: "Sarova Stanley", text: "Hii N₂O ni safi sana! Purest we've ever used 💯", rating: 5 },
+        { name: "Kamau's Bakery", role: "Westlands, Nairobi", text: "Desserts zetu zimekuwa noma since we switched!", rating: 5 },
+        { name: "Ochieng Mixology", role: "Kilimani", text: "Cocktails zetu sasa ni different level. Customers wanashangaa!", rating: 5 },
+        { name: "Njeri's Pastries", role: "Karen", text: "Delivery ni fast, quality iko juu. Hakuna complaints!", rating: 5 },
+        { name: "Chef Otieno", role: "Carnivore Restaurant", text: "Best supplier in KE bila shaka. Wametushow mzuri!", rating: 5 },
+        { name: "Akinyi Desserts", role: "Lavington", text: "Cream yetu sasa imebamba! Customers wote happy 🔥", rating: 5 },
+        { name: "Mwangi Hotels", role: "Mombasa Road", text: "Supply yao ni rada. Never disappointed, always on time!", rating: 5 },
+        { name: "Chef Kipchoge", role: "Norfolk Hotel", text: "Premium quality, pesa yako haipotei. Highly recommend!", rating: 5 },
+        { name: "Mama Fua Cafe", role: "CBD, Nairobi", text: "Hawa watu ni legit! Service ni poa, product swafi 👌", rating: 5 },
+        { name: "Barista Brian", role: "Java House", text: "Kazi safi! Our espumas are now chef's kiss 😙", rating: 5 },
     ]
 
     return (

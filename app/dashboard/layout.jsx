@@ -14,7 +14,6 @@ import {
     BarChart3,
     Settings,
     Plus,
-    ShoppingBag,
     CreditCard,
     Bike,
     ChevronLeft,
@@ -434,16 +433,25 @@ export default function DashboardLayout({ children }) {
                         >
                             {!isCollapsed || window.innerWidth < 1024 ? (
                                 <div className="flex items-center gap-2">
-                                    <div className="w-10 h-10 bg-linear-to-br from-primary to-secondary rounded-lg flex items-center justify-center shrink-0">
-                                        <ShoppingBag className="w-6 h-6 text-white" />
-                                    </div>
-                                    <span className="text-xl font-bold bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent">
-                                        FastGasHub
-                                    </span>
+                                    <Image 
+                                        src="https://fast-gas.com/wp-content/themes/common/src/assets/images/fast-gas-logo.svg"
+                                        alt="FastGas"
+                                        width={140}
+                                        height={56}
+                                        className="shrink-0"
+                                        unoptimized
+                                    />
                                 </div>
                             ) : (
-                                <div className="w-10 h-10 bg-linear-to-br from-primary to-secondary rounded-lg flex items-center justify-center mx-auto">
-                                    <ShoppingBag className="w-6 h-6 text-white" />
+                                <div className="w-10 h-10 rounded-lg flex items-center justify-center mx-auto overflow-hidden">
+                                    <Image 
+                                        src="https://fast-gas.com/wp-content/themes/common/src/assets/images/fast-gas-logo.svg"
+                                        alt="FastGas"
+                                        width={40}
+                                        height={40}
+                                        className="object-contain"
+                                        unoptimized
+                                    />
                                 </div>
                             )}
                         </Link>

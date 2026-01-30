@@ -1,81 +1,90 @@
 'use client'
 
-import { ShoppingCart, Package, Sparkles } from 'lucide-react'
+import { Sparkles } from 'lucide-react'
+import Image from 'next/image'
+
+// FastGas Official Logo
+const FASTGAS_LOGO_URL = 'https://fast-gas.com/wp-content/themes/common/src/assets/images/fast-gas-logo.svg'
 
 export default function Loading() {
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-base-100 via-base-200 to-base-100 relative overflow-hidden">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-950 to-cyan-950 relative overflow-hidden">
+            {/* Animated Background Elements */}
+            <div className="absolute inset-0">
+                {/* Gradient Orbs */}
+                <div className="absolute top-20 left-20 w-72 h-72 bg-cyan-500/20 rounded-full blur-3xl animate-pulse"></div>
+                <div className="absolute bottom-20 right-20 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '0.5s' }}></div>
+            </div>
+
             <div className="text-center relative z-10">
-                {/* Main Loading Animation */}
+                {/* Main Logo Animation */}
                 <div className="mb-10 flex justify-center">
-                    <div className="relative w-32 h-32">
-                        {/* Rotating Border Ring */}
-                        <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-primary border-r-secondary animate-spin-slow"></div>
-
-                        {/* Secondary Ring */}
-                        <div className="absolute inset-2 rounded-full border-4 border-transparent border-b-accent border-l-primary animate-spin-reverse"></div>
-
-                        {/* Center Shopping Cart */}
-                        <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="relative">
-                                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary via-secondary to-accent flex items-center justify-center shadow-2xl animate-float">
-                                    <ShoppingCart className="w-10 h-10 text-white" strokeWidth={2.5} />
-                                </div>
-
-                                {/* Glow Effect */}
-                                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary to-secondary opacity-50 blur-xl animate-pulse-glow"></div>
+                    <div className="relative">
+                        {/* Outer Rotating Ring */}
+                        <div className="absolute -inset-8 rounded-full border-2 border-dashed border-cyan-500/30 animate-spin-slow"></div>
+                        
+                        {/* Inner Rotating Ring */}
+                        <div className="absolute -inset-4 rounded-full border-2 border-cyan-400/40 animate-spin-reverse"></div>
+                        
+                        {/* Logo Container with Glow */}
+                        <div className="relative p-6">
+                            {/* Glow Effect */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 rounded-2xl blur-2xl opacity-50 animate-pulse-glow"></div>
+                            
+                            {/* FastGas Logo */}
+                            <div className="relative bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 animate-float">
+                                <Image 
+                                    src={FASTGAS_LOGO_URL}
+                                    alt="FastGas"
+                                    width={200}
+                                    height={80}
+                                    className="relative z-10"
+                                    priority
+                                    unoptimized
+                                />
                             </div>
                         </div>
-
-                        {/* Orbiting Package Icon */}
+                        
+                        {/* Orbiting Sparkle */}
                         <div className="absolute inset-0 animate-orbit">
-                            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-success to-accent flex items-center justify-center shadow-lg animate-bounce-subtle">
-                                    <Package className="w-5 h-5 text-white" strokeWidth={2.5} />
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Orbiting Sparkle Icon */}
-                        <div className="absolute inset-0 animate-orbit-reverse">
-                            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2">
+                            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-4">
                                 <div className="animate-sparkle">
-                                    <Sparkles className="w-7 h-7 text-warning" strokeWidth={2.5} />
+                                    <Sparkles className="w-6 h-6 text-cyan-400" strokeWidth={2.5} />
                                 </div>
                             </div>
                         </div>
-
+                        
                         {/* Decorative Dots */}
-                        <div className="absolute top-0 right-0 w-3 h-3 bg-primary rounded-full animate-ping-slow"></div>
-                        <div className="absolute bottom-0 left-0 w-3 h-3 bg-secondary rounded-full animate-ping-slow" style={{ animationDelay: '0.5s' }}></div>
-                        <div className="absolute top-1/2 right-0 w-2 h-2 bg-accent rounded-full animate-ping-slow" style={{ animationDelay: '1s' }}></div>
+                        <div className="absolute -top-2 -right-2 w-3 h-3 bg-cyan-400 rounded-full animate-ping-slow"></div>
+                        <div className="absolute -bottom-2 -left-2 w-3 h-3 bg-blue-400 rounded-full animate-ping-slow" style={{ animationDelay: '0.5s' }}></div>
                     </div>
                 </div>
 
                 {/* Text Content */}
                 <div className="animate-fade-in">
                     <h2 className="text-3xl font-bold mb-3 tracking-tight">
-                        <span className="bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent animate-gradient">
-                            Preparing Your Shop
+                        <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent animate-gradient">
+                            Loading FastGas
                         </span>
                     </h2>
-                    <p className="text-base-content/70 text-sm mb-8">
-                        Loading amazing products just for you
+                    <p className="text-white/60 text-sm mb-8">
+                        Premium N₂O for culinary excellence
                     </p>
                 </div>
 
                 {/* Progress Bar */}
                 <div className="max-w-xs mx-auto animate-slide-up">
-                    <div className="h-2 bg-base-300 rounded-full overflow-hidden shadow-inner relative">
-                        <div className="h-full bg-gradient-to-r from-primary via-secondary to-accent rounded-full shadow-lg animate-loading-progress"></div>
+                    <div className="h-1.5 bg-white/10 rounded-full overflow-hidden shadow-inner relative backdrop-blur-sm">
+                        <div className="h-full bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 rounded-full shadow-lg animate-loading-progress"></div>
                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div>
                     </div>
 
                     {/* Loading Dots */}
                     <div className="flex justify-center items-center gap-2 mt-5">
-                        <div className="w-2 h-2 rounded-full bg-primary animate-bounce-dot"></div>
-                        <div className="w-2 h-2 rounded-full bg-secondary animate-bounce-dot" style={{ animationDelay: '0.2s' }}></div>
-                        <div className="w-2 h-2 rounded-full bg-accent animate-bounce-dot" style={{ animationDelay: '0.4s' }}></div>
+                        <div className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce-dot"></div>
+                        <div className="w-2 h-2 rounded-full bg-blue-400 animate-bounce-dot" style={{ animationDelay: '0.2s' }}></div>
+                        <div className="w-2 h-2 rounded-full bg-purple-400 animate-bounce-dot" style={{ animationDelay: '0.4s' }}></div>
                     </div>
                 </div>
             </div>

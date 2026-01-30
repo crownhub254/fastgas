@@ -16,9 +16,9 @@ export default function Footer() {
                 <div className="grid md:grid-cols-4 gap-12">
                     {/* Company Info */}
                     <div className="md:col-span-1 space-y-5">
-                        <Logo />
+                        <Logo size="large" />
                         <p className="text-base-content/70 mb-6 leading-relaxed">
-                            Your trusted destination for premium products and exceptional service. Quality you can trust, delivered with care.
+                            Premium N₂O cream chargers for professional culinary use. European quality, trusted by chefs worldwide.
                         </p>
                         <div className="flex space-x-4">
                             {[

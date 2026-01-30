@@ -1,14 +1,39 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     images: {
-        domains: [
-            'images.unsplash.com',
-            'i.ibb.co',
-            'ibb.co.com',
-            'i.ibb.co.com',
-            'lh3.googleusercontent.com',
-            'i.pravatar.cc',
-            'api.dicebear.com',
+        remotePatterns: [
+            {
+                protocol: 'https',
+                hostname: 'images.unsplash.com',
+            },
+            {
+                protocol: 'https',
+                hostname: 'i.ibb.co',
+            },
+            {
+                protocol: 'https',
+                hostname: 'ibb.co.com',
+            },
+            {
+                protocol: 'https',
+                hostname: 'i.ibb.co.com',
+            },
+            {
+                protocol: 'https',
+                hostname: 'lh3.googleusercontent.com',
+            },
+            {
+                protocol: 'https',
+                hostname: 'i.pravatar.cc',
+            },
+            {
+                protocol: 'https',
+                hostname: 'api.dicebear.com',
+            },
+            {
+                protocol: 'https',
+                hostname: 'fast-gas.com',
+            },
         ],
     },
 };

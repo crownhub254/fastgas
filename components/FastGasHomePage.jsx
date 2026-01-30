@@ -713,7 +713,7 @@ function ProductCard3D({ cylinder, index }) {
 
                 {/* CTA Button with Shine Effect - WhatsApp Order */}
                 <motion.a
-                    href={`https://wa.me/254700000000?text=Hi! I'm interested in ordering ${cylinder.name} (${cylinder.size}). Please share pricing and availability.`}
+                    href={`https://wa.me/254740595680?text=Hi! I'm interested in ordering ${cylinder.name} (${cylinder.size}). Please share pricing and availability.`}
                     target="_blank"
                     rel="noopener noreferrer"
                     whileHover={{ scale: 1.03 }}
@@ -1232,16 +1232,16 @@ export default function FastGasHomePage({ user = null }) {
                         
                         <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
                             <motion.a 
-                                href="tel:+254700000000" 
+                                href="tel:+254740595680" 
                                 whileHover={{ scale: 1.05, y: -3 }}
                                 whileTap={{ scale: 0.98 }}
                                 className="btn btn-lg px-10 bg-white text-blue-600 hover:bg-gray-100 border-none shadow-2xl"
                             >
                                 <Phone className="w-5 h-5 mr-2" />
-                                +254 700 000 000
+                                +254 740 595 680
                             </motion.a>
                             <motion.a 
-                                href="https://wa.me/254700000000" 
+                                href="https://wa.me/254740595680" 
                                 whileHover={{ scale: 1.05, y: -3 }}
                                 whileTap={{ scale: 0.98 }}
                                 className="btn btn-lg px-10 bg-green-500 text-white hover:bg-green-600 border-none shadow-2xl"

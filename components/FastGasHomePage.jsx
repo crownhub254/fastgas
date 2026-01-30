@@ -795,13 +795,16 @@ export default function FastGasHomePage({ user = null }) {
         return () => window.removeEventListener('mousemove', handleMouseMove)
     }, [])
 
-    // Testimonial data for marquee
+    // Testimonial data for marquee - Kenyan customers
     const testimonials = [
-        { name: "Chef Marcus", role: "Executive Chef", text: "The purest N₂O we've ever used!", rating: 5 },
-        { name: "Bella Kitchen", role: "Pastry Shop", text: "Perfect for our desserts every time", rating: 5 },
-        { name: "Mixology Bar", role: "Cocktail Lounge", text: "Game-changer for our foam cocktails", rating: 5 },
-        { name: "Sweet Delights", role: "Bakery", text: "Consistent quality, fast delivery", rating: 5 },
-        { name: "Chef Antonio", role: "Restaurant Owner", text: "Best culinary gas supplier in Kenya", rating: 5 },
+        { name: "Chef Wanjiku", role: "Executive Chef, Sarova Stanley", text: "The purest N₂O we've ever used!", rating: 5 },
+        { name: "Kamau's Bakery", role: "Westlands, Nairobi", text: "Perfect for our desserts every time", rating: 5 },
+        { name: "Ochieng Mixology", role: "Cocktail Lounge, Kilimani", text: "Game-changer for our foam cocktails", rating: 5 },
+        { name: "Njeri's Pastries", role: "Karen, Nairobi", text: "Consistent quality, fast delivery", rating: 5 },
+        { name: "Chef Otieno", role: "Carnivore Restaurant", text: "Best culinary gas supplier in Kenya", rating: 5 },
+        { name: "Akinyi Desserts", role: "Lavington", text: "Our whipped creams are now perfect!", rating: 5 },
+        { name: "Mwangi Hotels", role: "Mombasa Road", text: "Reliable supply for all our kitchens", rating: 5 },
+        { name: "Chef Kipchoge", role: "Norfolk Hotel", text: "Premium quality, highly recommend!", rating: 5 },
     ]
 
     return (

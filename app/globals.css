@@ -315,3 +315,73 @@ th {
 * {
   -ms-overflow-style: none;
 }
+
+/* ============================================
+   PERFORMANCE-OPTIMIZED ANIMATIONS
+   ============================================ */
+
+/* Marquee animations using CSS (GPU-accelerated) */
+@keyframes marquee-left {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes marquee-right {
+  0% { transform: translateX(-50%); }
+  100% { transform: translateX(0); }
+}
+
+.animate-marquee-left {
+  animation: marquee-left linear infinite;
+}
+
+.animate-marquee-right {
+  animation: marquee-right linear infinite;
+}
+
+/* Float animation for 3D elements */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .animate-marquee-left,
+  .animate-marquee-right,
+  .animate-float {
+    animation: none !important;
+  }
+}
+
+/* Mobile performance optimizations */
+@media (max-width: 768px) {
+  /* Disable complex transforms on mobile */
+  .perspective-1000 {
+    perspective: none !important;
+  }
+  
+  /* Reduce animation complexity */
+  .animate-marquee-left,
+  .animate-marquee-right {
+    animation-timing-function: linear;
+  }
+  
+  /* Disable blur on mobile (expensive) */
+  .mobile-no-blur {
+    filter: none !important;
+    backdrop-filter: none !important;
+  }
+}

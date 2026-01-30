@@ -1,19 +1,68 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback, Suspense } from 'react'
-import { motion, useScroll, useTransform, useSpring, useInView, AnimatePresence, useMotionValue, useVelocity, useAnimationFrame } from 'framer-motion'
+import { useState, useEffect, useRef, useCallback, Suspense, memo, useMemo } from 'react'
+import { motion, useScroll, useTransform, useInView, AnimatePresence } from 'framer-motion'
 import { Sparkles, Truck, Shield, Phone, MapPin, Clock, ChevronRight, Star, Package, Coffee, GlassWater, Cake, ChefHat, Zap, CheckCircle, Award, Beaker, IceCream, ArrowDown, Play, LayoutDashboard, Users, ShoppingBag, Bike, Volume2, VolumeX } from 'lucide-react'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 
-// Dynamic import for 3D scenes (client-side only)
+// ============================================
+// PERFORMANCE HOOKS
+// ============================================
+
+// Detect mobile/low-power devices
+function useIsMobile() {
+    const [isMobile, setIsMobile] = useState(false)
+    
+    useEffect(() => {
+        const checkDevice = () => {
+            const mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+            const smallScreen = window.innerWidth < 768
+            setIsMobile(mobile || smallScreen)
+        }
+        
+        checkDevice()
+        window.addEventListener('resize', checkDevice)
+        return () => window.removeEventListener('resize', checkDevice)
+    }, [])
+    
+    return isMobile
+}
+
+// Reduced motion preference - using lazy initial state
+function usePrefersReducedMotion() {
+    const [prefersReducedMotion, setPrefersReducedMotion] = useState(() => {
+        if (typeof window === 'undefined') return false
+        return window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    })
+    
+    useEffect(() => {
+        const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
+        const handler = (e) => setPrefersReducedMotion(e.matches)
+        mediaQuery.addEventListener('change', handler)
+        return () => mediaQuery.removeEventListener('change', handler)
+    }, [])
+    
+    return prefersReducedMotion
+}
+
+// Dynamic import for 3D scenes (client-side only) - with loading states
 const Hero3DScene = dynamic(() => import('./three/Scene3D').then(mod => ({ default: mod.Hero3DScene })), { 
     ssr: false,
-    loading: () => <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 via-purple-900/20 to-cyan-900/20" />
+    loading: () => null
 })
-const Product3DScene = dynamic(() => import('./three/Scene3D').then(mod => ({ default: mod.Product3DScene })), { ssr: false })
-const Minimal3DBackground = dynamic(() => import('./three/Scene3D').then(mod => ({ default: mod.Minimal3DBackground })), { ssr: false })
-const ProductViewer3D = dynamic(() => import('./three/Scene3D').then(mod => ({ default: mod.ProductViewer3D })), { ssr: false })
+const Product3DScene = dynamic(() => import('./three/Scene3D').then(mod => ({ default: mod.Product3DScene })), { 
+    ssr: false,
+    loading: () => null 
+})
+const Minimal3DBackground = dynamic(() => import('./three/Scene3D').then(mod => ({ default: mod.Minimal3DBackground })), { 
+    ssr: false,
+    loading: () => null 
+})
+const ProductViewer3D = dynamic(() => import('./three/Scene3D').then(mod => ({ default: mod.ProductViewer3D })), { 
+    ssr: false,
+    loading: () => null 
+})
 
 // FastGas N₂O Cylinder Products - Official Products from fast-gas.com
 const CYLINDER_DATA = [
@@ -201,45 +250,47 @@ function MagneticButton({ children, className = '', onClick, href }) {
     )
 }
 
-// Aurora/Northern Lights Background
+// Aurora/Northern Lights Background - OPTIMIZED
 function AuroraBackground() {
+    const isMobile = useIsMobile()
+    const prefersReducedMotion = usePrefersReducedMotion()
+    
+    // Skip heavy animations on mobile or when reduced motion is preferred
+    if (isMobile || prefersReducedMotion) {
+        return (
+            <div className="absolute inset-0 overflow-hidden">
+                <div 
+                    className="absolute inset-0 opacity-30"
+                    style={{
+                        background: 'linear-gradient(180deg, transparent 0%, rgba(6,182,212,0.15) 50%, transparent 100%)',
+                    }}
+                />
+            </div>
+        )
+    }
+    
     return (
         <div className="absolute inset-0 overflow-hidden">
-            <motion.div
-                className="absolute inset-0"
-                style={{
-                    background: 'linear-gradient(180deg, transparent 0%, rgba(6,182,212,0.1) 50%, transparent 100%)',
-                }}
-                animate={{
-                    y: ['-100%', '100%'],
-                }}
-                transition={{
-                    duration: 8,
-                    repeat: Infinity,
-                    ease: "linear",
-                }}
-            />
-            {[...Array(5)].map((_, i) => (
+            {/* Reduced from 5 to 2 animated elements */}
+            {[0, 1].map((i) => (
                 <motion.div
                     key={i}
-                    className="absolute w-full h-64"
+                    className="absolute w-full h-64 will-change-transform"
                     style={{
                         background: `linear-gradient(90deg, transparent, ${
-                            ['rgba(6,182,212,0.2)', 'rgba(139,92,246,0.2)', 'rgba(236,72,153,0.2)', 'rgba(34,211,238,0.15)', 'rgba(167,139,250,0.15)'][i]
+                            ['rgba(6,182,212,0.15)', 'rgba(139,92,246,0.15)'][i]
                         }, transparent)`,
-                        top: `${i * 20}%`,
+                        top: `${i * 40}%`,
                         filter: 'blur(40px)',
                     }}
                     animate={{
-                        x: ['-50%', '50%', '-50%'],
-                        opacity: [0.3, 0.7, 0.3],
-                        scaleY: [1, 1.5, 1],
+                        x: ['-30%', '30%', '-30%'],
+                        opacity: [0.3, 0.5, 0.3],
                     }}
                     transition={{
-                        duration: 10 + i * 2,
+                        duration: 15 + i * 5,
                         repeat: Infinity,
                         ease: "easeInOut",
-                        delay: i * 0.5,
                     }}
                 />
             ))}
@@ -247,39 +298,26 @@ function AuroraBackground() {
     )
 }
 
-// Infinite Marquee Component
+// Infinite Marquee Component - OPTIMIZED with CSS animation
 function InfiniteMarquee({ items, speed = 50, direction = 'left' }) {
-    const marqueeRef = useRef(null)
-    const [contentWidth, setContentWidth] = useState(0)
+    const isMobile = useIsMobile()
     
-    useEffect(() => {
-        if (marqueeRef.current) {
-            setContentWidth(marqueeRef.current.scrollWidth / 2)
-        }
-    }, [])
-    
+    // Use CSS animation for better performance
     return (
         <div className="overflow-hidden whitespace-nowrap">
-            <motion.div
-                ref={marqueeRef}
-                className="inline-flex"
-                animate={{
-                    x: direction === 'left' ? [0, -contentWidth] : [-contentWidth, 0],
-                }}
-                transition={{
-                    x: {
-                        duration: speed,
-                        repeat: Infinity,
-                        ease: "linear",
-                    },
+            <div 
+                className={`inline-flex ${direction === 'left' ? 'animate-marquee-left' : 'animate-marquee-right'}`}
+                style={{ 
+                    animationDuration: `${isMobile ? speed * 1.5 : speed}s`,
+                    willChange: 'transform'
                 }}
             >
                 {[...items, ...items].map((item, i) => (
-                    <div key={i} className="inline-flex items-center mx-8">
+                    <div key={i} className="inline-flex items-center mx-4 md:mx-8">
                         {item}
                     </div>
                 ))}
-            </motion.div>
+            </div>
         </div>
     )
 }
@@ -338,39 +376,50 @@ function useConfetti() {
 
 // Spotlight Cursor Effect
 function SpotlightCursor() {
+    const isMobile = useIsMobile()
     const [position, setPosition] = useState({ x: -100, y: -100 })
     const [isVisible, setIsVisible] = useState(false)
     
     useEffect(() => {
+        // Disable on mobile devices
+        if (isMobile) return
+        
+        let rafId = null
         const handleMouseMove = (e) => {
-            setPosition({ x: e.clientX, y: e.clientY })
-            setIsVisible(true)
+            // Throttle updates with RAF
+            if (rafId) return
+            rafId = requestAnimationFrame(() => {
+                setPosition({ x: e.clientX, y: e.clientY })
+                setIsVisible(true)
+                rafId = null
+            })
         }
         const handleMouseLeave = () => setIsVisible(false)
         
-        window.addEventListener('mousemove', handleMouseMove)
+        window.addEventListener('mousemove', handleMouseMove, { passive: true })
         document.body.addEventListener('mouseleave', handleMouseLeave)
         
         return () => {
             window.removeEventListener('mousemove', handleMouseMove)
             document.body.removeEventListener('mouseleave', handleMouseLeave)
+            if (rafId) cancelAnimationFrame(rafId)
         }
-    }, [])
+    }, [isMobile])
+    
+    // Don't render on mobile
+    if (isMobile) return null
     
     return (
-        <motion.div
-            className="fixed pointer-events-none z-50 mix-blend-soft-light"
-            animate={{
-                x: position.x - 150,
-                y: position.y - 150,
-                opacity: isVisible ? 1 : 0,
-            }}
-            transition={{ type: "spring", stiffness: 500, damping: 28 }}
+        <div
+            className="fixed pointer-events-none z-50 mix-blend-soft-light will-change-transform"
             style={{
+                transform: `translate(${position.x - 150}px, ${position.y - 150}px)`,
+                opacity: isVisible ? 1 : 0,
                 width: 300,
                 height: 300,
-                background: 'radial-gradient(circle, rgba(6,182,212,0.4) 0%, transparent 70%)',
+                background: 'radial-gradient(circle, rgba(6,182,212,0.3) 0%, transparent 70%)',
                 borderRadius: '50%',
+                transition: 'opacity 0.2s ease',
             }}
         />
     )
@@ -378,26 +427,34 @@ function SpotlightCursor() {
 
 // Liquid Blob Animation
 function LiquidBlob({ className = '', color = 'cyan' }) {
+    const isMobile = useIsMobile()
+    const prefersReducedMotion = usePrefersReducedMotion()
+    
     const colors = {
-        cyan: 'rgba(6,182,212,0.3)',
-        purple: 'rgba(139,92,246,0.3)',
-        pink: 'rgba(236,72,153,0.3)',
+        cyan: 'rgba(6,182,212,0.25)',
+        purple: 'rgba(139,92,246,0.25)',
+        pink: 'rgba(236,72,153,0.25)',
+    }
+    
+    // Static blob on mobile for better performance
+    if (isMobile || prefersReducedMotion) {
+        return (
+            <div
+                className={`absolute rounded-full blur-2xl ${className}`}
+                style={{ backgroundColor: colors[color] }}
+            />
+        )
     }
     
     return (
         <motion.div
-            className={`absolute rounded-full blur-3xl ${className}`}
+            className={`absolute rounded-full blur-3xl will-change-transform ${className}`}
             style={{ backgroundColor: colors[color] }}
             animate={{
-                borderRadius: [
-                    '60% 40% 30% 70% / 60% 30% 70% 40%',
-                    '30% 60% 70% 40% / 50% 60% 30% 60%',
-                    '60% 40% 30% 70% / 60% 30% 70% 40%',
-                ],
-                scale: [1, 1.1, 1],
+                scale: [1, 1.05, 1],
             }}
             transition={{
-                duration: 8,
+                duration: 10,
                 repeat: Infinity,
                 ease: "easeInOut",
             }}
@@ -508,33 +565,39 @@ function WaveDivider({ flip = false }) {
 // ORIGINAL COMPONENTS (ENHANCED)
 // ============================================
 
-// Pre-generate particle data to avoid impure function calls during render
-const PARTICLE_DATA = [...Array(50)].map((_, i) => ({
+// Pre-generate particle data - REDUCED count for performance
+const PARTICLE_DATA = [...Array(15)].map((_, i) => ({
     id: i,
     left: `${(i * 37 + 13) % 100}%`,
     top: `${(i * 53 + 7) % 100}%`,
     xOffset: ((i * 17) % 20) - 10,
-    duration: 3 + ((i * 23) % 40) / 10,
+    duration: 4 + ((i * 23) % 40) / 10,
     delay: ((i * 31) % 50) / 10,
 }))
 
-// Floating Particle Component
+// Floating Particle Component - OPTIMIZED
 function FloatingParticles() {
+    const isMobile = useIsMobile()
+    const prefersReducedMotion = usePrefersReducedMotion()
+    
+    // Disable on mobile or reduced motion
+    if (isMobile || prefersReducedMotion) {
+        return null
+    }
+    
     return (
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
             {PARTICLE_DATA.map((particle) => (
                 <motion.div
                     key={particle.id}
-                    className="absolute w-1 h-1 bg-white rounded-full"
+                    className="absolute w-1 h-1 bg-white rounded-full will-change-transform"
                     style={{
                         left: particle.left,
                         top: particle.top,
                     }}
                     animate={{
-                        y: [0, -30, 0],
-                        x: [0, particle.xOffset, 0],
-                        opacity: [0.2, 0.8, 0.2],
-                        scale: [1, 1.5, 1],
+                        y: [0, -20, 0],
+                        opacity: [0.2, 0.6, 0.2],
                     }}
                     transition={{
                         duration: particle.duration,
@@ -548,18 +611,25 @@ function FloatingParticles() {
     )
 }
 
-// Animated Gradient Orb
+// Animated Gradient Orb - OPTIMIZED
 function GradientOrb({ className, delay = 0 }) {
+    const isMobile = useIsMobile()
+    
+    // Use CSS animation on mobile
+    if (isMobile) {
+        return (
+            <div className={`absolute rounded-full blur-2xl opacity-20 ${className}`} />
+        )
+    }
+    
     return (
         <motion.div
-            className={`absolute rounded-full blur-3xl opacity-30 ${className}`}
+            className={`absolute rounded-full blur-3xl opacity-25 will-change-transform ${className}`}
             animate={{
-                scale: [1, 1.2, 1],
-                x: [0, 30, -30, 0],
-                y: [0, -30, 30, 0],
+                scale: [1, 1.1, 1],
             }}
             transition={{
-                duration: 8,
+                duration: 10,
                 repeat: Infinity,
                 delay,
                 ease: "easeInOut",
@@ -789,23 +859,37 @@ function AnimatedCounter({ value, suffix = '', prefix = '' }) {
 
 // Main Component
 export default function FastGasHomePage({ user = null }) {
+    const isMobile = useIsMobile()
+    const prefersReducedMotion = usePrefersReducedMotion()
+    
+    // Only use scroll transforms on desktop
     const { scrollYProgress } = useScroll()
-    const scaleProgress = useTransform(scrollYProgress, [0, 0.5], [1, 0.95])
-    const opacityProgress = useTransform(scrollYProgress, [0, 0.3], [1, 0.8])
-    const yProgress = useTransform(scrollYProgress, [0, 1], [0, -100])
-    const springY = useSpring(yProgress, { stiffness: 100, damping: 30 })
+    const scaleProgress = useTransform(scrollYProgress, [0, 0.5], [1, isMobile ? 1 : 0.95])
+    const opacityProgress = useTransform(scrollYProgress, [0, 0.3], [1, isMobile ? 1 : 0.8])
     
     // Advanced features state
     const { explode, ConfettiComponent } = useConfetti()
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
 
     useEffect(() => {
+        // Disable mouse tracking on mobile
+        if (isMobile) return
+        
+        let rafId = null
         const handleMouseMove = (e) => {
-            setMousePosition({ x: e.clientX, y: e.clientY })
+            // Throttle with RAF for better performance
+            if (rafId) return
+            rafId = requestAnimationFrame(() => {
+                setMousePosition({ x: e.clientX, y: e.clientY })
+                rafId = null
+            })
         }
-        window.addEventListener('mousemove', handleMouseMove)
-        return () => window.removeEventListener('mousemove', handleMouseMove)
-    }, [])
+        window.addEventListener('mousemove', handleMouseMove, { passive: true })
+        return () => {
+            window.removeEventListener('mousemove', handleMouseMove)
+            if (rafId) cancelAnimationFrame(rafId)
+        }
+    }, [isMobile])
 
     // Testimonial data for marquee - Kenyan customers with Sheng vibes
     const testimonials = [
@@ -842,24 +926,17 @@ export default function FastGasHomePage({ user = null }) {
                     <Hero3DScene />
                 </div>
                 
-                {/* Animated Gradient Background */}
-                <motion.div 
-                    className="absolute inset-0 bg-gradient-to-br from-blue-900 via-purple-900 to-cyan-900"
-                    animate={{
-                        background: [
-                            'linear-gradient(135deg, #1e3a5f 0%, #4a1e7a 50%, #1e5f5f 100%)',
-                            'linear-gradient(135deg, #4a1e7a 0%, #1e5f5f 50%, #1e3a5f 100%)',
-                            'linear-gradient(135deg, #1e5f5f 0%, #1e3a5f 50%, #4a1e7a 100%)',
-                            'linear-gradient(135deg, #1e3a5f 0%, #4a1e7a 50%, #1e5f5f 100%)',
-                        ]
-                    }}
-                    transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-                />
+                {/* Static Gradient Background - Optimized for performance */}
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-900 via-purple-900 to-cyan-900" />
 
-                {/* Liquid Blob Effects */}
-                <LiquidBlob className="w-[500px] h-[500px] -top-40 -left-40" color="cyan" />
-                <LiquidBlob className="w-[400px] h-[400px] top-1/2 -right-40" color="purple" />
-                <LiquidBlob className="w-[350px] h-[350px] -bottom-40 left-1/3" color="pink" />
+                {/* Liquid Blob Effects - Only on desktop */}
+                {!isMobile && (
+                    <>
+                        <LiquidBlob className="w-[500px] h-[500px] -top-40 -left-40" color="cyan" />
+                        <LiquidBlob className="w-[400px] h-[400px] top-1/2 -right-40" color="purple" />
+                        <LiquidBlob className="w-[350px] h-[350px] -bottom-40 left-1/3" color="pink" />
+                    </>
+                )}
 
                 {/* Floating Gradient Orbs */}
                 <GradientOrb className="w-96 h-96 bg-cyan-500 -top-20 -left-20" delay={0} />
@@ -876,17 +953,18 @@ export default function FastGasHomePage({ user = null }) {
                     backgroundSize: '50px 50px',
                 }} />
 
-                {/* Mouse Follower Glow */}
-                <motion.div
-                    className="absolute w-96 h-96 rounded-full pointer-events-none"
-                    style={{
-                        background: 'radial-gradient(circle, rgba(6,182,212,0.15) 0%, transparent 70%)',
-                        left: mousePosition.x - 192,
-                        top: mousePosition.y - 192,
-                    }}
-                    animate={{ scale: [1, 1.1, 1] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                />
+                {/* Mouse Follower Glow - Desktop only */}
+                {!isMobile && (
+                    <div
+                        className="absolute w-96 h-96 rounded-full pointer-events-none will-change-transform"
+                        style={{
+                            background: 'radial-gradient(circle, rgba(6,182,212,0.12) 0%, transparent 70%)',
+                            left: mousePosition.x - 192,
+                            top: mousePosition.y - 192,
+                            transform: 'translateZ(0)',
+                        }}
+                    />
+                )}
 
                 <div className="container mx-auto px-4 relative z-10">
                     <motion.div

@@ -6,9 +6,9 @@ import Link from 'next/link'
 
 // Demo data for FastGas Reseller Dashboard
 const DEMO_RESELLER = {
-    businessName: 'Nairobi Gas Supplies',
+    businessName: 'Nairobi Cream Supplies',
     ownerName: 'James Kamau',
-    email: 'james@nairobigas.co.ke',
+    email: 'james@nairobicream.co.ke',
     phone: '+254 712 345 678',
     region: 'Nairobi',
     address: 'Kenyatta Avenue, Nairobi CBD',
@@ -22,23 +22,22 @@ const DEMO_STATS = {
     pendingOrders: 8,
     deliveredOrders: 127,
     totalSpent: 812000,
-    cylindersOrdered: 423,
+    productsOrdered: 423,
     savings: 143290
 }
 
 const DEMO_MY_ORDERS = [
-    { id: 'RES-001', variant: '13kg', qty: 20, unitPrice: 2380, total: 47600, status: 'delivered', date: '2026-01-30', deliveryDate: '2026-01-30' },
-    { id: 'RES-002', variant: '6kg', qty: 15, unitPrice: 1275, total: 19125, status: 'shipped', date: '2026-01-29', eta: '2026-01-31' },
-    { id: 'RES-003', variant: '25kg', qty: 10, unitPrice: 4420, total: 44200, status: 'processing', date: '2026-01-28' },
-    { id: 'RES-004', variant: '50kg', qty: 5, unitPrice: 8075, total: 40375, status: 'pending', date: '2026-01-27' },
-    { id: 'RES-005', variant: '13kg', qty: 25, unitPrice: 2380, total: 59500, status: 'delivered', date: '2026-01-25', deliveryDate: '2026-01-26' }
+    { id: 'RES-001', variant: '670g Cylinder', qty: 20, unitPrice: 6375, total: 127500, status: 'delivered', date: '2026-01-30', deliveryDate: '2026-01-30' },
+    { id: 'RES-002', variant: 'Pressure Regulator', qty: 10, unitPrice: 2125, total: 21250, status: 'shipped', date: '2026-01-29', eta: '2026-01-31' },
+    { id: 'RES-003', variant: '670g Cylinder', qty: 15, unitPrice: 6375, total: 95625, status: 'processing', date: '2026-01-28' },
+    { id: 'RES-004', variant: 'FastGas Creamer', qty: 3, unitPrice: 12750, total: 38250, status: 'pending', date: '2026-01-27' },
+    { id: 'RES-005', variant: '670g Cylinder', qty: 25, unitPrice: 6375, total: 159375, status: 'delivered', date: '2026-01-25', deliveryDate: '2026-01-26' }
 ]
 
 const DEMO_PRICING = [
-    { size: '6kg', retailPrice: 1500, yourPrice: 1275, savings: 225, stock: 'In Stock' },
-    { size: '13kg', retailPrice: 2800, yourPrice: 2380, savings: 420, stock: 'In Stock' },
-    { size: '25kg', retailPrice: 5200, yourPrice: 4420, savings: 780, stock: 'Low Stock' },
-    { size: '50kg', retailPrice: 9500, yourPrice: 8075, savings: 1425, stock: 'In Stock' }
+    { size: '670g N₂O Cylinder', retailPrice: 7500, yourPrice: 6375, savings: 1125, stock: 'In Stock' },
+    { size: 'Pressure Regulator', retailPrice: 2500, yourPrice: 2125, savings: 375, stock: 'In Stock' },
+    { size: 'FastGas Creamer', retailPrice: 15000, yourPrice: 12750, savings: 2250, stock: 'Low Stock' }
 ]
 
 const DEMO_SALES_HISTORY = [
@@ -122,7 +121,7 @@ export default function ResellerDashboard() {
                 <StatsCard title="Pending" value={DEMO_STATS.pendingOrders} icon={Clock} color="warning" />
                 <StatsCard title="Delivered" value={DEMO_STATS.deliveredOrders} icon={CheckCircle} color="success" />
                 <StatsCard title="Total Spent" value={`KES ${(DEMO_STATS.totalSpent / 1000).toFixed(0)}K`} icon={DollarSign} />
-                <StatsCard title="Cylinders" value={DEMO_STATS.cylindersOrdered} icon={Flame} color="warning" />
+                <StatsCard title="Products" value={DEMO_STATS.productsOrdered} icon={Flame} color="warning" />
                 <StatsCard title="Savings" value={`KES ${(DEMO_STATS.savings / 1000).toFixed(0)}K`} icon={TrendingUp} color="success" />
             </div>
 
@@ -139,7 +138,7 @@ export default function ResellerDashboard() {
                     <table className="table">
                         <thead>
                             <tr>
-                                <th>Cylinder Size</th>
+                                <th>Product</th>
                                 <th>Retail Price</th>
                                 <th>Your Price</th>
                                 <th>You Save</th>
@@ -195,7 +194,7 @@ export default function ResellerDashboard() {
                             {DEMO_MY_ORDERS.map((order) => (
                                 <tr key={order.id}>
                                     <td className="font-medium">{order.id}</td>
-                                    <td>LPG Cylinder {order.variant}</td>
+                                    <td>{order.variant}</td>
                                     <td>{order.qty} units</td>
                                     <td>KES {order.unitPrice.toLocaleString()}</td>
                                     <td className="font-bold">KES {order.total.toLocaleString()}</td>

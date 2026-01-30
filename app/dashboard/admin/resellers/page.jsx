@@ -16,7 +16,7 @@ const DEMO_RESELLERS = [
         phoneNumber: '+254700000002',
         role: 'reseller',
         resellerProfile: {
-            businessName: 'John Gas Supplies',
+            businessName: 'Nairobi Cream Supplies',
             businessRegistrationNumber: 'BN12345',
             businessLocation: { city: 'Nairobi', county: 'Nairobi' },
             isApproved: true,
@@ -40,7 +40,7 @@ const DEMO_RESELLERS = [
         phoneNumber: '+254700000003',
         role: 'reseller',
         resellerProfile: {
-            businessName: 'Jane LPG Distributors',
+            businessName: 'Mombasa FastGas Hub',
             businessRegistrationNumber: 'BN67890',
             businessLocation: { city: 'Mombasa', county: 'Mombasa' },
             isApproved: true,
@@ -64,7 +64,7 @@ const DEMO_RESELLERS = [
         phoneNumber: '+254700000010',
         role: 'reseller',
         resellerProfile: {
-            businessName: 'Peter Gas Hub',
+            businessName: 'Kisumu Culinary Supplies',
             businessRegistrationNumber: 'BN99999',
             businessLocation: { city: 'Kisumu', county: 'Kisumu' },
             isApproved: false,

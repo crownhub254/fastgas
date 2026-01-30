@@ -34,32 +34,31 @@ const DEMO_CHART_DATA = {
         { name: 'Shipped', value: 134, color: '#8b5cf6' },
         { name: 'Cancelled', value: 54, color: '#ef4444' }
     ],
-    cylinderSales: [
-        { size: '6kg', sold: 423, revenue: 634500 },
-        { size: '13kg', sold: 567, revenue: 1587600 },
-        { size: '25kg', sold: 298, revenue: 1549600 },
-        { size: '50kg', sold: 135, revenue: 1282500 }
+    productSales: [
+        { size: '670g Cylinder', sold: 567, revenue: 4252500 },
+        { size: 'Pressure Regulator', sold: 298, revenue: 745000 },
+        { size: 'FastGas Creamer', sold: 135, revenue: 2025000 }
     ]
 }
 
 const DEMO_RECENT_ORDERS = [
-    { id: 'ORD-001', customer: 'John Mwangi', variant: '13kg', qty: 2, total: 5600, status: 'delivered', date: '2026-01-30' },
-    { id: 'ORD-002', customer: 'Mary Wanjiku', variant: '6kg', qty: 1, total: 1500, status: 'processing', date: '2026-01-30' },
-    { id: 'ORD-003', customer: 'Peter Ochieng', variant: '25kg', qty: 1, total: 5200, status: 'shipped', date: '2026-01-29' },
-    { id: 'ORD-004', customer: 'Grace Akinyi', variant: '50kg', qty: 2, total: 19000, status: 'pending', date: '2026-01-29' },
-    { id: 'ORD-005', customer: 'David Kimani', variant: '13kg', qty: 3, total: 8400, status: 'delivered', date: '2026-01-28' }
+    { id: 'ORD-001', customer: 'John Mwangi', variant: '670g Cylinder', qty: 2, total: 15000, status: 'delivered', date: '2026-01-30' },
+    { id: 'ORD-002', customer: 'Mary Wanjiku', variant: 'Pressure Regulator', qty: 1, total: 2500, status: 'processing', date: '2026-01-30' },
+    { id: 'ORD-003', customer: 'Peter Ochieng', variant: '670g Cylinder', qty: 3, total: 22500, status: 'shipped', date: '2026-01-29' },
+    { id: 'ORD-004', customer: 'Grace Akinyi', variant: 'FastGas Creamer', qty: 1, total: 15000, status: 'pending', date: '2026-01-29' },
+    { id: 'ORD-005', customer: 'David Kimani', variant: '670g Cylinder', qty: 5, total: 37500, status: 'delivered', date: '2026-01-28' }
 ]
 
 const DEMO_RESELLERS = [
-    { id: 1, name: 'Nairobi Gas Supplies', owner: 'James Kamau', region: 'Nairobi', orders: 145, revenue: 812000, status: 'active' },
-    { id: 2, name: 'Mombasa LPG Hub', owner: 'Fatuma Hassan', region: 'Mombasa', orders: 98, revenue: 567000, status: 'active' },
-    { id: 3, name: 'Kisumu Gas Center', owner: 'Otieno Odhiambo', region: 'Kisumu', orders: 67, revenue: 378000, status: 'active' },
-    { id: 4, name: 'Nakuru Energy', owner: 'Alice Njeri', region: 'Nakuru', orders: 54, revenue: 298000, status: 'pending' }
+    { id: 1, name: 'Nairobi Cream Supplies', owner: 'James Kamau', region: 'Nairobi', orders: 145, revenue: 812000, status: 'active' },
+    { id: 2, name: 'Mombasa FastGas Hub', owner: 'Fatuma Hassan', region: 'Mombasa', orders: 98, revenue: 567000, status: 'active' },
+    { id: 3, name: 'Kisumu Culinary Center', owner: 'Otieno Odhiambo', region: 'Kisumu', orders: 67, revenue: 378000, status: 'active' },
+    { id: 4, name: 'Nakuru Catering Supplies', owner: 'Alice Njeri', region: 'Nakuru', orders: 54, revenue: 298000, status: 'pending' }
 ]
 
 const DEMO_LOW_STOCK = [
-    { variant: '50kg', current: 8, minimum: 20, status: 'critical' },
-    { variant: '25kg', current: 15, minimum: 30, status: 'low' }
+    { variant: '670g Cylinder', current: 25, minimum: 50, status: 'low' },
+    { variant: 'Pressure Regulator', current: 8, minimum: 20, status: 'critical' }
 ]
 
 function StatsCard({ title, value, change, icon: Icon, trend }) {
@@ -108,15 +107,15 @@ function SimpleBarChart({ data, title }) {
     )
 }
 
-function CylinderSalesCard({ data }) {
+function ProductSalesCard({ data }) {
     const total = data.reduce((sum, d) => sum + d.sold, 0)
     return (
         <div className="bg-base-100 rounded-xl p-6 shadow-sm border border-base-200">
             <h3 className="font-semibold mb-4 flex items-center gap-2">
                 <Flame className="w-5 h-5 text-orange-500" />
-                Cylinder Sales by Size
+                Product Sales
             </h3>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {data.map((item) => (
                     <div key={item.size} className="text-center p-4 bg-base-200 rounded-lg">
                         <div className="text-3xl mb-2">🔥</div>
@@ -128,7 +127,7 @@ function CylinderSalesCard({ data }) {
                 ))}
             </div>
             <div className="mt-4 pt-4 border-t border-base-200 text-center">
-                <p className="text-sm text-base-content/60">Total Cylinders Sold</p>
+                <p className="text-sm text-base-content/60">Total Products Sold</p>
                 <p className="text-3xl font-bold text-primary">{total.toLocaleString()}</p>
             </div>
         </div>
@@ -159,7 +158,7 @@ export default function AdminDashboard() {
                         <Flame className="w-8 h-8 text-orange-500" />
                         FastGas Admin Dashboard
                     </h1>
-                    <p className="text-base-content/70">Overview of your LPG distribution business</p>
+                    <p className="text-base-content/70">Overview of your N₂O cream charger distribution business</p>
                 </div>
                 <div className="badge badge-warning badge-lg">Demo Mode</div>
             </div>
@@ -175,7 +174,7 @@ export default function AdminDashboard() {
                 <div className="bg-gradient-to-br from-orange-500 to-red-500 rounded-xl p-6 text-white">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-white/80 text-sm">Cylinders Sold</p>
+                            <p className="text-white/80 text-sm">Products Sold</p>
                             <p className="text-3xl font-bold">{DEMO_STATS.cylindersSold.toLocaleString()}</p>
                         </div>
                         <Flame className="w-12 h-12 text-white/30" />
@@ -203,7 +202,7 @@ export default function AdminDashboard() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <SimpleBarChart data={DEMO_CHART_DATA.revenueOverTime} title="Revenue This Week" />
-                <CylinderSalesCard data={DEMO_CHART_DATA.cylinderSales} />
+                <ProductSalesCard data={DEMO_CHART_DATA.productSales} />
             </div>
 
             {DEMO_LOW_STOCK.length > 0 && (

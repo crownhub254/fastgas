@@ -65,7 +65,7 @@ export default function InventoryPage() {
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div>
                         <h1 className="text-3xl font-bold">Inventory Management</h1>
-                        <p className="text-base-content/70">Manage FastGas cylinder stock levels</p>
+                        <p className="text-base-content/70">Manage FastGas N₂O product stock levels</p>
                     </div>
                     <button className="btn btn-primary">
                         <Plus className="w-4 h-4" />
@@ -81,7 +81,7 @@ export default function InventoryPage() {
                             <span className="text-base-content/70">Total Stock</span>
                         </div>
                         <p className="text-3xl font-bold">{totalStock}</p>
-                        <p className="text-sm text-base-content/50">cylinders</p>
+                        <p className="text-sm text-base-content/50">units</p>
                     </div>
                     
                     <div className="bg-base-100 rounded-xl p-6 border border-base-200">
@@ -119,7 +119,7 @@ export default function InventoryPage() {
                         <div>
                             <h4 className="font-bold">Low Stock Alert</h4>
                             <p className="text-sm">
-                                {lowStockVariants.map(v => v.size).join(', ')} cylinders are running low. 
+                                {lowStockVariants.map(v => v.size).join(', ')} products are running low. 
                                 Consider restocking soon.
                             </p>
                         </div>
@@ -129,14 +129,14 @@ export default function InventoryPage() {
                 {/* Inventory Table */}
                 <div className="bg-base-100 rounded-xl border border-base-200 overflow-hidden">
                     <div className="p-4 border-b border-base-200">
-                        <h2 className="font-semibold">FastGas Cylinder Variants</h2>
+                        <h2 className="font-semibold">FastGas N₂O Products</h2>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="table">
                             <thead>
                                 <tr>
                                     <th>SKU</th>
-                                    <th>Size</th>
+                                    <th>Product</th>
                                     <th>Retail Price</th>
                                     <th>Reseller Price</th>
                                     <th>Wholesale Price</th>

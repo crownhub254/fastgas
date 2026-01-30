@@ -1,77 +1,70 @@
 import { NextResponse } from 'next/server';
 
-// FastGas Product - Single product with variants (no database required for demo)
+// FastGas Products - N₂O Cream Chargers for Culinary Use
 const FASTGAS_PRODUCT = {
-    _id: 'fastgas-cylinder-001',
-    name: 'FastGas LPG Cylinder',
-    slug: 'fastgas-lpg-cylinder',
-    description: 'Premium quality LPG cylinders for home and commercial use. Safe, reliable, and efficient cooking gas. All cylinders come with safety valves and are regularly inspected for quality.',
+    _id: 'fastgas-n2o-001',
+    name: 'FastGas N₂O Products',
+    slug: 'fastgas-n2o-products',
+    description: 'Premium quality N₂O (Nitrous Oxide) cream chargers for professional culinary use. Perfect for creating whipped cream, mousses, espumas, and other culinary foams. Food-grade certified and trusted by professional chefs across Kenya.',
     brand: 'FastGas',
-    productType: 'gas-cylinder',
-    gasType: 'LPG',
-    image: '/images/fastgas-cylinder.png',
-    images: ['/images/fastgas-cylinder.png', '/images/fastgas-6kg.png', '/images/fastgas-13kg.png'],
+    productType: 'cream-charger',
+    gasType: 'N2O',
+    image: '/images/fastgas-670g.png',
+    images: ['/images/fastgas-670g.png', '/images/fastgas-regulator.png', '/images/fastgas-creamer.png'],
     variants: [
         {
-            size: '6kg',
-            sku: 'FG-6KG',
-            retailPrice: 1500,
-            resellerPrice: 1350,
-            wholesalePrice: 1200,
-            stock: 100,
-            weight: 6,
-            dimensions: { height: 30, diameter: 25 },
-            isActive: true
+            size: '670g N₂O Cylinder',
+            sku: 'FG-670G',
+            retailPrice: 7500,
+            resellerPrice: 6375,
+            wholesalePrice: 5625,
+            stock: 150,
+            weight: 0.67,
+            dimensions: { height: 32, diameter: 8 },
+            isActive: true,
+            description: 'Premium 670g N₂O cream charger cylinder - Food grade certified'
         },
         {
-            size: '13kg',
-            sku: 'FG-13KG',
-            retailPrice: 2800,
-            resellerPrice: 2520,
-            wholesalePrice: 2240,
-            stock: 75,
-            weight: 13,
-            dimensions: { height: 50, diameter: 30 },
-            isActive: true
+            size: 'Pressure Regulator',
+            sku: 'FG-REG',
+            retailPrice: 2500,
+            resellerPrice: 2125,
+            wholesalePrice: 1875,
+            stock: 80,
+            weight: 0.3,
+            dimensions: { height: 10, diameter: 5 },
+            isActive: true,
+            description: 'Professional pressure regulator for 670g cylinders'
         },
         {
-            size: '25kg',
-            sku: 'FG-25KG',
-            retailPrice: 5200,
-            resellerPrice: 4680,
-            wholesalePrice: 4160,
-            stock: 40,
-            weight: 25,
-            dimensions: { height: 70, diameter: 35 },
-            isActive: true
-        },
-        {
-            size: '50kg',
-            sku: 'FG-50KG',
-            retailPrice: 9500,
-            resellerPrice: 8550,
-            wholesalePrice: 7600,
-            stock: 20,
-            weight: 50,
-            dimensions: { height: 100, diameter: 45 },
-            isActive: true
+            size: 'FastGas Creamer',
+            sku: 'FG-CREAMER',
+            retailPrice: 15000,
+            resellerPrice: 12750,
+            wholesalePrice: 11250,
+            stock: 45,
+            weight: 0.5,
+            dimensions: { height: 35, diameter: 10 },
+            isActive: true,
+            description: 'Professional cream dispenser - 500ml capacity'
         }
     ],
-    safetyInfo: 'Handle with care. Store in well-ventilated area. Keep away from heat sources and open flames. Check for leaks regularly.',
-    certifications: ['KEBS Certified', 'ISO 9001', 'LPG Safety Standard'],
+    safetyInfo: 'For culinary use only. Do not inhale. Store in cool, dry place away from heat sources. Use with compatible dispensers only. Keep out of reach of children.',
+    certifications: ['Food Grade Certified', 'KEBS Approved', 'ISO 9001'],
     features: [
-        'Premium quality LPG',
-        'Safety valve included',
-        'Regular quality inspections',
+        'Premium food-grade N₂O',
+        'Perfect for whipped cream & culinary foams',
+        'Compatible with standard dispensers',
         'Fast delivery across Kenya',
-        'Easy refill service'
+        'Professional chef approved'
     ],
     specifications: {
-        gasComposition: 'Propane/Butane Mix',
-        pressureRating: '17 bar',
-        valveType: 'Standard POL',
-        material: 'Steel',
-        warranty: '10 years on cylinder'
+        gasComposition: 'Pure N₂O (Nitrous Oxide)',
+        purity: '99.9% Food Grade',
+        pressureRating: '40 bar',
+        valveType: 'Standard 8g compatible',
+        material: 'Steel cylinder with brass valve',
+        warranty: '1 year on accessories'
     },
     rating: 4.8,
     reviews: [
@@ -79,7 +72,7 @@ const FASTGAS_PRODUCT = {
             userId: 'user-001',
             userName: 'John M.',
             rating: 5,
-            comment: 'Excellent quality gas, lasts long!',
+            comment: 'Perfect for our dessert preparations! Cream comes out silky smooth.',
             verified: true,
             date: new Date().toISOString()
         },
@@ -87,7 +80,7 @@ const FASTGAS_PRODUCT = {
             userId: 'user-002',
             userName: 'Mary W.',
             rating: 5,
-            comment: 'Fast delivery and great service',
+            comment: 'Fast delivery and excellent quality N₂O. Our pastry chefs love it!',
             verified: true,
             date: new Date().toISOString()
         }
@@ -101,7 +94,7 @@ const FASTGAS_PRODUCT = {
     updatedAt: new Date().toISOString()
 };
 
-// GET all products (returns single FastGas product)
+// GET all products (returns FastGas N₂O products)
 export async function GET(req) {
     try {
         const { searchParams } = new URL(req.url);
@@ -124,7 +117,7 @@ export async function GET(req) {
             success: true, 
             products: [product],
             product: product, // Also return as single product
-            message: 'FastGas cylinder product'
+            message: 'FastGas N₂O cream charger products'
         }, { status: 200 });
     } catch (error) {
         console.error('Get products error:', error);

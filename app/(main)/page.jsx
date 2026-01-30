@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import useFirebaseAuth from '@/lib/hooks/useFirebaseAuth'
-import DefaultHomePage from '@/components/DefaultHomePage'
-import AuthenticatedHome from '@/components/AuthenticatedHome'
+import FastGasHomePage from '@/components/FastGasHomePage'
 import Loading from '../loading'
 
 export default function Page() {
@@ -18,9 +17,6 @@ export default function Page() {
         return <Loading />
     }
 
-    if (user && userData) {
-        return <AuthenticatedHome user={userData} />
-    }
-    
-    return <DefaultHomePage />
+    // Use FastGas home page for all users
+    return <FastGasHomePage user={userData} />
 }

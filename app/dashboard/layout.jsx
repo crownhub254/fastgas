@@ -34,17 +34,95 @@ import { auth } from '@/lib/firebase/config'
 import Loading from './loading'
 import DashboardNavbar from './components/DashboardNavbar'
 
+// Demo user data for different roles
+const DEMO_USERS = {
+    admin: {
+        uid: 'demo-admin',
+        email: 'admin@fastgas.co.ke',
+        displayName: 'Demo Admin',
+        role: 'admin',
+        photoURL: null
+    },
+    reseller: {
+        uid: 'demo-reseller',
+        email: 'reseller@fastgas.co.ke',
+        displayName: 'Demo Reseller',
+        role: 'reseller',
+        photoURL: null
+    },
+    rider: {
+        uid: 'demo-rider',
+        email: 'rider@fastgas.co.ke',
+        displayName: 'Demo Rider',
+        role: 'rider',
+        photoURL: null
+    },
+    seller: {
+        uid: 'demo-seller',
+        email: 'seller@fastgas.co.ke',
+        displayName: 'Demo Seller',
+        role: 'seller',
+        photoURL: null
+    },
+    user: {
+        uid: 'demo-user',
+        email: 'user@fastgas.co.ke',
+        displayName: 'Demo User',
+        role: 'user',
+        photoURL: null
+    }
+}
+
+// Helper to get role from pathname
+function getRoleFromPath(pathname) {
+    if (pathname.startsWith('/dashboard/admin')) return 'admin'
+    if (pathname.startsWith('/dashboard/reseller')) return 'reseller'
+    if (pathname.startsWith('/dashboard/rider')) return 'rider'
+    if (pathname.startsWith('/dashboard/seller')) return 'seller'
+    if (pathname.startsWith('/dashboard/user')) return 'user'
+    return 'user' // default
+}
+
 export default function DashboardLayout({ children }) {
     const [isCollapsed, setIsCollapsed] = useState(false)
     const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
     const [notifications, setNotifications] = useState([])
+    const [demoMode, setDemoMode] = useState(false)
+    const [demoUser, setDemoUser] = useState(null)
     const pathname = usePathname()
     const router = useRouter()
-    const { user, userData, loading } = useFirebaseAuth()
+    const { user: firebaseUser, userData: firebaseUserData, loading: firebaseLoading } = useFirebaseAuth()
+
+    // Check for demo mode on mount
+    useEffect(() => {
+        const checkDemoMode = () => {
+            // Check for demo-mode cookie
+            const cookies = document.cookie.split(';').reduce((acc, cookie) => {
+                const [key, value] = cookie.trim().split('=')
+                acc[key] = value
+                return acc
+            }, {})
+            
+            if (cookies['demo-mode'] === 'true' || cookies['auth-token']?.startsWith('demo-')) {
+                const role = getRoleFromPath(pathname)
+                setDemoMode(true)
+                setDemoUser(DEMO_USERS[role] || DEMO_USERS.user)
+            }
+        }
+        
+        checkDemoMode()
+    }, [pathname])
+
+    // Determine actual user and userData (Firebase or Demo)
+    const user = demoMode ? demoUser : firebaseUser
+    const userData = demoMode ? demoUser : firebaseUserData
+    const loading = demoMode ? false : firebaseLoading
 
     useEffect(() => {
-        if (!loading) {
+        if (!loading && !demoMode) {
             if (!user) {
+                // In demo mode, don't redirect - middleware will handle it
+                // For real auth, redirect to login
                 router.push('/login')
                 return
             }
@@ -58,11 +136,16 @@ export default function DashboardLayout({ children }) {
                 }
             }
         }
-    }, [user, userData, loading, router, pathname])
+        
+        // If in demo mode and on base /dashboard, redirect to role dashboard
+        if (demoMode && demoUser && pathname === '/dashboard') {
+            router.push(`/dashboard/${demoUser.role}`)
+        }
+    }, [user, userData, loading, router, pathname, demoMode, demoUser])
 
     const fetchNotifications = async () => {
         try {
-            if (!user) return
+            if (!user || demoMode) return // Skip for demo mode
             const token = await user.getIdToken()
             const response = await fetch('/api/notifications', {
                 headers: {
@@ -80,6 +163,14 @@ export default function DashboardLayout({ children }) {
 
     const handleLogout = async () => {
         try {
+            if (demoMode) {
+                // Clear demo cookies
+                document.cookie = 'auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+                document.cookie = 'user-role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+                document.cookie = 'demo-mode=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+                router.push('/')
+                return
+            }
             await signOut(auth)
             router.push('/login')
         } catch (error) {
@@ -108,8 +199,13 @@ export default function DashboardLayout({ children }) {
                     icon: Users,
                 },
                 {
-                    name: 'All Products',
-                    href: '/dashboard/admin/products',
+                    name: 'Resellers',
+                    href: '/dashboard/admin/resellers',
+                    icon: Users,
+                },
+                {
+                    name: 'Inventory',
+                    href: '/dashboard/admin/inventory',
                     icon: Package,
                 },
                 {
@@ -118,19 +214,29 @@ export default function DashboardLayout({ children }) {
                     icon: ShoppingCart,
                 },
                 {
+                    name: 'Reseller Orders',
+                    href: '/dashboard/admin/reseller-orders',
+                    icon: ShoppingCart,
+                },
+                {
                     name: 'Assign Riders',
                     href: '/dashboard/admin/assign-rider',
                     icon: Bike,
                 },
                 {
-                    name: 'System Logs',
-                    href: '/dashboard/admin/logs',
-                    icon: FileText,
+                    name: 'M-Pesa Transactions',
+                    href: '/dashboard/admin/mpesa',
+                    icon: Wallet,
                 },
                 {
                     name: 'Reports',
                     href: '/dashboard/admin/reports',
                     icon: BarChart3,
+                },
+                {
+                    name: 'System Logs',
+                    href: '/dashboard/admin/logs',
+                    icon: FileText,
                 },
                 {
                     name: 'Settings',
@@ -192,6 +298,43 @@ export default function DashboardLayout({ children }) {
             ]
         }
 
+        // Reseller navigation
+        if (userData.role === 'reseller') {
+            return [
+                ...baseNav,
+                {
+                    name: 'My Clients',
+                    href: '/dashboard/reseller/clients',
+                    icon: Users,
+                },
+                {
+                    name: 'Client Orders',
+                    href: '/dashboard/reseller/orders',
+                    icon: ShoppingCart,
+                },
+                {
+                    name: 'Stock Orders',
+                    href: '/dashboard/reseller/stock-orders',
+                    icon: Package,
+                },
+                {
+                    name: 'My Inventory',
+                    href: '/dashboard/reseller/inventory',
+                    icon: Package,
+                },
+                {
+                    name: 'Earnings',
+                    href: '/dashboard/reseller/earnings',
+                    icon: Wallet,
+                },
+                {
+                    name: 'Settings',
+                    href: '/dashboard/reseller/settings',
+                    icon: Settings,
+                }
+            ]
+        }
+
         // Default user navigation
         return [
             ...baseNav,
@@ -216,7 +359,13 @@ export default function DashboardLayout({ children }) {
     const navigation = getNavigation()
     const isActive = (href) => pathname === href || pathname.startsWith(href + '/dashboard')
 
-    if (loading || !userData) {
+    // Show loading only if not in demo mode and still loading
+    if (!demoMode && (loading || !userData)) {
+        return <Loading />
+    }
+    
+    // In demo mode, ensure we have demo user data
+    if (demoMode && !demoUser) {
         return <Loading />
     }
 

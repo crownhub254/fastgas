@@ -5,9 +5,59 @@ export function middleware(request) {
     // Get the pathname
     const { pathname } = request.nextUrl
 
-    // Define protected routes that require authentication
+    // DEMO MODE: Auto-login for dashboard routes
+    // Check if accessing any dashboard route
+    const isDashboardRoute = pathname.startsWith('/dashboard')
+    
+    if (isDashboardRoute) {
+        // Extract role from URL path
+        let demoRole = 'user' // default
+        if (pathname.startsWith('/dashboard/admin')) {
+            demoRole = 'admin'
+        } else if (pathname.startsWith('/dashboard/reseller')) {
+            demoRole = 'reseller'
+        } else if (pathname.startsWith('/dashboard/rider')) {
+            demoRole = 'rider'
+        } else if (pathname.startsWith('/dashboard/seller')) {
+            demoRole = 'seller'
+        } else if (pathname.startsWith('/dashboard/user')) {
+            demoRole = 'user'
+        }
+
+        // Check if already has demo auth
+        const authToken = request.cookies.get('auth-token')?.value
+        const userRole = request.cookies.get('user-role')?.value
+
+        // If not authenticated or role doesn't match, set demo cookies
+        if (!authToken || userRole !== demoRole) {
+            const response = NextResponse.next()
+            
+            // Set demo authentication cookies
+            response.cookies.set('auth-token', `demo-${demoRole}-token`, {
+                path: '/',
+                maxAge: 60 * 60 * 24 * 7, // 7 days
+                sameSite: 'lax'
+            })
+            response.cookies.set('user-role', demoRole, {
+                path: '/',
+                maxAge: 60 * 60 * 24 * 7,
+                sameSite: 'lax'
+            })
+            response.cookies.set('demo-mode', 'true', {
+                path: '/',
+                maxAge: 60 * 60 * 24 * 7,
+                sameSite: 'lax'
+            })
+            
+            return response
+        }
+        
+        // Already authenticated with correct role, proceed
+        return NextResponse.next()
+    }
+
+    // Define protected routes that require authentication (non-dashboard)
     const protectedRoutes = [
-        '/dashboard',
         '/profile',
         '/orders',
         '/settings',

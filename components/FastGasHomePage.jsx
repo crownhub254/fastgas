@@ -38,30 +38,6 @@ const CYLINDER_DATA = [
         }
     },
     {
-        size: '2000g',
-        name: 'FastGas Max',
-        category: 'Cream Charger',
-        idealFor: ['Hotels', 'Large restaurants', 'Catering companies', 'High-volume bars'],
-        features: [
-            'Maximum capacity (2kg)',
-            'Carrying strap included',
-            'Best value for volume',
-            'M10X1 standard valve'
-        ],
-        description: 'The largest FastGas cream charger at 2000g (2kg). European quality N₂O in a convenient large-format cylinder with carrying strap. Ideal for high-volume professional operations.',
-        application: 'Equivalent to ~250 cream chargers',
-        icon: ChefHat,
-        color: 'from-amber-400 to-orange-400',
-        specs: {
-            dimensions: '12.3 × 12.3 × 35.5 cm',
-            capacity: '2000 grams',
-            gas: 'Nitrous Oxide (N₂O)',
-            casing: 'Disposable Carbon Steel',
-            valve: 'M10X1',
-            unitsPerCase: 1
-        }
-    },
-    {
         size: 'Regulator',
         name: 'Pressure Regulator',
         category: 'Accessory',

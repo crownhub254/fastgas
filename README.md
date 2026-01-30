@@ -1,8 +1,8 @@
-# 🛍️ ShopHub - Modern E-Commerce Platform
+# 🛍️ FastGasHub - Modern E-Commerce Platform
 
 <div align="center">
 
-![ShopHub Banner](./assets/hero.png)
+![FastGasHub Banner](./assets/hero.png)
 
 **A full-stack, production-ready e-commerce platform with real-time notifications, role-based dashboards, and seamless payment integration.**
 
@@ -39,9 +39,9 @@
 
 ## 🌟 Overview
 
-**ShopHub** is a comprehensive e-commerce solution built with modern web technologies. It features a powerful admin panel, seller dashboard, real-time notifications, secure payment processing, and a beautiful, responsive user interface. Perfect for businesses looking to establish an online presence or developers wanting to learn full-stack development.
+**FastGasHub** is a comprehensive e-commerce solution built with modern web technologies. It features a powerful admin panel, seller dashboard, real-time notifications, secure payment processing, and a beautiful, responsive user interface. Perfect for businesses looking to establish an online presence or developers wanting to learn full-stack development.
 
-### Why ShopHub?
+### Why FastGasHub?
 
 - ✅ **Production-Ready** - Built with scalability and performance in mind
 - ✅ **Real-time Updates** - Firebase Firestore for instant notifications
@@ -423,7 +423,7 @@ Frontend will run on [http://localhost:3000](http://localhost:3000)
 ## 📁 Project Structure
 
 ```
-ShopHub/
+FastGasHub/
 ├── 📁 app/                          # Next.js App Router
 │   ├── 📁 (auth)/                   # Authentication routes
 │   │   ├── login/                   # Login page

@@ -166,7 +166,7 @@ function generateEmailTemplate({ order, payment, customerEmail }) {
           <!-- Footer -->
           <tr>
             <td style="padding: 30px 40px; background-color: #f8fafc; border-radius: 0 0 16px 16px; text-align: center;">
-              <p style="margin: 0 0 10px; color: #64748b; font-size: 14px;">Need help? Contact us at <a href="mailto:support@shophub.com" style="color: #4F46E5; text-decoration: none;">support@shophub.com</a></p>
+              <p style="margin: 0 0 10px; color: #64748b; font-size: 14px;">Need help? Contact us at <a href="mailto:support@fastgashub.com" style="color: #4F46E5; text-decoration: none;">support@fastgashub.com</a></p>
               <p style="margin: 0; color: #94a3b8; font-size: 12px;">© 2026 ShopHub. All rights reserved.</p>
               <p style="margin: 10px 0 0; color: #94a3b8; font-size: 12px;">
                 <a href="${process.env.FRONTEND_URL}/help" style="color: #94a3b8; text-decoration: none; margin: 0 10px;">Help</a> |

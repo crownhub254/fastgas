@@ -41,7 +41,7 @@ app.use('/api/settings', settingsRoutes);
 app.get('/', (req, res) => {
     res.json({
         success: true,
-        message: 'ShopHub API Server Running',
+        message: 'FastGasHub API Server Running',
         timestamp: new Date().toISOString()
     });
 });

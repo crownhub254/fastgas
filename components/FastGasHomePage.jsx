@@ -10,35 +10,55 @@ const CYLINDER_DATA = [
     {
         size: '670g',
         name: 'FastGas Original',
-        category: 'Cylinder',
+        category: 'Cream Charger',
         idealFor: ['Cafés & bakeries', 'Cocktail bars', 'Restaurants', 'Professional kitchens'],
         features: [
             'Bestselling size worldwide',
             'M10X1 standard valve',
             'Carbon steel cylinder',
-            'European manufactured'
+            '6 units per case'
         ],
-        description: 'The bestselling FastGas 670g cream charger. European quality N₂O at 99.99% purity. Compact design (8.0 × 8.0 × 25.2 cm) perfect for professional use. QR code verified authenticity.',
+        description: 'European quality nitrous oxide in a safe and disposable steel canister. Always at full capacity, this 670g canister is our bestselling size globally. Makes the fluffiest whipped creams, espumas, cocktail foams, and sauces.',
         application: 'Equivalent to ~80 cream chargers',
         icon: Coffee,
         popular: true,
-        color: 'from-cyan-400 to-blue-400'
+        color: 'from-cyan-400 to-blue-400',
+        specs: {
+            weight: '1.4 kg',
+            dimensions: '8.0 × 8.0 × 25.2 cm',
+            capacity: '670 grams',
+            gas: 'Nitrous Oxide (N₂O)',
+            casing: 'Disposable Carbon Steel',
+            valve: 'M10X1',
+            unNumber: 'UN.Nr 1070',
+            unitsPerCase: 6,
+            caseSize: '25.5 × 17.5 × 27 cm',
+            caseWeight: '12.6 kg'
+        }
     },
     {
         size: '2000g',
         name: 'FastGas Max',
-        category: 'Tank',
+        category: 'Cream Charger',
         idealFor: ['Hotels', 'Large restaurants', 'Catering companies', 'High-volume bars'],
         features: [
             'Maximum capacity (2kg)',
             'Carrying strap included',
             'Best value for volume',
-            'Heavy-duty regulator compatible'
+            'M10X1 standard valve'
         ],
-        description: 'The largest FastGas cylinder at 2000g (2kg). Dimensions: 12.3 × 12.3 × 35.5 cm. Includes convenient carrying strap. Ideal for high-volume professional operations.',
+        description: 'The largest FastGas cream charger at 2000g (2kg). European quality N₂O in a convenient large-format cylinder with carrying strap. Ideal for high-volume professional operations.',
         application: 'Equivalent to ~250 cream chargers',
         icon: ChefHat,
-        color: 'from-amber-400 to-orange-400'
+        color: 'from-amber-400 to-orange-400',
+        specs: {
+            dimensions: '12.3 × 12.3 × 35.5 cm',
+            capacity: '2000 grams',
+            gas: 'Nitrous Oxide (N₂O)',
+            casing: 'Disposable Carbon Steel',
+            valve: 'M10X1',
+            unitsPerCase: 1
+        }
     },
     {
         size: 'Regulator',
@@ -59,15 +79,15 @@ const CYLINDER_DATA = [
     {
         size: 'Creamer',
         name: 'FastGas Creamer',
-        category: 'Accessory',
+        category: 'Dispenser',
         idealFor: ['Espumas', 'Whipped cream', 'Sauces', 'Molecular gastronomy'],
         features: [
-            'Professional dispenser',
-            'Multiple nozzle tips',
-            'Easy cleaning design',
+            'Professional stand mount',
+            'Integrated cylinder holder',
+            'Premium matte black finish',
             'Restaurant-grade quality'
         ],
-        description: 'The FastGas Creamer is a professional cream syphon designed for creating perfect whipped cream, espumas, cocktail foams, and culinary sauces with precision.',
+        description: 'The FastGas Creamer is a professional all-in-one cream dispenser with integrated stand and cylinder mount. Creates perfect whipped cream, espumas, cocktail foams, and culinary sauces with precision.',
         application: 'Creates perfect creams & foams',
         icon: IceCream,
         color: 'from-pink-400 to-rose-400'

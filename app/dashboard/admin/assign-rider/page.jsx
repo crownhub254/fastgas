@@ -224,6 +224,45 @@ export default function AssignRiderPage() {
             toast.dismiss(loadingToast)
 
             if (data.success) {
+                // Send SMS to rider about new assignment
+                try {
+                    const riderPhone = rider.phone || rider.phoneNumber
+                    if (riderPhone) {
+                        await fetch('/api/sms/send', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                type: 'rider-assignment',
+                                phone: riderPhone,
+                                orderId: selectedOrder.orderId,
+                                address: `${selectedOrder.shippingInfo?.address || ''}, ${selectedOrder.shippingInfo?.city || ''}`
+                            })
+                        })
+                    }
+                } catch (smsError) {
+                    console.warn('Rider SMS notification failed:', smsError)
+                }
+
+                // Send SMS to customer about order being shipped
+                try {
+                    const customerPhone = selectedOrder.buyerInfo?.phone
+                    if (customerPhone) {
+                        await fetch('/api/sms/send', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                type: 'shipped',
+                                phone: customerPhone,
+                                orderId: selectedOrder.orderId,
+                                riderName: rider.displayName || 'Your rider',
+                                riderPhone: rider.phone || rider.phoneNumber || 'N/A'
+                            })
+                        })
+                    }
+                } catch (smsError) {
+                    console.warn('Customer SMS notification failed:', smsError)
+                }
+
                 toast.success(`✅ Rider ${rider.displayName} assigned successfully!`)
                 setShowRiderModal(false)
                 setSelectedOrder(null)

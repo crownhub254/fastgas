@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@stripe/stripe-js": "^8.6.1",
+    "africastalking": "^0.7.0",
     "axios": "^1.13.2",
     "daisyui": "^5.5.14",
     "date-fns": "^4.1.0",

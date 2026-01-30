@@ -192,34 +192,34 @@ components/checkout/
 ## 📊 Phase 3: Admin Dashboard Enhancements
 
 ### 3.1 Analytics Features
-- [ ] Sales by product (670g vs Regulator vs Creamer)
-- [ ] Revenue trends (daily, weekly, monthly)
-- [ ] Top resellers by volume
-- [ ] Geographic sales distribution
-- [ ] Inventory alerts
+- [x] Sales by product (670g vs Regulator vs Creamer)
+- [x] Revenue trends (daily, weekly, monthly)
+- [x] Top resellers by volume
+- [x] Geographic sales distribution
+- [x] Inventory alerts
 
 ### 3.2 Reseller Management
-- [ ] Approve/reject reseller applications
-- [ ] Set reseller price tiers
-- [ ] View reseller performance
-- [ ] Manage commissions
+- [x] Approve/reject reseller applications
+- [x] Set reseller price tiers
+- [x] View reseller performance
+- [x] Manage commissions
 
 ### 3.3 Order Management
-- [ ] View all orders with filters
-- [ ] Update order status
-- [ ] Assign riders for delivery
-- [ ] Print invoices/receipts
+- [x] View all orders with filters
+- [x] Update order status
+- [x] Assign riders for delivery
+- [x] Print invoices/receipts
 
 ---
 
 ## 🛒 Phase 4: Reseller Portal
 
 ### 4.1 Features for Resellers
-- [ ] View special pricing (15-25% discount)
-- [ ] Place bulk orders
-- [ ] Track order history
-- [ ] View earnings/commissions
-- [ ] Manage client relationships
+- [x] View special pricing (15-25% discount)
+- [x] Place bulk orders
+- [x] Track order history
+- [x] View earnings/commissions
+- [x] Manage client relationships
 
 ### 4.2 Reseller Tiers
 | Tier | Discount | Min. Monthly Order |
@@ -233,15 +233,15 @@ components/checkout/
 ## 🚚 Phase 5: Delivery & Rider System
 
 ### 5.1 Rider Features
-- [ ] View assigned deliveries
-- [ ] Update delivery status
-- [ ] Capture proof of delivery
+- [x] View assigned deliveries
+- [x] Update delivery status
+- [x] Capture proof of delivery (photo + recipient name)
 - [ ] Route optimization (future)
 
 ### 5.2 Delivery Tracking
-- [ ] Real-time order tracking
-- [ ] SMS notifications
-- [ ] Delivery confirmation
+- [x] Real-time order tracking page
+- [x] SMS notifications (Africa's Talking integration)
+- [x] Delivery confirmation with proof
 
 ---
 

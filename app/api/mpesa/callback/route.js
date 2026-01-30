@@ -5,6 +5,7 @@
 import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb/mongodb';
 import { MpesaTransaction, Order } from '@/lib/models';
+import { sendPaymentConfirmationSMS } from '@/lib/sms/config';
 
 export async function POST(req) {
     try {
@@ -67,6 +68,22 @@ export async function POST(req) {
                 receipt: transaction.mpesaReceiptNumber,
                 amount: transaction.amount,
             });
+
+            // Send SMS payment confirmation
+            try {
+                const order = await Order.findOne({ orderId: transaction.orderId });
+                if (order?.buyerInfo?.phone) {
+                    await sendPaymentConfirmationSMS(
+                        order.buyerInfo.phone,
+                        transaction.orderId,
+                        transaction.amount,
+                        transaction.mpesaReceiptNumber
+                    );
+                    console.log('📱 Payment SMS sent to:', order.buyerInfo.phone);
+                }
+            } catch (smsError) {
+                console.warn('SMS notification failed:', smsError);
+            }
 
         } else {
             // Payment failed or cancelled

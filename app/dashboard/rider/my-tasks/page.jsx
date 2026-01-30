@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Package, MapPin, Phone, DollarSign, CheckCircle, XCircle, Eye, X, Clock, Loader, Truck, Navigation } from 'lucide-react'
+import { Package, MapPin, Phone, DollarSign, CheckCircle, XCircle, Eye, X, Clock, Loader, Truck, Navigation, Camera, Upload, Image as ImageIcon } from 'lucide-react'
 import useFirebaseAuth from '@/lib/hooks/useFirebaseAuth'
 import toast from 'react-hot-toast'
 import DataTable from '../../components/DataTable'
@@ -15,6 +15,15 @@ export default function RiderMyTasksPage() {
     const [isLoading, setIsLoading] = useState(true)
     const [selectedOrder, setSelectedOrder] = useState(null)
     const [actionLoading, setActionLoading] = useState(false)
+    
+    // Proof of Delivery state
+    const [showProofModal, setShowProofModal] = useState(false)
+    const [proofOrder, setProofOrder] = useState(null)
+    const [proofImage, setProofImage] = useState(null)
+    const [proofImagePreview, setProofImagePreview] = useState(null)
+    const [proofNote, setProofNote] = useState('')
+    const [recipientName, setRecipientName] = useState('')
+    const fileInputRef = useRef(null)
 
     useEffect(() => {
         if (user) {
@@ -276,6 +285,123 @@ export default function RiderMyTasksPage() {
         }
     }
 
+    // Proof of Delivery Functions
+    const openProofModal = (order) => {
+        setProofOrder(order)
+        setProofImage(null)
+        setProofImagePreview(null)
+        setProofNote('')
+        setRecipientName(order.buyerInfo?.name || '')
+        setShowProofModal(true)
+    }
+
+    const handleImageChange = (e) => {
+        const file = e.target.files[0]
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) {
+                toast.error('Image must be less than 5MB')
+                return
+            }
+            setProofImage(file)
+            const reader = new FileReader()
+            reader.onloadend = () => {
+                setProofImagePreview(reader.result)
+            }
+            reader.readAsDataURL(file)
+        }
+    }
+
+    const handleConfirmDelivery = async () => {
+        if (!proofOrder) return
+
+        if (!recipientName.trim()) {
+            toast.error('Please enter recipient name')
+            return
+        }
+
+        setActionLoading(true)
+        try {
+            let proofImageUrl = null
+
+            // Upload image if provided
+            if (proofImage) {
+                const formData = new FormData()
+                formData.append('image', proofImage)
+
+                try {
+                    const uploadRes = await fetch(
+                        `https://api.imgbb.com/1/upload?key=${process.env.NEXT_PUBLIC_IMGBB_API_KEY}`,
+                        { method: 'POST', body: formData }
+                    )
+                    const uploadData = await uploadRes.json()
+                    if (uploadData.success) {
+                        proofImageUrl = uploadData.data.url
+                    }
+                } catch (uploadError) {
+                    console.warn('Image upload failed, continuing without image:', uploadError)
+                }
+            }
+
+            // Update order status with proof of delivery
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/riders/update-status`,
+                {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        orderId: proofOrder.orderId,
+                        riderId: user.uid,
+                        orderStatus: 'delivered',
+                        riderStatus: 'delivered',
+                        statusLabel: 'Delivered',
+                        proofOfDelivery: {
+                            recipientName: recipientName.trim(),
+                            deliveryNote: proofNote.trim(),
+                            proofImageUrl,
+                            deliveredAt: new Date().toISOString(),
+                            deliveredBy: user.uid
+                        }
+                    })
+                }
+            )
+
+            const data = await response.json()
+
+            if (data.success) {
+                // Send SMS notification to customer
+                try {
+                    const customerPhone = proofOrder.buyerInfo?.phone
+                    if (customerPhone) {
+                        await fetch('/api/sms/send', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                type: 'delivered',
+                                phone: customerPhone,
+                                orderId: proofOrder.orderId
+                            })
+                        })
+                    }
+                } catch (smsError) {
+                    console.warn('SMS notification failed:', smsError)
+                }
+
+                toast.success('✅ Delivery confirmed with proof!')
+                setShowProofModal(false)
+                setProofOrder(null)
+                setSelectedOrder(null)
+                setTimeout(() => fetchOrders(), 500)
+            } else {
+                toast.error(data.error || 'Failed to confirm delivery')
+            }
+        } catch (error) {
+            console.error('Error confirming delivery:', error)
+            toast.error('Failed to confirm delivery: ' + error.message)
+        } finally {
+            setActionLoading(false)
+        }
+    }
+
     const getStatusBadge = (status) => {
         const badges = {
             pending: { class: 'badge-warning', label: 'Pending', icon: Clock },
@@ -384,15 +510,15 @@ export default function RiderMyTasksPage() {
                 return (
                     <>
                         <button
-                            onClick={() => handleUpdateStatus(order.orderId, 'delivered', 'Delivered')}
+                            onClick={() => openProofModal(order)}
                             className="btn btn-sm btn-success"
-                            title="Mark as Delivered"
+                            title="Mark as Delivered with Proof"
                             disabled={actionLoading}
                         >
                             {actionLoading ? (
                                 <Loader className="w-4 h-4 animate-spin" />
                             ) : (
-                                <CheckCircle className="w-4 h-4" />
+                                <Camera className="w-4 h-4" />
                             )}
                         </button>
                         <button
@@ -736,6 +862,165 @@ export default function RiderMyTasksPage() {
                                             </span>
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Proof of Delivery Modal */}
+            <AnimatePresence>
+                {showProofModal && proofOrder && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+                        onClick={() => !actionLoading && setShowProofModal(false)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            className="bg-base-100 rounded-2xl shadow-xl max-w-md w-full p-6"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="flex items-center justify-between mb-6">
+                                <h3 className="text-xl font-bold text-base-content flex items-center gap-2">
+                                    <Camera className="w-6 h-6 text-success" />
+                                    Proof of Delivery
+                                </h3>
+                                <button
+                                    onClick={() => setShowProofModal(false)}
+                                    className="btn btn-ghost btn-sm btn-circle"
+                                    disabled={actionLoading}
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+
+                            <div className="space-y-4">
+                                {/* Order Info */}
+                                <div className="bg-base-200 p-3 rounded-lg">
+                                    <p className="text-sm text-base-content/70">Order</p>
+                                    <p className="font-bold text-base-content">{proofOrder.orderId}</p>
+                                    <p className="text-sm text-base-content/60">{proofOrder.buyerInfo?.name}</p>
+                                </div>
+
+                                {/* Recipient Name */}
+                                <div>
+                                    <label className="label">
+                                        <span className="label-text font-semibold">Recipient Name *</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={recipientName}
+                                        onChange={(e) => setRecipientName(e.target.value)}
+                                        placeholder="Who received the package?"
+                                        className="input input-bordered w-full"
+                                        disabled={actionLoading}
+                                    />
+                                </div>
+
+                                {/* Photo Upload */}
+                                <div>
+                                    <label className="label">
+                                        <span className="label-text font-semibold">Delivery Photo (Optional)</span>
+                                    </label>
+                                    <input
+                                        type="file"
+                                        ref={fileInputRef}
+                                        accept="image/*"
+                                        capture="environment"
+                                        onChange={handleImageChange}
+                                        className="hidden"
+                                    />
+                                    
+                                    {proofImagePreview ? (
+                                        <div className="relative">
+                                            <img
+                                                src={proofImagePreview}
+                                                alt="Proof of delivery"
+                                                className="w-full h-48 object-cover rounded-lg"
+                                            />
+                                            <button
+                                                onClick={() => {
+                                                    setProofImage(null)
+                                                    setProofImagePreview(null)
+                                                }}
+                                                className="absolute top-2 right-2 btn btn-circle btn-sm btn-error"
+                                                disabled={actionLoading}
+                                            >
+                                                <X className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => fileInputRef.current?.click()}
+                                                className="btn btn-outline flex-1 gap-2"
+                                                disabled={actionLoading}
+                                            >
+                                                <Camera className="w-5 h-5" />
+                                                Take Photo
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    fileInputRef.current.removeAttribute('capture')
+                                                    fileInputRef.current?.click()
+                                                }}
+                                                className="btn btn-outline flex-1 gap-2"
+                                                disabled={actionLoading}
+                                            >
+                                                <Upload className="w-5 h-5" />
+                                                Upload
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Delivery Notes */}
+                                <div>
+                                    <label className="label">
+                                        <span className="label-text font-semibold">Delivery Notes (Optional)</span>
+                                    </label>
+                                    <textarea
+                                        value={proofNote}
+                                        onChange={(e) => setProofNote(e.target.value)}
+                                        placeholder="Any notes about the delivery..."
+                                        className="textarea textarea-bordered w-full"
+                                        rows={3}
+                                        disabled={actionLoading}
+                                    />
+                                </div>
+
+                                {/* Actions */}
+                                <div className="flex gap-3 mt-6">
+                                    <button
+                                        onClick={() => setShowProofModal(false)}
+                                        className="btn btn-ghost flex-1"
+                                        disabled={actionLoading}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={handleConfirmDelivery}
+                                        className="btn btn-success flex-1 gap-2"
+                                        disabled={actionLoading || !recipientName.trim()}
+                                    >
+                                        {actionLoading ? (
+                                            <>
+                                                <span className="loading loading-spinner loading-sm" />
+                                                Confirming...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Check className="w-5 h-5" />
+                                                Confirm Delivery
+                                            </>
+                                        )}
+                                    </button>
                                 </div>
                             </div>
                         </motion.div>

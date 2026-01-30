@@ -1,9 +1,19 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, Suspense } from 'react'
 import { motion, useScroll, useTransform, useSpring, useInView, AnimatePresence, useMotionValue, useVelocity, useAnimationFrame } from 'framer-motion'
 import { Sparkles, Truck, Shield, Phone, MapPin, Clock, ChevronRight, Star, Package, Coffee, GlassWater, Cake, ChefHat, Zap, CheckCircle, Award, Beaker, IceCream, ArrowDown, Play, LayoutDashboard, Users, ShoppingBag, Bike, Volume2, VolumeX } from 'lucide-react'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
+
+// Dynamic import for 3D scenes (client-side only)
+const Hero3DScene = dynamic(() => import('./three/Scene3D').then(mod => ({ default: mod.Hero3DScene })), { 
+    ssr: false,
+    loading: () => <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 via-purple-900/20 to-cyan-900/20" />
+})
+const Product3DScene = dynamic(() => import('./three/Scene3D').then(mod => ({ default: mod.Product3DScene })), { ssr: false })
+const Minimal3DBackground = dynamic(() => import('./three/Scene3D').then(mod => ({ default: mod.Minimal3DBackground })), { ssr: false })
+const ProductViewer3D = dynamic(() => import('./three/Scene3D').then(mod => ({ default: mod.ProductViewer3D })), { ssr: false })
 
 // FastGas N₂O Cylinder Products - Official Products from fast-gas.com
 const CYLINDER_DATA = [
@@ -827,6 +837,11 @@ export default function FastGasHomePage({ user = null }) {
                 {/* Aurora Background Effect */}
                 <AuroraBackground />
                 
+                {/* 3D Scene Background - Creates depth and visual interest */}
+                <div className="absolute inset-0 z-[1]">
+                    <Hero3DScene />
+                </div>
+                
                 {/* Animated Gradient Background */}
                 <motion.div 
                     className="absolute inset-0 bg-gradient-to-br from-blue-900 via-purple-900 to-cyan-900"
@@ -1031,6 +1046,11 @@ export default function FastGasHomePage({ user = null }) {
 
             {/* Products Section */}
             <section id="products" className="py-24 bg-base-200 relative overflow-hidden">
+                {/* 3D Background for Products */}
+                <div className="absolute inset-0 opacity-40">
+                    <Product3DScene />
+                </div>
+                
                 {/* Background Pattern */}
                 <div className="absolute inset-0 opacity-5">
                     <div className="absolute inset-0" style={{
@@ -1121,7 +1141,12 @@ export default function FastGasHomePage({ user = null }) {
             </section>
 
             {/* Testimonials Infinite Marquee Section */}
-            <section className="py-16 bg-gradient-to-r from-base-200 via-base-100 to-base-200 overflow-hidden">
+            <section className="py-16 bg-gradient-to-r from-base-200 via-base-100 to-base-200 overflow-hidden relative">
+                {/* Subtle 3D Stars Background */}
+                <div className="absolute inset-0 opacity-30">
+                    <Minimal3DBackground />
+                </div>
+                
                 <WaveDivider flip />
                 
                 <motion.div

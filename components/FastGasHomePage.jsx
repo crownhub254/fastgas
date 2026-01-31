@@ -723,39 +723,61 @@ function LiquidBlob({ className = '', color = 'cyan' }) {
     )
 }
 
-// Glitch Text Effect
+// Glitch Text Effect - Enhanced with Neon Glow
 function GlitchText({ text, className = '' }) {
     return (
         <div className={`relative ${className}`}>
-            <span className="relative z-10">{text}</span>
+            {/* Main text with neon glow */}
+            <span className="relative z-10 drop-shadow-[0_0_10px_rgba(6,182,212,0.5)]">{text}</span>
+            
+            {/* Cyan glitch layer */}
             <motion.span
                 className="absolute inset-0 text-cyan-400 z-0"
                 animate={{
-                    x: [-2, 2, -2],
-                    opacity: [0, 1, 0],
+                    x: [-3, 3, -3],
+                    opacity: [0, 0.8, 0],
                 }}
                 transition={{
-                    duration: 0.15,
+                    duration: 0.2,
                     repeat: Infinity,
-                    repeatDelay: 3,
+                    repeatDelay: 2,
                 }}
-                style={{ clipPath: 'inset(20% 0 30% 0)' }}
+                style={{ clipPath: 'inset(20% 0 30% 0)', textShadow: '0 0 20px rgba(6,182,212,0.8)' }}
             >
                 {text}
             </motion.span>
+            
+            {/* Pink/magenta glitch layer */}
             <motion.span
                 className="absolute inset-0 text-pink-400 z-0"
                 animate={{
-                    x: [2, -2, 2],
-                    opacity: [0, 1, 0],
+                    x: [3, -3, 3],
+                    opacity: [0, 0.8, 0],
                 }}
                 transition={{
-                    duration: 0.15,
+                    duration: 0.2,
                     repeat: Infinity,
-                    repeatDelay: 3,
-                    delay: 0.05,
+                    repeatDelay: 2,
+                    delay: 0.1,
                 }}
-                style={{ clipPath: 'inset(50% 0 20% 0)' }}
+                style={{ clipPath: 'inset(50% 0 20% 0)', textShadow: '0 0 20px rgba(236,72,153,0.8)' }}
+            >
+                {text}
+            </motion.span>
+            
+            {/* Yellow electric flash */}
+            <motion.span
+                className="absolute inset-0 text-yellow-300 z-0"
+                animate={{
+                    opacity: [0, 1, 0],
+                    scale: [1, 1.02, 1],
+                }}
+                transition={{
+                    duration: 0.1,
+                    repeat: Infinity,
+                    repeatDelay: 4,
+                }}
+                style={{ textShadow: '0 0 30px rgba(253,224,71,1), 0 0 60px rgba(253,224,71,0.5)' }}
             >
                 {text}
             </motion.span>
@@ -836,40 +858,106 @@ const PARTICLE_DATA = [...Array(15)].map((_, i) => ({
     delay: ((i * 31) % 50) / 10,
 }))
 
-// Floating Particle Component - OPTIMIZED
-function FloatingParticles() {
+// Generate shooting star data
+const SHOOTING_STARS = [...Array(6)].map((_, i) => ({
+    id: i,
+    startX: 10 + (i * 15) % 80,
+    startY: 5 + (i * 23) % 30,
+    duration: 1.5 + (i * 0.3),
+    delay: i * 3 + Math.random() * 2,
+}))
+
+// Static stars data for night sky
+const NIGHT_STARS = [...Array(100)].map((_, i) => ({
+    id: i,
+    left: `${(i * 17 + 3) % 100}%`,
+    top: `${(i * 31 + 7) % 100}%`,
+    size: 1 + (i % 3),
+    opacity: 0.3 + (i % 5) * 0.15,
+    twinkleDelay: (i * 0.7) % 5,
+}))
+
+// Space Background with Night Sky and Shooting Stars
+function SpaceBackground() {
     const isMobile = useIsMobile()
     const prefersReducedMotion = usePrefersReducedMotion()
     
-    // Disable on mobile or reduced motion
-    if (isMobile || prefersReducedMotion) {
-        return null
-    }
-    
     return (
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            {PARTICLE_DATA.map((particle) => (
+            {/* Static Stars - Night Sky */}
+            {NIGHT_STARS.map((star) => (
                 <motion.div
-                    key={particle.id}
-                    className="absolute w-1 h-1 bg-white rounded-full will-change-transform"
+                    key={star.id}
+                    className="absolute rounded-full bg-white will-change-transform"
                     style={{
-                        left: particle.left,
-                        top: particle.top,
+                        left: star.left,
+                        top: star.top,
+                        width: star.size,
+                        height: star.size,
                     }}
-                    animate={{
-                        y: [0, -20, 0],
-                        opacity: [0.2, 0.6, 0.2],
+                    animate={prefersReducedMotion ? {} : {
+                        opacity: [star.opacity, star.opacity * 1.5, star.opacity],
+                        scale: [1, 1.2, 1],
                     }}
                     transition={{
-                        duration: particle.duration,
+                        duration: 2 + (star.id % 3),
                         repeat: Infinity,
-                        delay: particle.delay,
+                        delay: star.twinkleDelay,
                         ease: "easeInOut",
                     }}
                 />
             ))}
+            
+            {/* Shooting Stars - Only on desktop and without reduced motion */}
+            {!isMobile && !prefersReducedMotion && SHOOTING_STARS.map((star) => (
+                <motion.div
+                    key={`shooting-${star.id}`}
+                    className="absolute"
+                    style={{
+                        left: `${star.startX}%`,
+                        top: `${star.startY}%`,
+                    }}
+                    initial={{ opacity: 0, x: 0, y: 0 }}
+                    animate={{
+                        opacity: [0, 1, 1, 0],
+                        x: [0, 150, 300],
+                        y: [0, 100, 200],
+                    }}
+                    transition={{
+                        duration: star.duration,
+                        repeat: Infinity,
+                        delay: star.delay,
+                        repeatDelay: 8 + star.id * 2,
+                        ease: "easeOut",
+                    }}
+                >
+                    {/* Shooting star head */}
+                    <div className="relative">
+                        <div className="w-2 h-2 bg-white rounded-full shadow-[0_0_10px_#fff,0_0_20px_#06b6d4,0_0_30px_#06b6d4]" />
+                        {/* Tail/Trail */}
+                        <div 
+                            className="absolute top-1/2 right-full -translate-y-1/2 h-0.5 bg-gradient-to-l from-white via-cyan-300 to-transparent"
+                            style={{ width: '80px' }}
+                        />
+                    </div>
+                </motion.div>
+            ))}
+            
+            {/* Nebula-like glow patches */}
+            <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-cyan-500/5 rounded-full blur-3xl" />
+            <div className="absolute bottom-1/3 right-1/4 w-48 h-48 bg-purple-500/5 rounded-full blur-3xl" />
+            <div className="absolute top-1/2 right-1/3 w-32 h-32 bg-yellow-400/5 rounded-full blur-2xl" />
         </div>
     )
+}
+
+// Legacy FloatingParticles - kept for backward compatibility
+function FloatingParticles() {
+    const isMobile = useIsMobile()
+    const prefersReducedMotion = usePrefersReducedMotion()
+    
+    // Now uses SpaceBackground instead
+    return <SpaceBackground />
 }
 
 // Animated Gradient Orb - OPTIMIZED
@@ -1256,24 +1344,57 @@ export default function FastGasHomePage({ user = null }) {
                             />
                         </motion.div>
                         
-                        {/* Main Title with Glitch Effect */}
+                        {/* Main Title with Flashy Neon Effect */}
                         <motion.h1 
                             initial={{ scale: 0.5, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             transition={{ delay: 0.4, type: "spring", stiffness: 100 }}
                             className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black mb-6 relative"
                         >
-                            <GlitchText text="Fast" className="relative inline-block" />
+                            {/* FAST - with glitch effect */}
+                            <GlitchText text="FAST" className="relative inline-block" />
+                            {/* GAS - with animated gradient and glow */}
                             <motion.span 
-                                className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-yellow-300 to-cyan-400"
+                                className="relative inline-block text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-yellow-200 to-cyan-400"
                                 animate={{ 
                                     backgroundPosition: ['0%', '100%', '0%'],
                                 }}
-                                transition={{ duration: 5, repeat: Infinity }}
-                                style={{ backgroundSize: '200%' }}
+                                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                                style={{ 
+                                    backgroundSize: '200%',
+                                    filter: 'drop-shadow(0 0 20px rgba(253,224,71,0.5)) drop-shadow(0 0 40px rgba(6,182,212,0.3))',
+                                }}
                             >
-                                Gas
+                                GAS
+                                {/* Pulsing glow behind GAS */}
+                                <motion.span
+                                    className="absolute inset-0 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-yellow-400 blur-sm -z-10"
+                                    animate={{
+                                        opacity: [0.5, 1, 0.5],
+                                    }}
+                                    transition={{ duration: 2, repeat: Infinity }}
+                                    style={{ backgroundSize: '200%' }}
+                                >
+                                    GAS
+                                </motion.span>
                             </motion.span>
+                            
+                            {/* Electric spark effect around the title */}
+                            <motion.div
+                                className="absolute -inset-4 pointer-events-none"
+                                animate={{
+                                    opacity: [0, 1, 0],
+                                }}
+                                transition={{
+                                    duration: 0.3,
+                                    repeat: Infinity,
+                                    repeatDelay: 5,
+                                }}
+                            >
+                                <div className="absolute top-0 left-1/4 w-1 h-3 bg-gradient-to-b from-yellow-300 to-transparent rotate-12" />
+                                <div className="absolute top-1/3 right-0 w-1 h-4 bg-gradient-to-b from-cyan-300 to-transparent -rotate-12" />
+                                <div className="absolute bottom-0 left-1/2 w-1 h-2 bg-gradient-to-b from-yellow-300 to-transparent" />
+                            </motion.div>
                         </motion.h1>
                         
                         {/* Typewriter Subtitle */}

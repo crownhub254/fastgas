@@ -16,11 +16,11 @@ export default function ThemeToggle({ className = '' }) {
     return (
         <button
             onClick={toggleTheme}
-            className={`btn btn-ghost  btn-square ${className}`}
+            className={`p-2.5 rounded-lg bg-base-300 hover:bg-primary/20 transition-all duration-200 border border-base-content/10 group ${className}`}
             aria-label="Toggle theme"
         >
-            {theme === 'light' && <Sun className="w-5 h-5" />}
-            {theme === 'dark' && <Moon className="w-5 h-5" />}
+            {theme === 'light' && <Sun className="w-5 h-5 text-base-content group-hover:text-primary transition-colors" />}
+            {theme === 'dark' && <Moon className="w-5 h-5 text-base-content group-hover:text-primary transition-colors" />}
         </button>
     )
 }

@@ -262,17 +262,26 @@ function HeroSceneDesktop() {
                     <OptimizedRing position={[2.5, 1.5, -4]} color="#06b6d4" />
                     
                     {/* Reduced particle count */}
-                    <LightweightParticles count={80} />
-                    <MinimalSparkles count={25} />
+                    <MinimalSparkles count={35} />
                     
-                    {/* Simplified stars */}
+                    {/* Enhanced night sky stars - more visible */}
                     <Stars 
-                        radius={40} 
-                        depth={40} 
-                        count={300} 
-                        factor={3} 
+                        radius={50} 
+                        depth={50} 
+                        count={1500} 
+                        factor={4} 
                         fade 
-                        speed={0.3}
+                        speed={0.5}
+                    />
+                    
+                    {/* Second layer of stars for depth */}
+                    <Stars 
+                        radius={100} 
+                        depth={80} 
+                        count={800} 
+                        factor={6} 
+                        fade 
+                        speed={0.2}
                     />
                     
                     {/* Lighter bloom only */}
@@ -322,11 +331,12 @@ function HeroSceneMobile() {
                 <SimpleFloatingSphere position={[-2, 1, -2]} color="#06b6d4" size={0.4} />
                 <SimpleFloatingSphere position={[2, -0.5, -3]} color="#a855f7" size={0.3} />
                 
+                {/* Enhanced stars for mobile - space vibes */}
                 <Stars 
-                    radius={30} 
-                    depth={30} 
-                    count={100} 
-                    factor={2} 
+                    radius={40} 
+                    depth={40} 
+                    count={500} 
+                    factor={3} 
                     fade 
                     speed={0.2}
                 />

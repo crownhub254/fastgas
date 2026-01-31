@@ -200,10 +200,10 @@ export default function Navbar() {
                         {/* Cart Button */}
                         <Link
                             href="/cart"
-                            className="relative p-2.5 rounded-lg bg-base-300 hover:bg-base-200 transition-all duration-200 group"
+                            className="relative p-2.5 rounded-lg bg-base-300 hover:bg-primary/20 transition-all duration-200 group border border-base-content/10"
                             aria-label="Shopping cart"
                         >
-                            <ShoppingCart className="w-5 h-5 text-base-content group-hover:scale-110 transition-transform" />
+                            <ShoppingCart className="w-5 h-5 text-base-content group-hover:text-primary group-hover:scale-110 transition-all" />
                             {cartItemsCount > 0 && (
                                 <span className="absolute -top-1 -right-1 w-5 h-5 bg-linear-to-r from-primary to-secondary text-primary-content text-xs font-bold rounded-full flex items-center justify-center animate-pulse">
                                     {cartItemsCount > 9 ? '9+' : cartItemsCount}

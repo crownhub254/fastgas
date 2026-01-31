@@ -301,12 +301,6 @@ export default function ProductDetailPage() {
                                     <span>{product.stock === 0 ? 'Out of Stock' : 'Buy Now - Proceed to Checkout'}</span>
                                 </motion.button>
                             </Link>
-                                        : 'bg-base-300 text-base-content/40 cursor-not-allowed'
-                                    }`}
-                            >
-                                <ShoppingCart className="w-6 h-6" />
-                                <span>{product.stock === 0 ? 'Out of Stock' : `Add ${quantity} to Cart`}</span>
-                            </motion.button>
 
                             {/* Secondary Actions */}
                             <div className="grid grid-cols-2 gap-3">

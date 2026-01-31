@@ -8,8 +8,15 @@ module.exports = {
     theme: {
         extend: {
             colors: {
-                primary: '#3b82f6',
-                secondary: '#8b5cf6',
+                // FastGas Brand Colors
+                primary: '#0D2137',      // Deep Navy Blue (cylinder body)
+                secondary: '#F7C600',    // Bright Yellow/Gold (accent rings)
+                accent: '#06B6D4',       // Cyan (logo accent)
+                'fastgas-navy': '#0A1628',
+                'fastgas-blue': '#0D2137',
+                'fastgas-yellow': '#F7C600',
+                'fastgas-gold': '#E5B300',
+                'fastgas-cyan': '#06B6D4',
             },
             fontFamily: {
                 // Font 1: Core UI & Body - Trust, readability, compliance

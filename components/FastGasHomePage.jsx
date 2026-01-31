@@ -85,7 +85,7 @@ const CYLINDER_DATA = [
         application: 'Equivalent to ~80 cream chargers',
         icon: Coffee,
         popular: true,
-        color: 'from-cyan-400 to-blue-400',
+        color: 'from-[#0D2137] to-[#142d4c]',
         specs: {
             weight: '1.4 kg',
             dimensions: '8.0 × 8.0 × 25.2 cm',
@@ -475,8 +475,11 @@ function LiquidBlob({ className = '', color = 'cyan' }) {
     const isMobile = useIsMobile()
     const prefersReducedMotion = usePrefersReducedMotion()
     
+    // FastGas brand colors
     const colors = {
         cyan: 'rgba(6,182,212,0.25)',
+        yellow: 'rgba(247,198,0,0.25)',
+        navy: 'rgba(13,33,55,0.4)',
         purple: 'rgba(139,92,246,0.25)',
         pink: 'rgba(236,72,153,0.25)',
     }
@@ -970,22 +973,22 @@ export default function FastGasHomePage({ user = null }) {
                     <Hero3DScene />
                 </div>
                 
-                {/* Static Gradient Background - Optimized for performance */}
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-900 via-purple-900 to-cyan-900" />
+                {/* Static Gradient Background - FastGas Navy Blue */}
+                <div className="absolute inset-0 bg-gradient-to-br from-[#0A1628] via-[#0D2137] to-[#142d4c]" />
 
                 {/* Liquid Blob Effects - Only on desktop */}
                 {!isMobile && (
                     <>
                         <LiquidBlob className="w-[500px] h-[500px] -top-40 -left-40" color="cyan" />
-                        <LiquidBlob className="w-[400px] h-[400px] top-1/2 -right-40" color="purple" />
-                        <LiquidBlob className="w-[350px] h-[350px] -bottom-40 left-1/3" color="pink" />
+                        <LiquidBlob className="w-[400px] h-[400px] top-1/2 -right-40" color="yellow" />
+                        <LiquidBlob className="w-[350px] h-[350px] -bottom-40 left-1/3" color="cyan" />
                     </>
                 )}
 
-                {/* Floating Gradient Orbs */}
+                {/* Floating Gradient Orbs - FastGas colors */}
                 <GradientOrb className="w-96 h-96 bg-cyan-500 -top-20 -left-20" delay={0} />
-                <GradientOrb className="w-80 h-80 bg-purple-500 top-1/2 -right-20" delay={2} />
-                <GradientOrb className="w-72 h-72 bg-blue-500 -bottom-20 left-1/3" delay={4} />
+                <GradientOrb className="w-80 h-80 bg-yellow-400 top-1/2 -right-20" delay={2} />
+                <GradientOrb className="w-72 h-72 bg-cyan-400 -bottom-20 left-1/3" delay={4} />
 
                 {/* Floating Particles */}
                 <FloatingParticles />
@@ -1028,10 +1031,10 @@ export default function FastGasHomePage({ user = null }) {
                                 animate={{ rotate: 360 }}
                                 transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
                             >
-                                <Sparkles className="w-6 h-6 text-cyan-300" />
+                                <Sparkles className="w-6 h-6 text-yellow-400" />
                             </motion.div>
                             <span className="font-medium text-lg">
-                                <ScrambleText text="Premium Culinary Grade N₂O" className="bg-gradient-to-r from-cyan-300 to-purple-300 bg-clip-text text-transparent" delay={500} />
+                                <ScrambleText text="Premium Culinary Grade N₂O" className="bg-gradient-to-r from-yellow-300 to-cyan-300 bg-clip-text text-transparent" delay={500} />
                             </span>
                             <motion.div
                                 animate={{ scale: [1, 1.2, 1] }}
@@ -1049,7 +1052,7 @@ export default function FastGasHomePage({ user = null }) {
                         >
                             <GlitchText text="Fast" className="relative inline-block" />
                             <motion.span 
-                                className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400"
+                                className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-yellow-300 to-cyan-400"
                                 animate={{ 
                                     backgroundPosition: ['0%', '100%', '0%'],
                                 }}
@@ -1067,12 +1070,12 @@ export default function FastGasHomePage({ user = null }) {
                             transition={{ delay: 0.6 }}
                             className="text-3xl md:text-4xl mb-4 font-light"
                         >
-                            <span className="bg-gradient-to-r from-cyan-200 to-white bg-clip-text text-transparent">
+                            <span className="bg-gradient-to-r from-yellow-200 to-white bg-clip-text text-transparent">
                                 Perfect for{' '}
                             </span>
                             <TypewriterText 
                                 words={['Whipped Cream', 'Espumas', 'Cocktail Foams', 'Pastry Creations', 'Molecular Cuisine']}
-                                className="text-cyan-300 font-semibold"
+                                className="text-yellow-300 font-semibold"
                             />
                         </motion.p>
                         
@@ -1096,7 +1099,7 @@ export default function FastGasHomePage({ user = null }) {
                             <MagneticButton
                                 href="#products"
                                 onClick={explode}
-                                className="btn btn-md sm:btn-lg px-6 sm:px-10 bg-gradient-to-r from-cyan-500 to-blue-500 border-none text-white shadow-2xl shadow-cyan-500/30 hover:shadow-cyan-500/50 flex items-center"
+                                className="btn btn-md sm:btn-lg px-6 sm:px-10 bg-gradient-to-r from-yellow-400 to-yellow-500 border-none text-[#0D2137] font-bold shadow-2xl shadow-yellow-500/30 hover:shadow-yellow-500/50 flex items-center"
                             >
                                 <Package className="w-5 h-5 mr-2" />
                                 Explore Products
@@ -1138,7 +1141,7 @@ export default function FastGasHomePage({ user = null }) {
                                     whileHover={{ scale: 1.05, y: -5 }}
                                     className="bg-white/5 backdrop-blur-md rounded-2xl p-6 border border-white/10"
                                 >
-                                    <p className="text-4xl font-bold bg-gradient-to-r from-cyan-300 to-purple-300 bg-clip-text text-transparent">
+                                    <p className="text-4xl font-bold bg-gradient-to-r from-yellow-300 to-cyan-300 bg-clip-text text-transparent">
                                         <AnimatedCounter value={stat.value} suffix={stat.suffix} />
                                     </p>
                                     <p className="text-sm text-white/60 mt-1">{stat.label}</p>
@@ -1346,20 +1349,13 @@ export default function FastGasHomePage({ user = null }) {
                 <WaveDivider />
             </section>
 
-            {/* CTA Section with Parallax */}
+            {/* CTA Section with FastGas Brand Colors */}
             <section className="py-24 relative overflow-hidden">
-                <motion.div 
-                    className="absolute inset-0 bg-gradient-to-r from-cyan-600 via-blue-600 to-purple-600"
-                    animate={{
-                        background: [
-                            'linear-gradient(90deg, #0891b2 0%, #2563eb 50%, #7c3aed 100%)',
-                            'linear-gradient(90deg, #7c3aed 0%, #0891b2 50%, #2563eb 100%)',
-                            'linear-gradient(90deg, #2563eb 0%, #7c3aed 50%, #0891b2 100%)',
-                            'linear-gradient(90deg, #0891b2 0%, #2563eb 50%, #7c3aed 100%)',
-                        ]
-                    }}
-                    transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-                />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#0A1628] via-[#0D2137] to-[#142d4c]" />
+                
+                {/* Yellow accent glow */}
+                <div className="absolute top-0 left-1/4 w-96 h-96 bg-yellow-400/20 rounded-full blur-3xl" />
+                <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-cyan-400/20 rounded-full blur-3xl" />
                 
                 <FloatingParticles />
                 
@@ -1373,9 +1369,9 @@ export default function FastGasHomePage({ user = null }) {
                             className="text-5xl md:text-6xl font-bold mb-6 text-white"
                             animate={{ 
                                 textShadow: [
-                                    '0 0 20px rgba(255,255,255,0.3)',
-                                    '0 0 40px rgba(255,255,255,0.5)',
-                                    '0 0 20px rgba(255,255,255,0.3)',
+                                    '0 0 20px rgba(247,198,0,0.3)',
+                                    '0 0 40px rgba(247,198,0,0.5)',
+                                    '0 0 20px rgba(247,198,0,0.3)',
                                 ]
                             }}
                             transition={{ duration: 3, repeat: Infinity }}
@@ -1389,7 +1385,7 @@ export default function FastGasHomePage({ user = null }) {
                                 href="tel:+254740595680" 
                                 whileHover={{ scale: 1.05, y: -3 }}
                                 whileTap={{ scale: 0.98 }}
-                                className="btn btn-md sm:btn-lg px-6 sm:px-10 bg-white text-blue-600 hover:bg-gray-100 border-none shadow-2xl w-full sm:w-auto"
+                                className="btn btn-md sm:btn-lg px-6 sm:px-10 bg-yellow-400 text-[#0D2137] hover:bg-yellow-300 border-none shadow-2xl shadow-yellow-400/30 font-bold w-full sm:w-auto"
                             >
                                 <Phone className="w-5 h-5 mr-2" />
                                 +254 740 595 680

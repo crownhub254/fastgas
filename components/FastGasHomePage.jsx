@@ -68,6 +68,7 @@ const ProductViewer3D = dynamic(() => import('./three/Scene3D').then(mod => ({ d
 const CYLINDER_DATA = [
     {
         size: '670g',
+        slug: '670g-n2o-cylinder',
         name: 'FastGas Original',
         category: 'Cream Charger',
         image: 'https://fast-gas.com/wp-content/uploads/2022/07/PRODUCT-PAGE_670_side-view.png',
@@ -100,6 +101,7 @@ const CYLINDER_DATA = [
     },
     {
         size: 'Regulator',
+        slug: 'pressure-regulator',
         name: 'Pressure Regulator',
         category: 'Accessory',
         image: 'https://fast-gas.com/wp-content/uploads/2025/03/Pressure-Regulator-transparent.png',
@@ -113,10 +115,18 @@ const CYLINDER_DATA = [
         description: 'Essential pressure regulator for connecting FastGas cylinders to cream syphons and dispensers.',
         application: 'Required for cylinder use',
         icon: Zap,
-        color: 'from-violet-400 to-purple-400'
+        color: 'from-violet-400 to-purple-400',
+        specs: {
+            weight: '0.3 kg',
+            compatibility: 'M10X1 valve',
+            material: 'Durable Brass',
+            connection: 'Standard Syphon',
+            warranty: '1 Year'
+        }
     },
     {
         size: 'Creamer',
+        slug: 'fastgas-creamer',
         name: 'FastGas Creamer',
         category: 'Dispenser',
         image: 'https://fast-gas.com/wp-content/uploads/2024/06/fg-new-branding-670-original.png',
@@ -130,7 +140,42 @@ const CYLINDER_DATA = [
         description: 'Professional all-in-one cream dispenser with integrated stand and cylinder mount.',
         application: 'Creates perfect creams & foams',
         icon: IceCream,
-        color: 'from-pink-400 to-rose-400'
+        color: 'from-pink-400 to-rose-400',
+        specs: {
+            weight: '0.5 kg',
+            dimensions: '10 × 10 × 35 cm',
+            compatibility: 'All N₂O cylinders',
+            finish: 'Premium Matte Black',
+            warranty: '2 Years'
+        }
+    },
+    {
+        size: '0.5L',
+        slug: 'cream-syphon',
+        name: 'FastGas Cream Syphon',
+        category: 'Equipment',
+        image: 'https://fast-gas.com/wp-content/uploads/2025/03/3.png',
+        idealFor: ['Whipped creams', 'Espumas', 'Foams', 'Culinary creations', 'Bar service'],
+        features: [
+            'Compatible with FastGas Creamer',
+            'Works with Pressure Regulator',
+            'Industry standard compatibility',
+            'Cold mixtures only',
+            'Professional grade quality'
+        ],
+        description: 'The FastGas cream syphon is designed to dispense the final product: whipped creams, espumas and foams on your culinary or bar creations. Compatible with the FastGas Creamer and the FastGas pressure regulator as well as most industry standards. Only suitable for cold mixtures.',
+        application: 'Dispenses perfect creams & foams',
+        icon: GlassWater,
+        color: 'from-emerald-400 to-teal-400',
+        specs: {
+            weight: '1 kg',
+            dimensions: '0.8 × 2.6 cm (nozzle)',
+            capacity: '0.5 Liters (500ml)',
+            compatibility: 'FastGas Creamer, Pressure Regulator, Industry Standard',
+            suitableFor: 'Cold Mixtures Only',
+            material: 'Food-Grade Stainless Steel',
+            warranty: '2 Years'
+        }
     }
 ]
 
@@ -793,30 +838,29 @@ function ProductCard3D({ cylinder, index }) {
                     ))}
                 </div>
 
-                {/* CTA Button with Shine Effect - WhatsApp Order */}
-                <motion.a
-                    href={`https://wa.me/254740595680?text=Hi! I'm interested in ordering ${cylinder.name} (${cylinder.size}). Please share pricing and availability.`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="w-full btn btn-primary relative overflow-hidden group"
-                >
+                {/* CTA Button - View Product Details */}
+                <Link href={`/products/${cylinder.slug}`} className="block w-full">
                     <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
-                        animate={{ x: ['-100%', '200%'] }}
-                        transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
-                    />
-                    <span className="relative z-10 flex items-center justify-center gap-2">
-                        Order via WhatsApp
-                        <motion.span
-                            animate={{ x: [0, 5, 0] }}
-                            transition={{ duration: 1, repeat: Infinity }}
-                        >
-                            <ChevronRight className="w-4 h-4" />
-                        </motion.span>
-                    </span>
-                </motion.a>
+                        whileHover={{ scale: 1.03 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="w-full btn btn-primary relative overflow-hidden group"
+                    >
+                        <motion.div
+                            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                            animate={{ x: ['-100%', '200%'] }}
+                            transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                        />
+                        <span className="relative z-10 flex items-center justify-center gap-2">
+                            View Details & Order
+                            <motion.span
+                                animate={{ x: [0, 5, 0] }}
+                                transition={{ duration: 1, repeat: Infinity }}
+                            >
+                                <ChevronRight className="w-4 h-4" />
+                            </motion.span>
+                        </span>
+                    </motion.div>
+                </Link>
             </div>
         </motion.div>
     )

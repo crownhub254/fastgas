@@ -218,17 +218,17 @@ export default function ProductDetailPage() {
                                 <div className="relative z-10">
                                     <p className="text-base-content/70 text-sm font-bold mb-3 tracking-wide">CURRENT PRICE</p>
                                     <div className="flex items-baseline gap-4 mb-6">
-                                        <span className="text-6xl md:text-7xl font-black bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
-                                            ${product.price.toFixed(2)}
+                                        <span className="text-5xl md:text-6xl font-black bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+                                            KES {(product.retailPrice || product.price || 0).toLocaleString()}
                                         </span>
                                         <div className="flex flex-col gap-2">
                                             <span className="text-sm text-base-content/50 line-through font-semibold">
-                                                ${(product.price * 1.2).toFixed(2)}
+                                                KES {Math.round((product.retailPrice || product.price || 0) * 1.2).toLocaleString()}
                                             </span>
                                             <span className="text-sm font-black text-error">SAVE 20%</span>
                                         </div>
                                     </div>
-                                    <p className="text-base-content/70 text-sm">Limited time offer • Prices may vary by region</p>
+                                    <p className="text-base-content/70 text-sm">Limited time offer • Free delivery on orders above KES 5,000</p>
                                 </div>
                             </div>
 
@@ -263,8 +263,8 @@ export default function ProductDetailPage() {
                                     </div>
                                     <div>
                                         <p className="text-base-content/70 text-xs font-bold mb-2">TOTAL PRICE</p>
-                                        <p className="text-4xl font-black bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                                            ${(product.price * quantity).toFixed(2)}
+                                        <p className="text-3xl font-black bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                                            KES {((product.retailPrice || product.price || 0) * quantity).toLocaleString()}
                                         </p>
                                     </div>
                                 </div>
@@ -278,6 +278,29 @@ export default function ProductDetailPage() {
                                 disabled={product.stock === 0}
                                 className={`w-full py-5 rounded-2xl font-bold text-lg transition-all duration-300 flex items-center justify-center gap-3 ${product.stock > 0
                                         ? 'bg-gradient-to-r from-primary via-secondary to-accent text-primary-content hover:shadow-2xl hover:shadow-primary/40'
+                                        : 'bg-base-300 text-base-content/40 cursor-not-allowed'
+                                    }`}
+                            >
+                                <ShoppingCart className="w-6 h-6" />
+                                <span>{product.stock === 0 ? 'Out of Stock' : `Add ${quantity} to Cart`}</span>
+                            </motion.button>
+
+                            {/* Buy Now - Direct to Checkout */}
+                            <Link href="/checkout" className="block w-full">
+                                <motion.button
+                                    whileHover={{ scale: product.stock > 0 ? 1.03 : 1 }}
+                                    whileTap={{ scale: product.stock > 0 ? 0.97 : 1 }}
+                                    onClick={() => product.stock > 0 && addToCart(product, quantity)}
+                                    disabled={product.stock === 0}
+                                    className={`w-full py-5 rounded-2xl font-bold text-lg transition-all duration-300 flex items-center justify-center gap-3 border-2 ${product.stock > 0
+                                            ? 'border-primary text-primary hover:bg-primary hover:text-primary-content'
+                                            : 'border-base-300 text-base-content/40 cursor-not-allowed'
+                                        }`}
+                                >
+                                    <Zap className="w-6 h-6" />
+                                    <span>{product.stock === 0 ? 'Out of Stock' : 'Buy Now - Proceed to Checkout'}</span>
+                                </motion.button>
+                            </Link>
                                         : 'bg-base-300 text-base-content/40 cursor-not-allowed'
                                     }`}
                             >
@@ -417,24 +440,66 @@ export default function ProductDetailPage() {
                                     exit={{ opacity: 0, y: -20 }}
                                     className="bg-base-100 border-2 border-base-300/50 rounded-3xl p-8 md:p-10"
                                 >
-                                    <h3 className="text-3xl font-black mb-8 text-base-content">Technical Specs</h3>
+                                    <h3 className="text-3xl font-black mb-4 text-base-content">Technical Specifications</h3>
+                                    <p className="text-base-content/60 mb-8">Detailed product specifications to help you make an informed decision.</p>
+                                    
+                                    {/* SEO-Friendly Specifications Table */}
                                     {product.specifications && Object.keys(product.specifications).length > 0 ? (
-                                        <div className="grid md:grid-cols-2 gap-4">
-                                            {Object.entries(product.specifications).map(([key, val], i) => (
-                                                <motion.div
-                                                    key={i}
-                                                    initial={{ opacity: 0, y: 10 }}
-                                                    animate={{ opacity: 1, y: 0 }}
-                                                    transition={{ delay: i * 0.05 }}
-                                                    className="p-5 bg-gradient-to-br from-base-200 via-primary/5 to-base-100 rounded-2xl border border-base-300/50"
-                                                >
-                                                    <p className="font-bold text-base-content text-sm mb-2 uppercase tracking-wide">{key}</p>
-                                                    <p className="text-base-content/70 font-medium">{val}</p>
-                                                </motion.div>
-                                            ))}
+                                        <div className="space-y-6">
+                                            {/* Specifications Grid */}
+                                            <div className="overflow-hidden rounded-2xl border border-base-300">
+                                                <table className="w-full" itemScope itemType="https://schema.org/Product">
+                                                    <tbody>
+                                                        {Object.entries(product.specifications).map(([key, val], i) => (
+                                                            <tr 
+                                                                key={i}
+                                                                className={`${i % 2 === 0 ? 'bg-base-200/50' : 'bg-base-100'} border-b border-base-300 last:border-b-0`}
+                                                            >
+                                                                <td className="px-6 py-4 font-bold text-base-content/80 w-1/3 text-sm uppercase tracking-wide">
+                                                                    {key.replace(/([A-Z])/g, ' $1').trim()}
+                                                                </td>
+                                                                <td className="px-6 py-4 text-base-content font-medium" itemProp={key.toLowerCase()}>
+                                                                    {val}
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+
+                                            {/* Quick Specs Cards for Mobile */}
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
+                                                {product.weight && (
+                                                    <div className="text-center p-4 bg-primary/5 rounded-xl">
+                                                        <Package className="w-6 h-6 mx-auto mb-2 text-primary" />
+                                                        <p className="text-xs text-base-content/60 font-bold uppercase">Weight</p>
+                                                        <p className="font-bold text-base-content">{product.weight} kg</p>
+                                                    </div>
+                                                )}
+                                                {product.dimensions && (
+                                                    <div className="text-center p-4 bg-secondary/5 rounded-xl">
+                                                        <Package className="w-6 h-6 mx-auto mb-2 text-secondary" />
+                                                        <p className="text-xs text-base-content/60 font-bold uppercase">Dimensions</p>
+                                                        <p className="font-bold text-base-content">{product.dimensions.height}cm H</p>
+                                                    </div>
+                                                )}
+                                                <div className="text-center p-4 bg-success/5 rounded-xl">
+                                                    <Shield className="w-6 h-6 mx-auto mb-2 text-success" />
+                                                    <p className="text-xs text-base-content/60 font-bold uppercase">Quality</p>
+                                                    <p className="font-bold text-base-content">Food Grade</p>
+                                                </div>
+                                                <div className="text-center p-4 bg-accent/5 rounded-xl">
+                                                    <Check className="w-6 h-6 mx-auto mb-2 text-accent" />
+                                                    <p className="text-xs text-base-content/60 font-bold uppercase">Certified</p>
+                                                    <p className="font-bold text-base-content">KEBS ✓</p>
+                                                </div>
+                                            </div>
                                         </div>
                                     ) : (
-                                        <p className="text-base-content/60 text-center py-12">No specifications</p>
+                                        <div className="text-center py-12">
+                                            <Package className="w-16 h-16 text-base-300 mx-auto mb-4" />
+                                            <p className="text-base-content/60">No specifications available</p>
+                                        </div>
                                     )}
                                 </motion.div>
                             )}

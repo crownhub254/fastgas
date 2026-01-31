@@ -76,6 +76,19 @@ const products = [
             'https://fast-gas.com/wp-content/uploads/2022/07/PRODUCT-PAGE_670_box.png',
             'https://fast-gas.com/wp-content/uploads/2022/07/PRODUCT-PAGE_670_pallet.png'
         ],
+        specifications: new Map([
+            ['Weight', '1.4 kg'],
+            ['Dimensions', '8.0 × 8.0 × 25.2 cm'],
+            ['Capacity', '670 grams'],
+            ['Gas Type', 'Nitrous Oxide (N₂O)'],
+            ['Purity', '99.99% Food Grade'],
+            ['Casing', 'Disposable Carbon Steel'],
+            ['Valve Type', 'M10X1 Standard'],
+            ['UN Number', 'UN.Nr 1070'],
+            ['Units Per Case', '6'],
+            ['Case Dimensions', '25.5 × 17.5 × 27 cm'],
+            ['Case Weight', '12.6 kg']
+        ]),
         features: [
             'Bestselling size worldwide',
             'M10X1 standard valve',
@@ -109,6 +122,14 @@ const products = [
         dimensions: { height: 10, diameter: 5 },
         image: 'https://fast-gas.com/wp-content/uploads/2025/03/Pressure-Regulator-transparent.png',
         images: ['https://fast-gas.com/wp-content/uploads/2025/03/Pressure-Regulator-transparent.png'],
+        specifications: new Map([
+            ['Weight', '0.3 kg'],
+            ['Valve Compatibility', 'M10X1 Standard'],
+            ['Material', 'Durable Brass Construction'],
+            ['Connection Type', 'Standard Syphon Attachment'],
+            ['Pressure Control', 'Precision Adjustable'],
+            ['Warranty', '1 Year']
+        ]),
         features: [
             'M10X1 valve compatible',
             'Precise pressure control',
@@ -143,6 +164,13 @@ const products = [
         dimensions: { height: 35, diameter: 10 },
         image: 'https://fast-gas.com/wp-content/uploads/2024/06/fg-new-branding-670-original.png',
         images: ['https://fast-gas.com/wp-content/uploads/2024/06/fg-new-branding-670-original.png'],
+        specifications: new Map([
+            ['Weight', '0.5 kg'],
+            ['Dimensions', '10 × 10 × 35 cm'],
+            ['Compatibility', 'All N₂O cylinders'],
+            ['Finish', 'Premium Matte Black'],
+            ['Warranty', '2 Years']
+        ]),
         features: [
             'Professional stand mount',
             'Integrated cylinder holder',
@@ -158,6 +186,50 @@ const products = [
         totalSold: 135,
         rating: 4.7,
         reviewCount: 18,
+    },
+    {
+        name: 'FastGas Cream Syphon',
+        slug: 'cream-syphon',
+        sku: 'FG-SYPHON',
+        category: 'equipment',
+        description: 'The FastGas cream syphon is designed to dispense the final product: whipped creams, espumas and foams on your culinary or bar creations. Compatible with the FastGas Creamer and the FastGas pressure regulator as well as most industry standards. Only suitable for cold mixtures.',
+        shortDescription: 'Professional 0.5L cream syphon for whipped creams, espumas and foams',
+        retailPrice: 8500,
+        resellerPrice: 7225,
+        wholesalePrice: 6375,
+        costPrice: 5100,
+        stock: 60,
+        lowStockThreshold: 15,
+        weight: 1.0,
+        dimensions: { height: 26, diameter: 8 },
+        image: 'https://fast-gas.com/wp-content/uploads/2025/03/3.png',
+        images: ['https://fast-gas.com/wp-content/uploads/2025/03/3.png'],
+        specifications: new Map([
+            ['Weight', '1 kg'],
+            ['Nozzle Dimensions', '0.8 × 2.6 cm'],
+            ['Capacity', '0.5 Liters (500ml)'],
+            ['Compatibility', 'FastGas Creamer, Pressure Regulator, Industry Standard'],
+            ['Suitable For', 'Cold Mixtures Only'],
+            ['Material', 'Food-Grade Stainless Steel'],
+            ['Warranty', '2 Years']
+        ]),
+        features: [
+            'Compatible with FastGas Creamer',
+            'Works with Pressure Regulator',
+            'Industry standard compatibility',
+            'Cold mixtures only',
+            'Professional grade quality',
+            '0.5L capacity for efficient service',
+            'Food-grade stainless steel construction',
+            '2 year warranty'
+        ],
+        safetyInfo: 'For cold mixtures only. Do not use with hot liquids. Release all pressure before opening. Clean after each use. Store in cool, dry place.',
+        certifications: ['Food Grade Certified', 'KEBS Approved', 'ISO 9001'],
+        isActive: true,
+        isFeatured: true,
+        totalSold: 89,
+        rating: 4.8,
+        reviewCount: 24,
     }
 ];
 

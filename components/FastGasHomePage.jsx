@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback, Suspense, memo, useMemo } from 'react'
-import { motion, useScroll, useTransform, useInView, AnimatePresence } from 'framer-motion'
-import { Sparkles, Truck, Shield, Phone, MapPin, Clock, ChevronRight, Star, Package, Coffee, GlassWater, Cake, ChefHat, Zap, CheckCircle, Award, Beaker, IceCream, ArrowDown, Play, LayoutDashboard, Users, ShoppingBag, Bike, Volume2, VolumeX } from 'lucide-react'
+import { motion, useScroll, useTransform, useInView, AnimatePresence, useMotionValue, useSpring, animate } from 'framer-motion'
+import { Sparkles, Truck, Shield, Phone, MapPin, Clock, ChevronRight, ChevronLeft, Star, Package, Coffee, GlassWater, Cake, ChefHat, Zap, CheckCircle, Award, Beaker, IceCream, ArrowDown, Play, LayoutDashboard, Users, ShoppingBag, Bike, Volume2, VolumeX } from 'lucide-react'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 
@@ -178,6 +178,219 @@ const CYLINDER_DATA = [
         }
     }
 ]
+
+// ============================================
+// MOBILE PRODUCT CAROUSEL COMPONENT
+// ============================================
+
+function MobileProductCarousel({ products }) {
+    const [currentIndex, setCurrentIndex] = useState(0)
+    const [isDragging, setIsDragging] = useState(false)
+    const containerRef = useRef(null)
+    const dragX = useMotionValue(0)
+    
+    const totalProducts = products.length
+    
+    // Auto-rotate every 4 seconds (paused when dragging)
+    useEffect(() => {
+        if (isDragging) return
+        
+        const interval = setInterval(() => {
+            setCurrentIndex(prev => (prev + 1) % totalProducts)
+        }, 4000)
+        
+        return () => clearInterval(interval)
+    }, [isDragging, totalProducts])
+    
+    const goToSlide = (index) => {
+        setCurrentIndex(index)
+    }
+    
+    const goNext = () => {
+        setCurrentIndex(prev => (prev + 1) % totalProducts)
+    }
+    
+    const goPrev = () => {
+        setCurrentIndex(prev => (prev - 1 + totalProducts) % totalProducts)
+    }
+    
+    // Handle drag end
+    const handleDragEnd = (event, info) => {
+        setIsDragging(false)
+        const threshold = 50
+        
+        if (info.offset.x < -threshold) {
+            goNext()
+        } else if (info.offset.x > threshold) {
+            goPrev()
+        }
+    }
+    
+    const cylinder = products[currentIndex]
+    const IconComponent = cylinder.icon
+    
+    return (
+        <div className="relative w-full" ref={containerRef}>
+            {/* Progress Bar */}
+            <div className="flex gap-1 mb-4 px-4">
+                {products.map((_, idx) => (
+                    <motion.button
+                        key={idx}
+                        onClick={() => goToSlide(idx)}
+                        className={`h-1 rounded-full flex-1 transition-all duration-300 ${
+                            idx === currentIndex 
+                                ? 'bg-primary' 
+                                : 'bg-base-300 hover:bg-primary/50'
+                        }`}
+                        whileHover={{ scaleY: 1.5 }}
+                    />
+                ))}
+            </div>
+            
+            {/* Carousel Container */}
+            <div className="relative overflow-hidden">
+                <motion.div
+                    drag="x"
+                    dragConstraints={{ left: 0, right: 0 }}
+                    dragElastic={0.2}
+                    onDragStart={() => setIsDragging(true)}
+                    onDragEnd={handleDragEnd}
+                    className="cursor-grab active:cursor-grabbing"
+                >
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={currentIndex}
+                            initial={{ opacity: 0, x: 100 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -100 }}
+                            transition={{ duration: 0.3, ease: "easeOut" }}
+                            className="px-4"
+                        >
+                            {/* Product Card */}
+                            <div className={`relative bg-base-100 rounded-3xl shadow-2xl border-2 overflow-hidden ${
+                                cylinder.popular ? 'border-primary ring-4 ring-primary/20' : 'border-base-200'
+                            }`}>
+                                {cylinder.popular && (
+                                    <div className="bg-gradient-to-r from-primary to-secondary text-primary-content text-center py-2 text-sm font-bold">
+                                        <span className="inline-flex items-center gap-2">
+                                            <Star className="w-4 h-4 fill-current" /> BEST SELLER <Star className="w-4 h-4 fill-current" />
+                                        </span>
+                                    </div>
+                                )}
+                                
+                                {/* Product Image */}
+                                <div className={`relative h-56 ${cylinder.image ? 'bg-gradient-to-br from-slate-100 to-slate-200' : `bg-gradient-to-br ${cylinder.color}`} flex items-center justify-center overflow-hidden`}>
+                                    {cylinder.image ? (
+                                        <motion.img 
+                                            src={cylinder.image} 
+                                            alt={cylinder.name}
+                                            className="h-44 w-auto object-contain drop-shadow-2xl"
+                                            animate={{ y: [0, -8, 0] }}
+                                            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                                        />
+                                    ) : (
+                                        <motion.div 
+                                            animate={{ y: [0, -10, 0] }}
+                                            transition={{ duration: 3, repeat: Infinity }}
+                                            className="text-7xl"
+                                        >
+                                            {cylinder.category === 'Accessory' ? '⚙️' : '🍨'}
+                                        </motion.div>
+                                    )}
+                                    
+                                    {/* Size Badge */}
+                                    <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm text-gray-800 px-3 py-1 rounded-full font-bold text-sm shadow-lg">
+                                        {cylinder.size}
+                                    </div>
+                                    
+                                    {/* Category Badge */}
+                                    <div className="absolute top-4 left-4 bg-primary/90 backdrop-blur-sm text-primary-content px-3 py-1 rounded-full text-xs font-semibold">
+                                        {cylinder.category}
+                                    </div>
+                                </div>
+                                
+                                {/* Product Info */}
+                                <div className="p-5">
+                                    <div className="flex items-center gap-3 mb-3">
+                                        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${cylinder.color || 'from-primary to-secondary'} flex items-center justify-center text-white shadow-lg`}>
+                                            <IconComponent className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-xl font-bold">{cylinder.name}</h3>
+                                            <p className="text-base-content/60 text-sm">{cylinder.application}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <p className="text-base-content/70 text-sm mb-4 line-clamp-2">
+                                        {cylinder.description}
+                                    </p>
+                                    
+                                    {/* Features Preview */}
+                                    <div className="flex flex-wrap gap-2 mb-4">
+                                        {cylinder.features.slice(0, 2).map((feature, idx) => (
+                                            <span key={idx} className="text-xs bg-base-200 px-2 py-1 rounded-full text-base-content/70">
+                                                {feature}
+                                            </span>
+                                        ))}
+                                        {cylinder.features.length > 2 && (
+                                            <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
+                                                +{cylinder.features.length - 2} more
+                                            </span>
+                                        )}
+                                    </div>
+                                    
+                                    {/* Action Button */}
+                                    <Link href={`/products/${cylinder.slug}`} className="block">
+                                        <motion.button
+                                            whileTap={{ scale: 0.98 }}
+                                            className="w-full py-3 bg-gradient-to-r from-primary to-secondary text-primary-content font-bold rounded-xl shadow-lg flex items-center justify-center gap-2"
+                                        >
+                                            View Details
+                                            <ChevronRight className="w-5 h-5" />
+                                        </motion.button>
+                                    </Link>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </AnimatePresence>
+                </motion.div>
+                
+                {/* Navigation Arrows */}
+                <button
+                    onClick={goPrev}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-base-100/90 backdrop-blur-sm shadow-lg flex items-center justify-center text-base-content hover:bg-primary hover:text-primary-content transition-colors"
+                >
+                    <ChevronLeft className="w-6 h-6" />
+                </button>
+                <button
+                    onClick={goNext}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-base-100/90 backdrop-blur-sm shadow-lg flex items-center justify-center text-base-content hover:bg-primary hover:text-primary-content transition-colors"
+                >
+                    <ChevronRight className="w-6 h-6" />
+                </button>
+            </div>
+            
+            {/* Swipe Hint */}
+            <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1 }}
+                className="text-center text-base-content/50 text-xs mt-4 flex items-center justify-center gap-2"
+            >
+                <ChevronLeft className="w-4 h-4" />
+                Swipe or tap arrows to browse products
+                <ChevronRight className="w-4 h-4" />
+            </motion.p>
+            
+            {/* Product Counter */}
+            <div className="text-center mt-2">
+                <span className="text-sm font-medium text-base-content/60">
+                    {currentIndex + 1} / {totalProducts}
+                </span>
+            </div>
+        </div>
+    )
+}
 
 // ============================================
 // ADVANCED ANIMATION COMPONENTS
@@ -1210,7 +1423,13 @@ export default function FastGasHomePage({ user = null }) {
                         </p>
                     </motion.div>
 
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                    {/* Mobile: Swipeable Carousel */}
+                    <div className="md:hidden">
+                        <MobileProductCarousel products={CYLINDER_DATA} />
+                    </div>
+
+                    {/* Desktop: Grid Layout */}
+                    <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
                         {CYLINDER_DATA.map((cylinder, index) => (
                             <ProductCard3D key={cylinder.size} cylinder={cylinder} index={index} />
                         ))}

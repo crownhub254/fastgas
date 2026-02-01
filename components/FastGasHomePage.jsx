@@ -186,12 +186,13 @@ const CYLINDER_DATA = [
 function MobileProductCarousel({ products }) {
     const [currentIndex, setCurrentIndex] = useState(0)
     const [isDragging, setIsDragging] = useState(false)
+    const [resetTimer, setResetTimer] = useState(0) // Timer reset trigger
     const containerRef = useRef(null)
     const dragX = useMotionValue(0)
     
     const totalProducts = products.length
     
-    // Auto-rotate every 4 seconds (paused when dragging)
+    // Auto-rotate every 4 seconds (paused when dragging, resets on arrow press)
     useEffect(() => {
         if (isDragging) return
         
@@ -200,18 +201,21 @@ function MobileProductCarousel({ products }) {
         }, 4000)
         
         return () => clearInterval(interval)
-    }, [isDragging, totalProducts])
+    }, [isDragging, totalProducts, resetTimer]) // resetTimer dependency causes timer restart
     
     const goToSlide = (index) => {
         setCurrentIndex(index)
+        setResetTimer(prev => prev + 1) // Reset auto-scroll timer
     }
     
     const goNext = () => {
         setCurrentIndex(prev => (prev + 1) % totalProducts)
+        setResetTimer(prev => prev + 1) // Reset auto-scroll timer
     }
     
     const goPrev = () => {
         setCurrentIndex(prev => (prev - 1 + totalProducts) % totalProducts)
+        setResetTimer(prev => prev + 1) // Reset auto-scroll timer
     }
     
     // Handle drag end
@@ -858,49 +862,75 @@ const PARTICLE_DATA = [...Array(15)].map((_, i) => ({
     delay: ((i * 31) % 50) / 10,
 }))
 
-// Generate shooting star data
-const SHOOTING_STARS = [...Array(6)].map((_, i) => ({
+// Generate shooting star data - more realistic with varying angles
+const SHOOTING_STARS = [...Array(8)].map((_, i) => ({
     id: i,
-    startX: 10 + (i * 15) % 80,
-    startY: 5 + (i * 23) % 30,
-    duration: 1.5 + (i * 0.3),
-    delay: i * 3 + Math.random() * 2,
+    startX: 5 + (i * 12) % 85,
+    startY: 2 + (i * 7) % 25,
+    angle: 30 + (i * 5) % 20, // Varying angles 30-50 degrees
+    length: 100 + (i * 20) % 80,
+    duration: 0.8 + (i * 0.15),
+    delay: i * 4 + Math.random() * 3,
 }))
 
-// Static stars data for night sky
-const NIGHT_STARS = [...Array(100)].map((_, i) => ({
+// Realistic static stars with more variety - different layers for depth
+const NIGHT_STARS_LAYER1 = [...Array(80)].map((_, i) => ({
     id: i,
-    left: `${(i * 17 + 3) % 100}%`,
+    left: `${(i * 13 + 5) % 100}%`,
+    top: `${(i * 17 + 3) % 100}%`,
+    size: 1,
+    opacity: 0.4 + (i % 3) * 0.2,
+    twinkleDelay: (i * 0.5) % 4,
+    twinkleDuration: 2 + (i % 3),
+}))
+
+const NIGHT_STARS_LAYER2 = [...Array(50)].map((_, i) => ({
+    id: i + 100,
+    left: `${(i * 23 + 11) % 100}%`,
     top: `${(i * 31 + 7) % 100}%`,
-    size: 1 + (i % 3),
-    opacity: 0.3 + (i % 5) * 0.15,
+    size: 2,
+    opacity: 0.6 + (i % 4) * 0.1,
     twinkleDelay: (i * 0.7) % 5,
+    twinkleDuration: 3 + (i % 2),
 }))
 
-// Space Background with Night Sky and Shooting Stars
+const NIGHT_STARS_LAYER3 = [...Array(20)].map((_, i) => ({
+    id: i + 200,
+    left: `${(i * 37 + 19) % 100}%`,
+    top: `${(i * 41 + 13) % 100}%`,
+    size: 3,
+    opacity: 0.8 + (i % 2) * 0.2,
+    twinkleDelay: (i * 0.9) % 6,
+    twinkleDuration: 4 + (i % 2),
+}))
+
+// Realistic Space Background with Night Sky and Shooting Stars
 function SpaceBackground() {
     const isMobile = useIsMobile()
     const prefersReducedMotion = usePrefersReducedMotion()
     
     return (
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            {/* Static Stars - Night Sky */}
-            {NIGHT_STARS.map((star) => (
+            {/* Deep space gradient base */}
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0a0a1a]/30 to-[#0a0a1a]/50" />
+            
+            {/* Star Layer 1 - Small distant stars */}
+            {NIGHT_STARS_LAYER1.map((star) => (
                 <motion.div
                     key={star.id}
-                    className="absolute rounded-full bg-white will-change-transform"
+                    className="absolute rounded-full bg-white"
                     style={{
                         left: star.left,
                         top: star.top,
                         width: star.size,
                         height: star.size,
+                        boxShadow: `0 0 ${star.size}px rgba(255,255,255,0.5)`,
                     }}
                     animate={prefersReducedMotion ? {} : {
-                        opacity: [star.opacity, star.opacity * 1.5, star.opacity],
-                        scale: [1, 1.2, 1],
+                        opacity: [star.opacity, star.opacity * 0.3, star.opacity],
                     }}
                     transition={{
-                        duration: 2 + (star.id % 3),
+                        duration: star.twinkleDuration,
                         repeat: Infinity,
                         delay: star.twinkleDelay,
                         ease: "easeInOut",
@@ -908,7 +938,76 @@ function SpaceBackground() {
                 />
             ))}
             
-            {/* Shooting Stars - Only on desktop and without reduced motion */}
+            {/* Star Layer 2 - Medium stars */}
+            {NIGHT_STARS_LAYER2.map((star) => (
+                <motion.div
+                    key={star.id}
+                    className="absolute rounded-full"
+                    style={{
+                        left: star.left,
+                        top: star.top,
+                        width: star.size,
+                        height: star.size,
+                        background: 'radial-gradient(circle, #ffffff 0%, #b4d7ff 50%, transparent 100%)',
+                        boxShadow: `0 0 ${star.size * 2}px rgba(180,215,255,0.6)`,
+                    }}
+                    animate={prefersReducedMotion ? {} : {
+                        opacity: [star.opacity, star.opacity * 0.5, star.opacity],
+                        scale: [1, 1.1, 1],
+                    }}
+                    transition={{
+                        duration: star.twinkleDuration,
+                        repeat: Infinity,
+                        delay: star.twinkleDelay,
+                        ease: "easeInOut",
+                    }}
+                />
+            ))}
+            
+            {/* Star Layer 3 - Bright prominent stars */}
+            {NIGHT_STARS_LAYER3.map((star) => (
+                <motion.div
+                    key={star.id}
+                    className="absolute"
+                    style={{
+                        left: star.left,
+                        top: star.top,
+                    }}
+                    animate={prefersReducedMotion ? {} : {
+                        opacity: [star.opacity, star.opacity * 0.6, star.opacity],
+                    }}
+                    transition={{
+                        duration: star.twinkleDuration,
+                        repeat: Infinity,
+                        delay: star.twinkleDelay,
+                        ease: "easeInOut",
+                    }}
+                >
+                    {/* Star cross/sparkle effect */}
+                    <div className="relative">
+                        <div 
+                            className="absolute rounded-full bg-white"
+                            style={{
+                                width: star.size,
+                                height: star.size,
+                                boxShadow: `0 0 ${star.size * 3}px rgba(255,255,255,0.8), 0 0 ${star.size * 6}px rgba(180,215,255,0.4)`,
+                            }}
+                        />
+                        {/* Horizontal ray */}
+                        <div 
+                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-transparent via-white to-transparent"
+                            style={{ width: star.size * 4, height: 1, opacity: 0.6 }}
+                        />
+                        {/* Vertical ray */}
+                        <div 
+                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-b from-transparent via-white to-transparent"
+                            style={{ width: 1, height: star.size * 4, opacity: 0.6 }}
+                        />
+                    </div>
+                </motion.div>
+            ))}
+            
+            {/* Realistic Shooting Stars - Only on desktop */}
             {!isMobile && !prefersReducedMotion && SHOOTING_STARS.map((star) => (
                 <motion.div
                     key={`shooting-${star.id}`}
@@ -916,47 +1015,55 @@ function SpaceBackground() {
                     style={{
                         left: `${star.startX}%`,
                         top: `${star.startY}%`,
+                        transform: `rotate(${star.angle}deg)`,
                     }}
-                    initial={{ opacity: 0, x: 0, y: 0 }}
+                    initial={{ opacity: 0, x: 0 }}
                     animate={{
                         opacity: [0, 1, 1, 0],
-                        x: [0, 150, 300],
-                        y: [0, 100, 200],
+                        x: [0, star.length * 2, star.length * 4],
                     }}
                     transition={{
                         duration: star.duration,
                         repeat: Infinity,
                         delay: star.delay,
-                        repeatDelay: 8 + star.id * 2,
+                        repeatDelay: 10 + star.id * 3,
                         ease: "easeOut",
                     }}
                 >
-                    {/* Shooting star head */}
+                    {/* Shooting star with realistic gradient tail */}
                     <div className="relative">
-                        <div className="w-2 h-2 bg-white rounded-full shadow-[0_0_10px_#fff,0_0_20px_#06b6d4,0_0_30px_#06b6d4]" />
-                        {/* Tail/Trail */}
+                        {/* Bright head */}
                         <div 
-                            className="absolute top-1/2 right-full -translate-y-1/2 h-0.5 bg-gradient-to-l from-white via-cyan-300 to-transparent"
-                            style={{ width: '80px' }}
+                            className="absolute right-0 w-1.5 h-1.5 bg-white rounded-full"
+                            style={{ 
+                                boxShadow: '0 0 4px #fff, 0 0 8px #fff, 0 0 16px rgba(180,215,255,0.8)',
+                            }} 
+                        />
+                        {/* Gradient tail */}
+                        <div 
+                            className="absolute top-1/2 right-0 -translate-y-1/2 h-[2px]"
+                            style={{ 
+                                width: `${star.length}px`,
+                                background: 'linear-gradient(to left, #ffffff, rgba(180,215,255,0.6) 20%, rgba(100,150,255,0.3) 50%, transparent)',
+                            }}
                         />
                     </div>
                 </motion.div>
             ))}
             
-            {/* Nebula-like glow patches */}
-            <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-cyan-500/5 rounded-full blur-3xl" />
-            <div className="absolute bottom-1/3 right-1/4 w-48 h-48 bg-purple-500/5 rounded-full blur-3xl" />
-            <div className="absolute top-1/2 right-1/3 w-32 h-32 bg-yellow-400/5 rounded-full blur-2xl" />
+            {/* Milky Way-like subtle band */}
+            <div 
+                className="absolute top-0 left-0 right-0 h-full pointer-events-none opacity-20"
+                style={{
+                    background: 'linear-gradient(135deg, transparent 0%, rgba(180,200,255,0.05) 30%, rgba(200,180,255,0.08) 50%, rgba(180,200,255,0.05) 70%, transparent 100%)',
+                }}
+            />
         </div>
     )
 }
 
-// Legacy FloatingParticles - kept for backward compatibility
+// Legacy FloatingParticles - now uses realistic SpaceBackground
 function FloatingParticles() {
-    const isMobile = useIsMobile()
-    const prefersReducedMotion = usePrefersReducedMotion()
-    
-    // Now uses SpaceBackground instead
     return <SpaceBackground />
 }
 
@@ -1344,7 +1451,7 @@ export default function FastGasHomePage({ user = null }) {
                             />
                         </motion.div>
                         
-                        {/* Main Title with Flashy Neon Effect */}
+                        {/* Main Title with Flashy Glitch Effect on both FAST and GAS */}
                         <motion.h1 
                             initial={{ scale: 0.5, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
@@ -1353,31 +1460,8 @@ export default function FastGasHomePage({ user = null }) {
                         >
                             {/* FAST - with glitch effect */}
                             <GlitchText text="FAST" className="relative inline-block" />
-                            {/* GAS - with animated gradient and glow */}
-                            <motion.span 
-                                className="relative inline-block text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-yellow-200 to-cyan-400"
-                                animate={{ 
-                                    backgroundPosition: ['0%', '100%', '0%'],
-                                }}
-                                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                                style={{ 
-                                    backgroundSize: '200%',
-                                    filter: 'drop-shadow(0 0 20px rgba(253,224,71,0.5)) drop-shadow(0 0 40px rgba(6,182,212,0.3))',
-                                }}
-                            >
-                                GAS
-                                {/* Pulsing glow behind GAS */}
-                                <motion.span
-                                    className="absolute inset-0 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-yellow-400 blur-sm -z-10"
-                                    animate={{
-                                        opacity: [0.5, 1, 0.5],
-                                    }}
-                                    transition={{ duration: 2, repeat: Infinity }}
-                                    style={{ backgroundSize: '200%' }}
-                                >
-                                    GAS
-                                </motion.span>
-                            </motion.span>
+                            {/* GAS - also with glitch effect to match FAST */}
+                            <GlitchText text="GAS" className="relative inline-block" />
                             
                             {/* Electric spark effect around the title */}
                             <motion.div
@@ -1570,11 +1654,12 @@ export default function FastGasHomePage({ user = null }) {
                         <h2 className="text-5xl font-bold mb-4">Why Choose FastGas?</h2>
                     </motion.div>
 
-                    <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                    <div className="grid md:grid-cols-4 gap-6 max-w-6xl mx-auto">
                         {[
-                            { icon: <Truck className="w-12 h-12" />, title: 'Fast Delivery', desc: 'Same-day delivery in Nairobi. Next-day shipping nationwide.', color: 'from-blue-500 to-cyan-500' },
+                            { icon: <Zap className="w-12 h-12" />, title: 'Fast Delivery', desc: 'Same-day delivery in Nairobi. Lightning-fast service when you need it.', color: 'from-yellow-500 to-orange-500' },
+                            { icon: <Truck className="w-12 h-12" />, title: 'Express Services', desc: 'Priority express delivery available. Get your order within hours.', color: 'from-blue-500 to-cyan-500' },
                             { icon: <Award className="w-12 h-12" />, title: 'Premium Quality', desc: '99.99% pure food-grade N₂O. European manufactured.', color: 'from-purple-500 to-pink-500' },
-                            { icon: <Phone className="w-12 h-12" />, title: 'Expert Support', desc: 'Culinary support and technical guidance.', color: 'from-orange-500 to-red-500' }
+                            { icon: <Phone className="w-12 h-12" />, title: 'Expert Support', desc: 'Culinary support and technical guidance 24/7.', color: 'from-green-500 to-emerald-500' }
                         ].map((feature, i) => (
                             <motion.div
                                 key={i}

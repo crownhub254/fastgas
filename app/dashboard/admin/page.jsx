@@ -1,73 +1,67 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Users, Package, ShoppingCart, DollarSign, Truck, TrendingUp, ArrowUpRight, ArrowDownRight, Flame, MapPin } from 'lucide-react'
+import { Users, Package, ShoppingCart, Truck, TrendingUp, ArrowUpRight, ArrowDownRight, Flame, MapPin, AlertTriangle, Box, Warehouse, BarChart3 } from 'lucide-react'
 import Link from 'next/link'
 
-// Demo data for FastGas Admin Dashboard
+// Demo data for FastGas Admin Dashboard - Stock Focused
 const DEMO_STATS = {
-    totalUsers: 1247,
-    totalResellers: 34,
-    totalOrders: 856,
-    totalRevenue: 2847500,
-    cylindersSold: 1423,
-    activeDeliveries: 12,
-    userGrowth: 12.5,
-    orderGrowth: 8.3,
-    revenueGrowth: 15.2
+    totalStock: 2450,
+    lowStockItems: 3,
+    outOfStock: 1,
+    pendingRestocks: 5,
+    totalDistributors: 12,
+    activeDeliveries: 8,
+    stockGrowth: 12.5,
+    distributorGrowth: 8.3
 }
 
-const DEMO_CHART_DATA = {
-    revenueOverTime: [
-        { name: 'Mon', revenue: 245000, orders: 45 },
-        { name: 'Tue', revenue: 312000, orders: 52 },
-        { name: 'Wed', revenue: 287000, orders: 48 },
-        { name: 'Thu', revenue: 398000, orders: 67 },
-        { name: 'Fri', revenue: 425000, orders: 72 },
-        { name: 'Sat', revenue: 534000, orders: 89 },
-        { name: 'Sun', revenue: 378000, orders: 63 }
-    ],
-    ordersByStatus: [
-        { name: 'Delivered', value: 423, color: '#22c55e' },
-        { name: 'Processing', value: 156, color: '#eab308' },
-        { name: 'Pending', value: 89, color: '#3b82f6' },
-        { name: 'Shipped', value: 134, color: '#8b5cf6' },
-        { name: 'Cancelled', value: 54, color: '#ef4444' }
-    ],
-    productSales: [
-        { size: '670g Cylinder', sold: 567, revenue: 4252500 },
-        { size: 'Pressure Regulator', sold: 298, revenue: 745000 },
-        { size: 'FastGas Creamer', sold: 135, revenue: 2025000 }
-    ]
-}
-
-const DEMO_RECENT_ORDERS = [
-    { id: 'ORD-001', customer: 'John Mwangi', variant: '670g Cylinder', qty: 2, total: 15000, status: 'delivered', date: '2026-01-30' },
-    { id: 'ORD-002', customer: 'Mary Wanjiku', variant: 'Pressure Regulator', qty: 1, total: 2500, status: 'processing', date: '2026-01-30' },
-    { id: 'ORD-003', customer: 'Peter Ochieng', variant: '670g Cylinder', qty: 3, total: 22500, status: 'shipped', date: '2026-01-29' },
-    { id: 'ORD-004', customer: 'Grace Akinyi', variant: 'FastGas Creamer', qty: 1, total: 15000, status: 'pending', date: '2026-01-29' },
-    { id: 'ORD-005', customer: 'David Kimani', variant: '670g Cylinder', qty: 5, total: 37500, status: 'delivered', date: '2026-01-28' }
+// Stock levels by product
+const DEMO_STOCK_BY_PRODUCT = [
+    { name: '670g Cylinder', inStock: 850, allocated: 120, available: 730, minLevel: 200, status: 'good' },
+    { name: 'Pressure Regulator', inStock: 45, allocated: 15, available: 30, minLevel: 50, status: 'low' },
+    { name: 'FastGas Creamer', inStock: 180, allocated: 40, available: 140, minLevel: 100, status: 'good' },
+    { name: 'Cream Syphon', inStock: 12, allocated: 5, available: 7, minLevel: 25, status: 'critical' }
 ]
 
-const DEMO_RESELLERS = [
-    { id: 1, name: 'Nairobi Cream Supplies', owner: 'James Kamau', region: 'Nairobi', orders: 145, revenue: 812000, status: 'active' },
-    { id: 2, name: 'Mombasa FastGas Hub', owner: 'Fatuma Hassan', region: 'Mombasa', orders: 98, revenue: 567000, status: 'active' },
-    { id: 3, name: 'Kisumu Culinary Center', owner: 'Otieno Odhiambo', region: 'Kisumu', orders: 67, revenue: 378000, status: 'active' },
-    { id: 4, name: 'Nakuru Catering Supplies', owner: 'Alice Njeri', region: 'Nakuru', orders: 54, revenue: 298000, status: 'pending' }
+// Stock by distributor/location
+const DEMO_DISTRIBUTOR_STOCK = [
+    { id: 1, name: 'Nairobi Central Hub', location: 'Nairobi CBD', cylinders: 320, regulators: 45, creamers: 85, syphons: 20, lastRestock: '2026-01-28' },
+    { id: 2, name: 'Mombasa Warehouse', location: 'Mombasa', cylinders: 180, regulators: 30, creamers: 45, syphons: 12, lastRestock: '2026-01-25' },
+    { id: 3, name: 'Kisumu Distribution', location: 'Kisumu', cylinders: 150, regulators: 25, creamers: 30, syphons: 8, lastRestock: '2026-01-27' },
+    { id: 4, name: 'Nakuru Depot', location: 'Nakuru', cylinders: 120, regulators: 18, creamers: 25, syphons: 5, lastRestock: '2026-01-24' },
+    { id: 5, name: 'Eldoret Store', location: 'Eldoret', cylinders: 80, regulators: 12, creamers: 15, syphons: 3, lastRestock: '2026-01-26' }
 ]
 
-const DEMO_LOW_STOCK = [
-    { variant: '670g Cylinder', current: 25, minimum: 50, status: 'low' },
-    { variant: 'Pressure Regulator', current: 8, minimum: 20, status: 'critical' }
+// Recent stock movements
+const DEMO_STOCK_MOVEMENTS = [
+    { id: 'MOV-001', type: 'in', product: '670g Cylinder', qty: 100, from: 'Main Warehouse', to: 'Nairobi Central Hub', date: '2026-01-30' },
+    { id: 'MOV-002', type: 'out', product: 'Pressure Regulator', qty: 15, from: 'Nairobi Central Hub', to: 'Customer Order', date: '2026-01-30' },
+    { id: 'MOV-003', type: 'in', product: 'FastGas Creamer', qty: 50, from: 'Supplier', to: 'Main Warehouse', date: '2026-01-29' },
+    { id: 'MOV-004', type: 'transfer', product: '670g Cylinder', qty: 30, from: 'Nairobi Central Hub', to: 'Mombasa Warehouse', date: '2026-01-29' },
+    { id: 'MOV-005', type: 'out', product: 'Cream Syphon', qty: 5, from: 'Mombasa Warehouse', to: 'Customer Order', date: '2026-01-28' }
 ]
 
-function StatsCard({ title, value, change, icon: Icon, trend }) {
+// Pending restocks
+const DEMO_PENDING_RESTOCKS = [
+    { product: 'Pressure Regulator', currentStock: 45, targetStock: 150, eta: '2026-02-02', status: 'ordered' },
+    { product: 'Cream Syphon', currentStock: 12, targetStock: 50, eta: '2026-02-01', status: 'shipping' },
+    { product: '670g Cylinder', currentStock: 850, targetStock: 1200, eta: '2026-02-05', status: 'pending' }
+]
+
+function StatsCard({ title, value, change, icon: Icon, trend, variant = 'default' }) {
     const isPositive = trend === 'up'
+    const variantStyles = {
+        default: 'bg-base-100 border-base-200',
+        warning: 'bg-warning/10 border-warning/30',
+        error: 'bg-error/10 border-error/30',
+        success: 'bg-success/10 border-success/30'
+    }
     return (
-        <div className="bg-base-100 rounded-xl p-6 shadow-sm border border-base-200 hover:shadow-md transition-shadow">
+        <div className={`rounded-xl p-6 shadow-sm border hover:shadow-md transition-shadow ${variantStyles[variant]}`}>
             <div className="flex items-center justify-between mb-4">
-                <div className="p-3 rounded-lg bg-primary/10">
-                    <Icon className="w-6 h-6 text-primary" />
+                <div className={`p-3 rounded-lg ${variant === 'default' ? 'bg-primary/10' : variant === 'warning' ? 'bg-warning/20' : variant === 'error' ? 'bg-error/20' : 'bg-success/20'}`}>
+                    <Icon className={`w-6 h-6 ${variant === 'default' ? 'text-primary' : variant === 'warning' ? 'text-warning' : variant === 'error' ? 'text-error' : 'text-success'}`} />
                 </div>
                 {change && (
                     <span className={`flex items-center text-sm font-medium ${isPositive ? 'text-success' : 'text-error'}`}>
@@ -82,53 +76,22 @@ function StatsCard({ title, value, change, icon: Icon, trend }) {
     )
 }
 
-function SimpleBarChart({ data, title }) {
-    const maxValue = Math.max(...data.map(d => d.revenue))
+function StockLevelBar({ current, min, max = 500 }) {
+    const percentage = Math.min((current / max) * 100, 100)
+    const isLow = current <= min
+    const isCritical = current <= min * 0.5
+    
     return (
-        <div className="bg-base-100 rounded-xl p-6 shadow-sm border border-base-200">
-            <h3 className="font-semibold mb-4">{title}</h3>
-            <div className="space-y-3">
-                {data.map((item, index) => (
-                    <div key={index} className="space-y-1">
-                        <div className="flex justify-between text-sm">
-                            <span>{item.name}</span>
-                            <span className="font-medium">KES {(item.revenue / 1000).toFixed(0)}K</span>
-                        </div>
-                        <div className="h-2 bg-base-200 rounded-full overflow-hidden">
-                            <div 
-                                className="h-full bg-gradient-to-r from-primary to-secondary rounded-full transition-all duration-500"
-                                style={{ width: `${(item.revenue / maxValue) * 100}%` }}
-                            />
-                        </div>
-                    </div>
-                ))}
+        <div className="w-full">
+            <div className="h-3 bg-base-200 rounded-full overflow-hidden">
+                <div 
+                    className={`h-full rounded-full transition-all duration-500 ${isCritical ? 'bg-error' : isLow ? 'bg-warning' : 'bg-success'}`}
+                    style={{ width: `${percentage}%` }}
+                />
             </div>
-        </div>
-    )
-}
-
-function ProductSalesCard({ data }) {
-    const total = data.reduce((sum, d) => sum + d.sold, 0)
-    return (
-        <div className="bg-base-100 rounded-xl p-6 shadow-sm border border-base-200">
-            <h3 className="font-semibold mb-4 flex items-center gap-2">
-                <Flame className="w-5 h-5 text-orange-500" />
-                Product Sales
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {data.map((item) => (
-                    <div key={item.size} className="text-center p-4 bg-base-200 rounded-lg">
-                        <div className="text-3xl mb-2">🔥</div>
-                        <p className="font-bold text-lg">{item.size}</p>
-                        <p className="text-2xl font-bold text-primary">{item.sold}</p>
-                        <p className="text-xs text-base-content/60">units sold</p>
-                        <p className="text-sm font-medium text-success mt-1">KES {(item.revenue / 1000).toFixed(0)}K</p>
-                    </div>
-                ))}
-            </div>
-            <div className="mt-4 pt-4 border-t border-base-200 text-center">
-                <p className="text-sm text-base-content/60">Total Products Sold</p>
-                <p className="text-3xl font-bold text-primary">{total.toLocaleString()}</p>
+            <div className="flex justify-between text-xs mt-1 text-base-content/60">
+                <span>{current} units</span>
+                <span>Min: {min}</span>
             </div>
         </div>
     )
@@ -155,136 +118,202 @@ export default function AdminDashboard() {
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
-                        <Flame className="w-8 h-8 text-orange-500" />
-                        FastGas Admin Dashboard
+                        <Warehouse className="w-8 h-8 text-primary" />
+                        Stock Management Dashboard
                     </h1>
-                    <p className="text-base-content/70">Overview of your N₂O cream charger distribution business</p>
+                    <p className="text-base-content/70">Monitor inventory levels across all distributors</p>
                 </div>
                 <div className="badge badge-warning badge-lg">Demo Mode</div>
             </div>
 
+            {/* Stock Overview Stats */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatsCard title="Total Customers" value={DEMO_STATS.totalUsers.toLocaleString()} change={DEMO_STATS.userGrowth} icon={Users} trend="up" />
-                <StatsCard title="Active Resellers" value={DEMO_STATS.totalResellers} icon={Users} trend="up" change={5.2} />
-                <StatsCard title="Total Orders" value={DEMO_STATS.totalOrders.toLocaleString()} change={DEMO_STATS.orderGrowth} icon={ShoppingCart} trend="up" />
-                <StatsCard title="Total Revenue" value={`KES ${(DEMO_STATS.totalRevenue / 1000000).toFixed(2)}M`} change={DEMO_STATS.revenueGrowth} icon={DollarSign} trend="up" />
+                <StatsCard title="Total Stock Units" value={DEMO_STATS.totalStock.toLocaleString()} change={DEMO_STATS.stockGrowth} icon={Package} trend="up" variant="success" />
+                <StatsCard title="Low Stock Items" value={DEMO_STATS.lowStockItems} icon={AlertTriangle} variant="warning" />
+                <StatsCard title="Out of Stock" value={DEMO_STATS.outOfStock} icon={Box} variant="error" />
+                <StatsCard title="Active Distributors" value={DEMO_STATS.totalDistributors} change={DEMO_STATS.distributorGrowth} icon={Truck} trend="up" />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-gradient-to-br from-orange-500 to-red-500 rounded-xl p-6 text-white">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-white/80 text-sm">Products Sold</p>
-                            <p className="text-3xl font-bold">{DEMO_STATS.cylindersSold.toLocaleString()}</p>
-                        </div>
-                        <Flame className="w-12 h-12 text-white/30" />
-                    </div>
-                </div>
-                <div className="bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl p-6 text-white">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-white/80 text-sm">Active Deliveries</p>
-                            <p className="text-3xl font-bold">{DEMO_STATS.activeDeliveries}</p>
-                        </div>
-                        <Truck className="w-12 h-12 text-white/30" />
-                    </div>
-                </div>
-                <div className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl p-6 text-white">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-white/80 text-sm">Avg. Order Value</p>
-                            <p className="text-3xl font-bold">KES {Math.round(DEMO_STATS.totalRevenue / DEMO_STATS.totalOrders).toLocaleString()}</p>
-                        </div>
-                        <TrendingUp className="w-12 h-12 text-white/30" />
-                    </div>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <SimpleBarChart data={DEMO_CHART_DATA.revenueOverTime} title="Revenue This Week" />
-                <ProductSalesCard data={DEMO_CHART_DATA.productSales} />
-            </div>
-
-            {DEMO_LOW_STOCK.length > 0 && (
-                <div className="alert alert-warning">
-                    <Package className="w-6 h-6" />
-                    <div>
-                        <h3 className="font-bold">Low Stock Alert!</h3>
+            {/* Critical Alerts */}
+            {DEMO_STOCK_BY_PRODUCT.filter(p => p.status === 'critical' || p.status === 'low').length > 0 && (
+                <div className="alert alert-warning shadow-lg">
+                    <AlertTriangle className="w-6 h-6" />
+                    <div className="flex-1">
+                        <h3 className="font-bold">Stock Alert!</h3>
                         <div className="text-sm">
-                            {DEMO_LOW_STOCK.map((item, i) => (
-                                <span key={item.variant}>{item.variant}: {item.current} units remaining{i < DEMO_LOW_STOCK.length - 1 ? ' | ' : ''}</span>
+                            {DEMO_STOCK_BY_PRODUCT.filter(p => p.status === 'critical' || p.status === 'low').map((item, i, arr) => (
+                                <span key={item.name} className={item.status === 'critical' ? 'text-error font-semibold' : ''}>
+                                    {item.name}: {item.available} available ({item.status}){i < arr.length - 1 ? ' | ' : ''}
+                                </span>
                             ))}
                         </div>
                     </div>
-                    <Link href="/dashboard/admin/inventory" className="btn btn-sm">View Inventory</Link>
+                    <Link href="/dashboard/admin/inventory" className="btn btn-sm">Manage Stock</Link>
                 </div>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-hidden">
-                    <div className="p-4 border-b border-base-200 flex justify-between items-center">
-                        <h3 className="font-semibold flex items-center gap-2"><ShoppingCart className="w-5 h-5" />Recent Orders</h3>
-                        <Link href="/dashboard/admin/orders" className="btn btn-ghost btn-sm">View All</Link>
-                    </div>
-                    <div className="overflow-x-auto">
-                        <table className="table table-sm">
-                            <thead><tr><th>Order</th><th>Customer</th><th>Variant</th><th>Total</th><th>Status</th></tr></thead>
-                            <tbody>
-                                {DEMO_RECENT_ORDERS.map((order) => (
-                                    <tr key={order.id}>
-                                        <td className="font-medium">{order.id}</td>
-                                        <td>{order.customer}</td>
-                                        <td>{order.variant} × {order.qty}</td>
-                                        <td>KES {order.total.toLocaleString()}</td>
-                                        <td><span className={`badge badge-sm ${order.status === 'delivered' ? 'badge-success' : order.status === 'shipped' ? 'badge-info' : order.status === 'processing' ? 'badge-warning' : 'badge-ghost'}`}>{order.status}</span></td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-hidden">
-                    <div className="p-4 border-b border-base-200 flex justify-between items-center">
-                        <h3 className="font-semibold flex items-center gap-2"><Users className="w-5 h-5" />Top Resellers</h3>
-                        <Link href="/dashboard/admin/resellers" className="btn btn-ghost btn-sm">View All</Link>
-                    </div>
-                    <div className="overflow-x-auto">
-                        <table className="table table-sm">
-                            <thead><tr><th>Business</th><th>Region</th><th>Orders</th><th>Revenue</th><th>Status</th></tr></thead>
-                            <tbody>
-                                {DEMO_RESELLERS.map((reseller) => (
-                                    <tr key={reseller.id}>
-                                        <td><div><p className="font-medium">{reseller.name}</p><p className="text-xs text-base-content/60">{reseller.owner}</p></div></td>
-                                        <td><span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{reseller.region}</span></td>
-                                        <td>{reseller.orders}</td>
-                                        <td>KES {(reseller.revenue / 1000).toFixed(0)}K</td>
-                                        <td><span className={`badge badge-sm ${reseller.status === 'active' ? 'badge-success' : 'badge-warning'}`}>{reseller.status}</span></td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
+            {/* Stock by Product */}
             <div className="bg-base-100 rounded-xl p-6 shadow-sm border border-base-200">
-                <h3 className="font-semibold mb-4">Order Status Distribution</h3>
-                <div className="flex flex-wrap gap-4">
-                    {DEMO_CHART_DATA.ordersByStatus.map((status) => (
-                        <div key={status.name} className="flex items-center gap-3 bg-base-200 rounded-lg px-4 py-3">
-                            <div className="w-4 h-4 rounded-full" style={{ backgroundColor: status.color }} />
-                            <div><p className="text-sm text-base-content/60">{status.name}</p><p className="font-bold text-lg">{status.value}</p></div>
-                        </div>
-                    ))}
+                <h3 className="font-semibold mb-4 flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5 text-primary" />
+                    Stock Levels by Product
+                </h3>
+                <div className="overflow-x-auto">
+                    <table className="table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>In Stock</th>
+                                <th>Allocated</th>
+                                <th>Available</th>
+                                <th>Stock Level</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {DEMO_STOCK_BY_PRODUCT.map((product) => (
+                                <tr key={product.name}>
+                                    <td className="font-medium">{product.name}</td>
+                                    <td>{product.inStock}</td>
+                                    <td className="text-warning">{product.allocated}</td>
+                                    <td className="font-bold">{product.available}</td>
+                                    <td className="w-48">
+                                        <StockLevelBar current={product.available} min={product.minLevel} />
+                                    </td>
+                                    <td>
+                                        <span className={`badge badge-sm ${product.status === 'good' ? 'badge-success' : product.status === 'low' ? 'badge-warning' : 'badge-error'}`}>
+                                            {product.status}
+                                        </span>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
+            {/* Distributor Stock Levels */}
+            <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-hidden">
+                <div className="p-4 border-b border-base-200 flex justify-between items-center">
+                    <h3 className="font-semibold flex items-center gap-2">
+                        <Truck className="w-5 h-5 text-primary" />
+                        Distributor Stock Levels
+                    </h3>
+                    <Link href="/dashboard/admin/resellers" className="btn btn-ghost btn-sm">View All</Link>
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="table">
+                        <thead>
+                            <tr>
+                                <th>Distributor</th>
+                                <th>Location</th>
+                                <th>670g Cylinders</th>
+                                <th>Regulators</th>
+                                <th>Creamers</th>
+                                <th>Syphons</th>
+                                <th>Last Restock</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {DEMO_DISTRIBUTOR_STOCK.map((dist) => (
+                                <tr key={dist.id}>
+                                    <td>
+                                        <div>
+                                            <p className="font-medium">{dist.name}</p>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span className="flex items-center gap-1">
+                                            <MapPin className="w-3 h-3" />
+                                            {dist.location}
+                                        </span>
+                                    </td>
+                                    <td className={dist.cylinders < 100 ? 'text-warning font-semibold' : ''}>{dist.cylinders}</td>
+                                    <td className={dist.regulators < 20 ? 'text-warning font-semibold' : ''}>{dist.regulators}</td>
+                                    <td className={dist.creamers < 30 ? 'text-warning font-semibold' : ''}>{dist.creamers}</td>
+                                    <td className={dist.syphons < 10 ? 'text-error font-semibold' : ''}>{dist.syphons}</td>
+                                    <td className="text-base-content/60">{dist.lastRestock}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Recent Stock Movements */}
+                <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-hidden">
+                    <div className="p-4 border-b border-base-200">
+                        <h3 className="font-semibold flex items-center gap-2">
+                            <TrendingUp className="w-5 h-5" />
+                            Recent Stock Movements
+                        </h3>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="table table-sm">
+                            <thead>
+                                <tr><th>ID</th><th>Type</th><th>Product</th><th>Qty</th><th>Details</th></tr>
+                            </thead>
+                            <tbody>
+                                {DEMO_STOCK_MOVEMENTS.map((mov) => (
+                                    <tr key={mov.id}>
+                                        <td className="font-medium">{mov.id}</td>
+                                        <td>
+                                            <span className={`badge badge-sm ${mov.type === 'in' ? 'badge-success' : mov.type === 'out' ? 'badge-error' : 'badge-info'}`}>
+                                                {mov.type}
+                                            </span>
+                                        </td>
+                                        <td>{mov.product}</td>
+                                        <td className={mov.type === 'in' ? 'text-success' : 'text-error'}>
+                                            {mov.type === 'in' ? '+' : '-'}{mov.qty}
+                                        </td>
+                                        <td className="text-xs text-base-content/60">{mov.from} → {mov.to}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                {/* Pending Restocks */}
+                <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-hidden">
+                    <div className="p-4 border-b border-base-200">
+                        <h3 className="font-semibold flex items-center gap-2">
+                            <Package className="w-5 h-5" />
+                            Pending Restocks
+                        </h3>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="table table-sm">
+                            <thead>
+                                <tr><th>Product</th><th>Current</th><th>Target</th><th>ETA</th><th>Status</th></tr>
+                            </thead>
+                            <tbody>
+                                {DEMO_PENDING_RESTOCKS.map((restock, i) => (
+                                    <tr key={i}>
+                                        <td className="font-medium">{restock.product}</td>
+                                        <td className={restock.currentStock < restock.targetStock * 0.3 ? 'text-error font-semibold' : ''}>{restock.currentStock}</td>
+                                        <td>{restock.targetStock}</td>
+                                        <td>{restock.eta}</td>
+                                        <td>
+                                            <span className={`badge badge-sm ${restock.status === 'shipping' ? 'badge-success' : restock.status === 'ordered' ? 'badge-info' : 'badge-ghost'}`}>
+                                                {restock.status}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            {/* Quick Actions */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Link href="/dashboard/admin/orders" className="btn btn-outline btn-primary"><ShoppingCart className="w-4 h-4" />Manage Orders</Link>
-                <Link href="/dashboard/admin/resellers" className="btn btn-outline btn-secondary"><Users className="w-4 h-4" />Manage Resellers</Link>
-                <Link href="/dashboard/admin/inventory" className="btn btn-outline btn-accent"><Package className="w-4 h-4" />Inventory</Link>
-                <Link href="/dashboard/admin/users" className="btn btn-outline"><Users className="w-4 h-4" />All Users</Link>
+                <Link href="/dashboard/admin/inventory" className="btn btn-outline btn-primary"><Package className="w-4 h-4" />Manage Inventory</Link>
+                <Link href="/dashboard/admin/orders" className="btn btn-outline btn-secondary"><ShoppingCart className="w-4 h-4" />View Orders</Link>
+                <Link href="/dashboard/admin/resellers" className="btn btn-outline btn-accent"><Users className="w-4 h-4" />Distributors</Link>
+                <Link href="/dashboard/admin/reports" className="btn btn-outline"><BarChart3 className="w-4 h-4" />Stock Reports</Link>
             </div>
         </div>
     )

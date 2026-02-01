@@ -144,6 +144,7 @@ html {
   /* Better text readability on mobile */
   html {
     -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
     text-size-adjust: 100%;
   }
 }
@@ -311,6 +312,7 @@ th {
 ::-webkit-scrollbar {
   width: 0px;
   height: 0px;
+  display: none;
 }
 
 /* Firefox */
@@ -389,6 +391,7 @@ th {
   /* Disable blur on mobile (expensive) */
   .mobile-no-blur {
     filter: none !important;
+    -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
   }
 }

@@ -13,28 +13,6 @@ import Link from 'next/link'
 import NotificationDropdown from '@/components/NotificationDropdown'
 import ThemeToggle from '@/components/Themetoggle'
 
-
-function useTheme() {
-    const [theme, setTheme] = useState('light')
-    const [mounted, setMounted] = useState(false)
-
-    useEffect(() => {
-        setMounted(true)
-        const savedTheme = localStorage.getItem('theme') || 'light'
-        setTheme(savedTheme)
-        document.documentElement.setAttribute('data-theme', savedTheme)
-    }, [])
-
-    const toggleTheme = () => {
-        const newTheme = theme === 'light' ? 'dark' : 'light'
-        setTheme(newTheme)
-        localStorage.setItem('theme', newTheme)
-        document.documentElement.setAttribute('data-theme', newTheme)
-    }
-
-    return { theme, toggleTheme, mounted }
-}
-
 export default function DashboardNavbar({ notifications = [], isCollapsed, setIsCollapsed, setIsMobileSidebarOpen, isMobileSidebarOpen }) {
     const [showNotifications, setShowNotifications] = useState(false)
     const [showProfile, setShowProfile] = useState(false)

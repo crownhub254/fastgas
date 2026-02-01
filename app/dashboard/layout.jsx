@@ -25,7 +25,8 @@ import {
     X,
     ListChecks,
     DollarSign,
-    Wallet
+    Wallet,
+    ShoppingBag
 } from 'lucide-react'
 import useFirebaseAuth from '@/lib/hooks/useFirebaseAuth'
 import { signOut } from 'firebase/auth'

@@ -206,8 +206,6 @@ const Logo = ({ size = 'default', showText = true, className = '', enableScrollG
             } : {}}
             transition={{ duration: 0.15, ease: "linear" }}
           >
-            transition={{ duration: 0.15, ease: "linear" }}
-          >
             <Image 
               src={FASTGAS_LOGO_URL}
               alt="FastGas Logo"

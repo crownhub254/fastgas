@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { ShoppingCart, Package, Truck, Clock, CheckCircle, Flame, MapPin, Bell, ArrowRight, User } from 'lucide-react'
 import Link from 'next/link'
 
-// Demo data for FastGas Customer Dashboard
+// Demo data for FastGas Customer Dashboard - Single Product: 670g N₂O Cream Charger
 const DEMO_USER = {
     name: 'Mary Wanjiku',
     email: 'mary@example.com',
@@ -21,12 +21,13 @@ const DEMO_STATS = {
     savedAmount: 3200
 }
 
+// Single product orders
 const DEMO_ORDERS = [
     { 
         id: 'ORD-2431', 
-        variant: '13kg', 
-        qty: 1, 
-        total: 2800, 
+        variant: '670g N₂O Cream Charger', 
+        qty: 2, 
+        total: 15000, 
         status: 'delivered', 
         date: '2026-01-28',
         deliveryDate: '2026-01-28',
@@ -34,9 +35,9 @@ const DEMO_ORDERS = [
     },
     { 
         id: 'ORD-2398', 
-        variant: '6kg', 
-        qty: 2, 
-        total: 3000, 
+        variant: '670g N₂O Cream Charger', 
+        qty: 1, 
+        total: 7500, 
         status: 'shipped', 
         date: '2026-01-30',
         eta: 'Today, 3-5 PM',
@@ -44,18 +45,18 @@ const DEMO_ORDERS = [
     },
     { 
         id: 'ORD-2312', 
-        variant: '13kg', 
-        qty: 1, 
-        total: 2800, 
+        variant: '670g N₂O Cream Charger', 
+        qty: 3, 
+        total: 22500, 
         status: 'delivered', 
         date: '2026-01-15',
         deliveryDate: '2026-01-15'
     },
     { 
         id: 'ORD-2245', 
-        variant: '25kg', 
-        qty: 1, 
-        total: 5200, 
+        variant: '670g N₂O Cream Charger', 
+        qty: 5, 
+        total: 37500, 
         status: 'delivered', 
         date: '2025-12-20',
         deliveryDate: '2025-12-20'
@@ -72,17 +73,15 @@ const DEMO_ACTIVE_DELIVERY = {
     progress: 75
 }
 
+// Single product only
 const DEMO_PRODUCTS = [
-    { size: '6kg', price: 1500, description: 'Perfect for small households', popular: false },
-    { size: '13kg', price: 2800, description: 'Most popular for families', popular: true },
-    { size: '25kg', price: 5200, description: 'Great for larger households', popular: false },
-    { size: '50kg', price: 9500, description: 'Commercial & heavy users', popular: false }
+    { size: '670g N₂O Cream Charger', price: 7500, description: 'Premium quality N₂O cylinder for professional culinary use', popular: true }
 ]
 
 const DEMO_NOTIFICATIONS = [
     { id: 1, message: 'Your order ORD-2398 is out for delivery!', time: '1 hour ago', read: false },
     { id: 2, message: 'Order ORD-2431 has been delivered', time: '2 days ago', read: true },
-    { id: 3, message: 'Special offer: 10% off on 25kg cylinders!', time: '3 days ago', read: true }
+    { id: 3, message: 'Special offer: 10% off on bulk orders of 670g Cream Chargers!', time: '3 days ago', read: true }
 ]
 
 function OrderStatusBadge({ status }) {

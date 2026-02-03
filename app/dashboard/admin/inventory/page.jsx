@@ -202,17 +202,17 @@ export default function InventoryPage() {
                     <h2 className="font-semibold mb-4">Recent Stock Changes</h2>
                     <div className="space-y-3">
                         {[
-                            { action: 'Added', variant: '13kg', qty: 50, by: 'Admin', time: '2 hours ago' },
-                            { action: 'Sold', variant: '6kg', qty: 5, by: 'Reseller John', time: '4 hours ago' },
-                            { action: 'Sold', variant: '13kg', qty: 10, by: 'Client Order', time: '6 hours ago' },
-                            { action: 'Added', variant: '25kg', qty: 20, by: 'Admin', time: '1 day ago' },
+                            { action: 'Added', variant: '670g N₂O', qty: 100, by: 'Admin', time: '2 hours ago' },
+                            { action: 'Sold', variant: '670g N₂O', qty: 20, by: 'Reseller John', time: '4 hours ago' },
+                            { action: 'Sold', variant: '670g N₂O', qty: 15, by: 'Client Order', time: '6 hours ago' },
+                            { action: 'Added', variant: '670g N₂O', qty: 50, by: 'Admin', time: '1 day ago' },
                         ].map((log, i) => (
                             <div key={i} className="flex items-center justify-between py-2 border-b border-base-200 last:border-0">
                                 <div className="flex items-center gap-3">
                                     <span className={`badge ${log.action === 'Added' ? 'badge-success' : 'badge-error'}`}>
                                         {log.action === 'Added' ? '+' : '-'}{log.qty}
                                     </span>
-                                    <span>{log.variant} cylinders</span>
+                                    <span>{log.variant} Cream Chargers</span>
                                 </div>
                                 <div className="text-sm text-base-content/50">
                                     <span>{log.by}</span>

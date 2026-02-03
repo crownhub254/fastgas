@@ -5,6 +5,7 @@ import { motion, useScroll, useTransform, useInView, AnimatePresence, useMotionV
 import { Sparkles, Truck, Shield, Phone, MapPin, Clock, ChevronRight, ChevronLeft, Star, Package, Coffee, GlassWater, Cake, ChefHat, Zap, CheckCircle, Award, Beaker, IceCream, ArrowDown, Play, LayoutDashboard, Users, ShoppingBag, Bike, Volume2, VolumeX } from 'lucide-react'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
+import ScrollButtons from './ScrollButtons'
 
 // ============================================
 // PERFORMANCE HOOKS
@@ -1360,8 +1361,19 @@ export default function FastGasHomePage({ user = null }) {
         { name: "Barista Brian", role: "Java House", text: "Kazi safi! Our espumas are now chef's kiss 😙", rating: 5 },
     ]
 
+    // Force dark theme on homepage
+    useEffect(() => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        return () => {
+            // Don't reset on unmount - let other pages handle their own theme
+        }
+    }, [])
+
     return (
-        <div className="min-h-screen overflow-hidden">
+        <div className="min-h-screen overflow-hidden" data-theme="dark">
+            {/* Scroll to Top/Bottom Buttons */}
+            <ScrollButtons />
+            
             {/* Global Spotlight Cursor Effect */}
             <SpotlightCursor />
             

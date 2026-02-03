@@ -4,49 +4,45 @@ import { useEffect, useState } from 'react'
 import { Users, Package, ShoppingCart, Truck, TrendingUp, ArrowUpRight, ArrowDownRight, Flame, MapPin, AlertTriangle, Box, Warehouse, BarChart3 } from 'lucide-react'
 import Link from 'next/link'
 
-// Demo data for FastGas Admin Dashboard - Stock Focused
+// Demo data for FastGas Admin Dashboard - Single Product Focus: 670g N₂O Cream Charger
 const DEMO_STATS = {
     totalStock: 2450,
-    lowStockItems: 3,
-    outOfStock: 1,
-    pendingRestocks: 5,
+    lowStockItems: 0,
+    outOfStock: 0,
+    pendingRestocks: 2,
     totalDistributors: 12,
     activeDeliveries: 8,
     stockGrowth: 12.5,
     distributorGrowth: 8.3
 }
 
-// Stock levels by product
+// Stock levels - Single product only
 const DEMO_STOCK_BY_PRODUCT = [
-    { name: '670g Cylinder', inStock: 850, allocated: 120, available: 730, minLevel: 200, status: 'good' },
-    { name: 'Pressure Regulator', inStock: 45, allocated: 15, available: 30, minLevel: 50, status: 'low' },
-    { name: 'FastGas Creamer', inStock: 180, allocated: 40, available: 140, minLevel: 100, status: 'good' },
-    { name: 'Cream Syphon', inStock: 12, allocated: 5, available: 7, minLevel: 25, status: 'critical' }
+    { name: '670g N₂O Cream Charger', inStock: 2450, allocated: 350, available: 2100, minLevel: 500, status: 'good' }
 ]
 
-// Stock by distributor/location
+// Stock by distributor/location - Single product focus
 const DEMO_DISTRIBUTOR_STOCK = [
-    { id: 1, name: 'Nairobi Central Hub', location: 'Nairobi CBD', cylinders: 320, regulators: 45, creamers: 85, syphons: 20, lastRestock: '2026-01-28' },
-    { id: 2, name: 'Mombasa Warehouse', location: 'Mombasa', cylinders: 180, regulators: 30, creamers: 45, syphons: 12, lastRestock: '2026-01-25' },
-    { id: 3, name: 'Kisumu Distribution', location: 'Kisumu', cylinders: 150, regulators: 25, creamers: 30, syphons: 8, lastRestock: '2026-01-27' },
-    { id: 4, name: 'Nakuru Depot', location: 'Nakuru', cylinders: 120, regulators: 18, creamers: 25, syphons: 5, lastRestock: '2026-01-24' },
-    { id: 5, name: 'Eldoret Store', location: 'Eldoret', cylinders: 80, regulators: 12, creamers: 15, syphons: 3, lastRestock: '2026-01-26' }
+    { id: 1, name: 'Nairobi Central Hub', location: 'Nairobi CBD', cylinders: 620, lastRestock: '2026-01-28' },
+    { id: 2, name: 'Mombasa Warehouse', location: 'Mombasa', cylinders: 480, lastRestock: '2026-01-25' },
+    { id: 3, name: 'Kisumu Distribution', location: 'Kisumu', cylinders: 380, lastRestock: '2026-01-27' },
+    { id: 4, name: 'Nakuru Depot', location: 'Nakuru', cylinders: 320, lastRestock: '2026-01-24' },
+    { id: 5, name: 'Eldoret Store', location: 'Eldoret', cylinders: 250, lastRestock: '2026-01-26' }
 ]
 
-// Recent stock movements
+// Recent stock movements - Single product
 const DEMO_STOCK_MOVEMENTS = [
-    { id: 'MOV-001', type: 'in', product: '670g Cylinder', qty: 100, from: 'Main Warehouse', to: 'Nairobi Central Hub', date: '2026-01-30' },
-    { id: 'MOV-002', type: 'out', product: 'Pressure Regulator', qty: 15, from: 'Nairobi Central Hub', to: 'Customer Order', date: '2026-01-30' },
-    { id: 'MOV-003', type: 'in', product: 'FastGas Creamer', qty: 50, from: 'Supplier', to: 'Main Warehouse', date: '2026-01-29' },
-    { id: 'MOV-004', type: 'transfer', product: '670g Cylinder', qty: 30, from: 'Nairobi Central Hub', to: 'Mombasa Warehouse', date: '2026-01-29' },
-    { id: 'MOV-005', type: 'out', product: 'Cream Syphon', qty: 5, from: 'Mombasa Warehouse', to: 'Customer Order', date: '2026-01-28' }
+    { id: 'MOV-001', type: 'in', product: '670g N₂O Cream Charger', qty: 200, from: 'Main Warehouse', to: 'Nairobi Central Hub', date: '2026-01-30' },
+    { id: 'MOV-002', type: 'out', product: '670g N₂O Cream Charger', qty: 50, from: 'Nairobi Central Hub', to: 'Customer Order', date: '2026-01-30' },
+    { id: 'MOV-003', type: 'in', product: '670g N₂O Cream Charger', qty: 150, from: 'Supplier', to: 'Main Warehouse', date: '2026-01-29' },
+    { id: 'MOV-004', type: 'transfer', product: '670g N₂O Cream Charger', qty: 80, from: 'Nairobi Central Hub', to: 'Mombasa Warehouse', date: '2026-01-29' },
+    { id: 'MOV-005', type: 'out', product: '670g N₂O Cream Charger', qty: 30, from: 'Mombasa Warehouse', to: 'Customer Order', date: '2026-01-28' }
 ]
 
-// Pending restocks
+// Pending restocks - Single product
 const DEMO_PENDING_RESTOCKS = [
-    { product: 'Pressure Regulator', currentStock: 45, targetStock: 150, eta: '2026-02-02', status: 'ordered' },
-    { product: 'Cream Syphon', currentStock: 12, targetStock: 50, eta: '2026-02-01', status: 'shipping' },
-    { product: '670g Cylinder', currentStock: 850, targetStock: 1200, eta: '2026-02-05', status: 'pending' }
+    { product: '670g N₂O Cream Charger', currentStock: 2450, targetStock: 3500, eta: '2026-02-05', status: 'ordered' },
+    { product: '670g N₂O Cream Charger', currentStock: 2450, targetStock: 5000, eta: '2026-02-15', status: 'pending' }
 ]
 
 function StatsCard({ title, value, change, icon: Icon, trend, variant = 'default' }) {
@@ -207,10 +203,7 @@ export default function AdminDashboard() {
                             <tr>
                                 <th>Distributor</th>
                                 <th>Location</th>
-                                <th>670g Cylinders</th>
-                                <th>Regulators</th>
-                                <th>Creamers</th>
-                                <th>Syphons</th>
+                                <th>670g N₂O Cream Chargers</th>
                                 <th>Last Restock</th>
                             </tr>
                         </thead>
@@ -228,10 +221,7 @@ export default function AdminDashboard() {
                                             {dist.location}
                                         </span>
                                     </td>
-                                    <td className={dist.cylinders < 100 ? 'text-warning font-semibold' : ''}>{dist.cylinders}</td>
-                                    <td className={dist.regulators < 20 ? 'text-warning font-semibold' : ''}>{dist.regulators}</td>
-                                    <td className={dist.creamers < 30 ? 'text-warning font-semibold' : ''}>{dist.creamers}</td>
-                                    <td className={dist.syphons < 10 ? 'text-error font-semibold' : ''}>{dist.syphons}</td>
+                                    <td className={dist.cylinders < 300 ? 'text-warning font-semibold' : 'font-bold text-success'}>{dist.cylinders}</td>
                                     <td className="text-base-content/60">{dist.lastRestock}</td>
                                 </tr>
                             ))}

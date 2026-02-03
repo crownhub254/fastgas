@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { Package, ShoppingCart, DollarSign, Truck, TrendingUp, Clock, CheckCircle, Flame, MapPin, Phone, Mail, User } from 'lucide-react'
 import Link from 'next/link'
 
-// Demo data for FastGas Reseller Dashboard
+// Demo data for FastGas Reseller Dashboard - Single Product: 670g N₂O Cream Charger
 const DEMO_RESELLER = {
     businessName: 'Nairobi Cream Supplies',
     ownerName: 'James Kamau',
@@ -26,18 +26,18 @@ const DEMO_STATS = {
     savings: 143290
 }
 
+// Single product orders only
 const DEMO_MY_ORDERS = [
-    { id: 'RES-001', variant: '670g Cylinder', qty: 20, unitPrice: 6375, total: 127500, status: 'delivered', date: '2026-01-30', deliveryDate: '2026-01-30' },
-    { id: 'RES-002', variant: 'Pressure Regulator', qty: 10, unitPrice: 2125, total: 21250, status: 'shipped', date: '2026-01-29', eta: '2026-01-31' },
-    { id: 'RES-003', variant: '670g Cylinder', qty: 15, unitPrice: 6375, total: 95625, status: 'processing', date: '2026-01-28' },
-    { id: 'RES-004', variant: 'FastGas Creamer', qty: 3, unitPrice: 12750, total: 38250, status: 'pending', date: '2026-01-27' },
-    { id: 'RES-005', variant: '670g Cylinder', qty: 25, unitPrice: 6375, total: 159375, status: 'delivered', date: '2026-01-25', deliveryDate: '2026-01-26' }
+    { id: 'RES-001', variant: '670g N₂O Cream Charger', qty: 20, unitPrice: 6375, total: 127500, status: 'delivered', date: '2026-01-30', deliveryDate: '2026-01-30' },
+    { id: 'RES-002', variant: '670g N₂O Cream Charger', qty: 15, unitPrice: 6375, total: 95625, status: 'shipped', date: '2026-01-29', eta: '2026-01-31' },
+    { id: 'RES-003', variant: '670g N₂O Cream Charger', qty: 25, unitPrice: 6375, total: 159375, status: 'processing', date: '2026-01-28' },
+    { id: 'RES-004', variant: '670g N₂O Cream Charger', qty: 10, unitPrice: 6375, total: 63750, status: 'pending', date: '2026-01-27' },
+    { id: 'RES-005', variant: '670g N₂O Cream Charger', qty: 30, unitPrice: 6375, total: 191250, status: 'delivered', date: '2026-01-25', deliveryDate: '2026-01-26' }
 ]
 
+// Single product pricing
 const DEMO_PRICING = [
-    { size: '670g N₂O Cylinder', retailPrice: 7500, yourPrice: 6375, savings: 1125, stock: 'In Stock' },
-    { size: 'Pressure Regulator', retailPrice: 2500, yourPrice: 2125, savings: 375, stock: 'In Stock' },
-    { size: 'FastGas Creamer', retailPrice: 15000, yourPrice: 12750, savings: 2250, stock: 'Low Stock' }
+    { size: '670g N₂O Cream Charger', retailPrice: 7500, yourPrice: 6375, savings: 1125, stock: 'In Stock' }
 ]
 
 const DEMO_SALES_HISTORY = [

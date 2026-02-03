@@ -170,8 +170,8 @@ export default function Navbar() {
             }`}>
             <div className="container-custom">
                 <div className="flex items-center justify-between h-20">
-                    {/* Logo */}
-                    <Logo />
+                    {/* Logo with scroll-based glitch */}
+                    <Logo enableScrollGlitch={true} />
 
                     {/* Desktop Navigation */}
                     <div className="hidden lg:flex items-center gap-8">

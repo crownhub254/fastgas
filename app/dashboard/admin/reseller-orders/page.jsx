@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { ShoppingCart, Package, Truck, Clock, CheckCircle, Search, Filter, Eye, MapPin, User, Calendar } from 'lucide-react'
 import Link from 'next/link'
 
-// Demo reseller orders data
+// Demo reseller orders data - Single Product: 670g N₂O Cream Charger
 const DEMO_RESELLER_ORDERS = [
     { 
         id: 'RES-001', 
@@ -12,10 +12,9 @@ const DEMO_RESELLER_ORDERS = [
         owner: 'James Kamau',
         region: 'Nairobi',
         items: [
-            { name: '670g Cylinder', qty: 20, price: 6375 },
-            { name: 'Pressure Regulator', qty: 5, price: 2125 }
+            { name: '670g N₂O Cream Charger', qty: 25, price: 6375 }
         ],
-        total: 138125,
+        total: 159375,
         status: 'delivered',
         orderDate: '2026-01-30',
         deliveryDate: '2026-01-30'
@@ -26,7 +25,7 @@ const DEMO_RESELLER_ORDERS = [
         owner: 'Fatuma Hassan',
         region: 'Mombasa',
         items: [
-            { name: '670g Cylinder', qty: 15, price: 6375 }
+            { name: '670g N₂O Cream Charger', qty: 15, price: 6375 }
         ],
         total: 95625,
         status: 'shipped',
@@ -39,10 +38,9 @@ const DEMO_RESELLER_ORDERS = [
         owner: 'Otieno Odhiambo',
         region: 'Kisumu',
         items: [
-            { name: 'FastGas Creamer', qty: 3, price: 12750 },
-            { name: '670g Cylinder', qty: 10, price: 6375 }
+            { name: '670g N₂O Cream Charger', qty: 20, price: 6375 }
         ],
-        total: 102000,
+        total: 127500,
         status: 'processing',
         orderDate: '2026-01-28'
     },
@@ -52,9 +50,9 @@ const DEMO_RESELLER_ORDERS = [
         owner: 'Alice Njeri',
         region: 'Nakuru',
         items: [
-            { name: '670g Cylinder', qty: 25, price: 6375 }
+            { name: '670g N₂O Cream Charger', qty: 30, price: 6375 }
         ],
-        total: 159375,
+        total: 191250,
         status: 'pending',
         orderDate: '2026-01-27'
     },
@@ -64,10 +62,9 @@ const DEMO_RESELLER_ORDERS = [
         owner: 'James Kamau',
         region: 'Nairobi',
         items: [
-            { name: '670g Cylinder', qty: 30, price: 6375 },
-            { name: 'Pressure Regulator', qty: 10, price: 2125 }
+            { name: '670g N₂O Cream Charger', qty: 35, price: 6375 }
         ],
-        total: 212500,
+        total: 223125,
         status: 'delivered',
         orderDate: '2026-01-25',
         deliveryDate: '2026-01-26'

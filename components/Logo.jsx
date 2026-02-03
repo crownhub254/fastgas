@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 
@@ -24,14 +24,70 @@ const glitchAnimation = {
   }
 }
 
-const Logo = ({ size = 'default', showText = true, className = '' }) => {
+const Logo = ({ size = 'default', showText = true, className = '', enableScrollGlitch = false }) => {
   const [isGlitching, setIsGlitching] = useState(false)
+  const [glitchIntensity, setGlitchIntensity] = useState(0)
+  const lastScrollY = useRef(0)
+  const lastScrollTime = useRef(Date.now())
+  const glitchTimeoutRef = useRef(null)
   
-  // Random glitch trigger
+  // Scroll-based glitch effect
   useEffect(() => {
+    if (!enableScrollGlitch) return
+    
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY
+      const currentTime = Date.now()
+      const timeDelta = currentTime - lastScrollTime.current
+      const scrollDelta = Math.abs(currentScrollY - lastScrollY.current)
+      
+      // Calculate scroll speed (pixels per millisecond)
+      const scrollSpeed = timeDelta > 0 ? scrollDelta / timeDelta : 0
+      
+      // Map scroll speed to glitch intensity (0-1)
+      // Speed > 2 px/ms is considered fast scrolling
+      const intensity = Math.min(scrollSpeed / 2, 1)
+      
+      if (intensity > 0.1) {
+        setGlitchIntensity(intensity)
+        setIsGlitching(true)
+        
+        // Clear previous timeout
+        if (glitchTimeoutRef.current) {
+          clearTimeout(glitchTimeoutRef.current)
+        }
+        
+        // Stop glitching after scroll stops
+        glitchTimeoutRef.current = setTimeout(() => {
+          setIsGlitching(false)
+          setGlitchIntensity(0)
+        }, 150)
+      }
+      
+      lastScrollY.current = currentScrollY
+      lastScrollTime.current = currentTime
+    }
+    
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
+      if (glitchTimeoutRef.current) {
+        clearTimeout(glitchTimeoutRef.current)
+      }
+    }
+  }, [enableScrollGlitch])
+  
+  // Random glitch trigger (when not using scroll-based)
+  useEffect(() => {
+    if (enableScrollGlitch) return
+    
     const triggerGlitch = () => {
       setIsGlitching(true)
-      setTimeout(() => setIsGlitching(false), 200)
+      setGlitchIntensity(0.8)
+      setTimeout(() => {
+        setIsGlitching(false)
+        setGlitchIntensity(0)
+      }, 200)
     }
     
     // Initial glitch after mount
@@ -48,7 +104,7 @@ const Logo = ({ size = 'default', showText = true, className = '' }) => {
       clearTimeout(initialTimer)
       clearInterval(interval)
     }
-  }, [])
+  }, [enableScrollGlitch])
   
   // Size configurations
   const sizes = {
@@ -60,18 +116,21 @@ const Logo = ({ size = 'default', showText = true, className = '' }) => {
   
   const { width, height } = sizes[size] || sizes.default
   
+  // Dynamic glitch offset based on intensity
+  const glitchOffset = Math.round(glitchIntensity * 5)
+  
   return (
     <div className={className}>
       <Link href="/" className="flex items-center gap-2 group">
         <div className="relative">
-          {/* Glitch overlay layers */}
-          {isGlitching && (
+          {/* Glitch overlay layers - intensity based */}
+          {isGlitching && glitchIntensity > 0.1 && (
             <>
               <motion.div
                 className="absolute inset-0 z-20 pointer-events-none"
                 initial={{ opacity: 0 }}
-                animate={{ opacity: [0, 0.8, 0] }}
-                transition={{ duration: 0.15 }}
+                animate={{ opacity: [0, glitchIntensity * 0.8, 0] }}
+                transition={{ duration: 0.1 + (glitchIntensity * 0.1) }}
               >
                 <Image 
                   src={FASTGAS_LOGO_URL}
@@ -80,8 +139,8 @@ const Logo = ({ size = 'default', showText = true, className = '' }) => {
                   height={height}
                   className="opacity-70"
                   style={{ 
-                    transform: 'translateX(-3px)',
-                    filter: 'hue-rotate(90deg) saturate(2)',
+                    transform: `translateX(-${glitchOffset}px)`,
+                    filter: `hue-rotate(${90 * glitchIntensity}deg) saturate(${1 + glitchIntensity})`,
                     mixBlendMode: 'screen'
                   }}
                   priority
@@ -91,8 +150,8 @@ const Logo = ({ size = 'default', showText = true, className = '' }) => {
               <motion.div
                 className="absolute inset-0 z-20 pointer-events-none"
                 initial={{ opacity: 0 }}
-                animate={{ opacity: [0, 0.8, 0] }}
-                transition={{ duration: 0.15, delay: 0.05 }}
+                animate={{ opacity: [0, glitchIntensity * 0.8, 0] }}
+                transition={{ duration: 0.1 + (glitchIntensity * 0.1), delay: 0.03 }}
               >
                 <Image 
                   src={FASTGAS_LOGO_URL}
@@ -101,14 +160,38 @@ const Logo = ({ size = 'default', showText = true, className = '' }) => {
                   height={height}
                   className="opacity-70"
                   style={{ 
-                    transform: 'translateX(3px)',
-                    filter: 'hue-rotate(-90deg) saturate(2)',
+                    transform: `translateX(${glitchOffset}px)`,
+                    filter: `hue-rotate(-${90 * glitchIntensity}deg) saturate(${1 + glitchIntensity})`,
                     mixBlendMode: 'screen'
                   }}
                   priority
                   unoptimized
                 />
               </motion.div>
+              {/* Extra intense glitch layer for fast scrolling */}
+              {glitchIntensity > 0.5 && (
+                <motion.div
+                  className="absolute inset-0 z-20 pointer-events-none"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: [0, glitchIntensity * 0.5, 0] }}
+                  transition={{ duration: 0.05 }}
+                >
+                  <Image 
+                    src={FASTGAS_LOGO_URL}
+                    alt=""
+                    width={width}
+                    height={height}
+                    className="opacity-50"
+                    style={{ 
+                      transform: `translateY(${glitchOffset / 2}px) skewX(${glitchIntensity * 5}deg)`,
+                      filter: 'hue-rotate(180deg) brightness(1.5)',
+                      mixBlendMode: 'screen'
+                    }}
+                    priority
+                    unoptimized
+                  />
+                </motion.div>
+              )}
             </>
           )}
           
@@ -117,7 +200,12 @@ const Logo = ({ size = 'default', showText = true, className = '' }) => {
           
           {/* Main logo with glitch effect */}
           <motion.div
-            animate={isGlitching ? glitchAnimation.glitch : {}}
+            animate={isGlitching ? {
+              x: [0, -glitchOffset/2, glitchOffset/2, -glitchOffset/3, glitchOffset/3, 0],
+              y: [0, glitchOffset/3, -glitchOffset/2, glitchOffset/3, -glitchOffset/3, 0],
+            } : {}}
+            transition={{ duration: 0.15, ease: "linear" }}
+          >
             transition={{ duration: 0.15, ease: "linear" }}
           >
             <Image 

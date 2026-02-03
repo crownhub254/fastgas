@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Users, MapPin, Package, Phone, Mail, Plus, Search, Filter, MoreVertical, Eye, Edit, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 
-// Demo distributor data
+// Demo distributor data - Single Product: 670g N₂O Cream Charger
 const DEMO_DISTRIBUTORS = [
     { 
         id: 1, 
@@ -15,7 +15,7 @@ const DEMO_DISTRIBUTORS = [
         location: 'Nairobi CBD',
         region: 'Nairobi',
         status: 'active',
-        stock: { cylinders: 320, regulators: 45, creamers: 85 },
+        stock: { creamChargers: 620 },
         totalOrders: 456,
         joinedDate: '2024-03-15'
     },
@@ -28,7 +28,7 @@ const DEMO_DISTRIBUTORS = [
         location: 'Mombasa Island',
         region: 'Mombasa',
         status: 'active',
-        stock: { cylinders: 180, regulators: 30, creamers: 45 },
+        stock: { creamChargers: 480 },
         totalOrders: 312,
         joinedDate: '2024-05-20'
     },
@@ -41,7 +41,7 @@ const DEMO_DISTRIBUTORS = [
         location: 'Kisumu Town',
         region: 'Kisumu',
         status: 'active',
-        stock: { cylinders: 150, regulators: 25, creamers: 30 },
+        stock: { creamChargers: 380 },
         totalOrders: 189,
         joinedDate: '2024-06-10'
     },
@@ -54,7 +54,7 @@ const DEMO_DISTRIBUTORS = [
         location: 'Nakuru Town',
         region: 'Nakuru',
         status: 'pending',
-        stock: { cylinders: 120, regulators: 18, creamers: 25 },
+        stock: { creamChargers: 320 },
         totalOrders: 145,
         joinedDate: '2024-07-05'
     },
@@ -67,7 +67,7 @@ const DEMO_DISTRIBUTORS = [
         location: 'Eldoret CBD',
         region: 'Eldoret',
         status: 'active',
-        stock: { cylinders: 80, regulators: 12, creamers: 15 },
+        stock: { creamChargers: 250 },
         totalOrders: 98,
         joinedDate: '2024-08-15'
     }
@@ -233,8 +233,7 @@ export default function DistributorsPage() {
                                     </td>
                                     <td>
                                         <div className="text-sm">
-                                            <p>Cylinders: <span className="font-semibold">{dist.stock.cylinders}</span></p>
-                                            <p>Regulators: <span className="font-semibold">{dist.stock.regulators}</span></p>
+                                            <p>670g Cream Chargers: <span className="font-semibold text-success">{dist.stock.creamChargers}</span></p>
                                         </div>
                                     </td>
                                     <td className="font-semibold">{dist.totalOrders}</td>
